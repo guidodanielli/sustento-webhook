@@ -1,6 +1,13 @@
 export default async function handler(req, res) {
-  // Permitir CORS para que la landing pueda llamar esta función
-  res.setHeader('Access-Control-Allow-Origin', 'https://www.haceloconsustento.com');
+  // Permitir CORS para ambas versiones del dominio
+  const origin = req.headers.origin;
+  const allowedOrigins = [
+    'https://www.haceloconsustento.com',
+    'https://haceloconsustento.com'
+  ];
+  if (allowedOrigins.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  }
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
