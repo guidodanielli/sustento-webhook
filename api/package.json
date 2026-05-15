@@ -1,7 +1,8 @@
 {
   "name": "sustento-webhook",
-  "version": "1.0.0",
-  "description": "Webhook para procesar pagos de MercadoPago y enviar el Recetario",
+  "version": "2.0.0",
+  "description": "API de pagos multi-producto para haceloconsustento.com",
+  "type": "module",
   "dependencies": {
     "resend": "^3.2.0"
   }

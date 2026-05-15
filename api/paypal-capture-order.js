@@ -3,14 +3,33 @@ import { PRODUCTS } from './products.js';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-async function getPaymentDetails(paymentId) {
-  const response = await fetch(`https://api.mercadopago.com/v1/payments/${paymentId}`, {
-    headers: { 'Authorization': `Bearer ${process.env.MP_ACCESS_TOKEN}` }
+const ALLOWED_ORIGINS = [
+  'https://www.haceloconsustento.com',
+  'https://haceloconsustento.com'
+];
+
+const PAYPAL_BASE = process.env.PAYPAL_MODE === 'sandbox'
+  ? 'https://api-m.sandbox.paypal.com'
+  : 'https://api-m.paypal.com';
+
+async function getPayPalToken() {
+  const creds = Buffer.from(
+    `${process.env.PAYPAL_CLIENT_ID}:${process.env.PAYPAL_CLIENT_SECRET}`
+  ).toString('base64');
+
+  const res = await fetch(`${PAYPAL_BASE}/v1/oauth2/token`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Basic ${creds}`,
+      'Content-Type': 'application/x-www-form-urlencoded'
+    },
+    body: 'grant_type=client_credentials'
   });
-  return response.json();
+  const data = await res.json();
+  return data.access_token;
 }
 
-async function logPurchase({ productId, productName, buyerEmail, buyerName, amount, currency, paymentMethod, paymentId }) {
+async function logPurchase({ productId, productName, buyerEmail, buyerName, amount, currency, paymentId }) {
   try {
     await fetch(`${process.env.SUPABASE_URL}/rest/v1/purchases`, {
       method: 'POST',
@@ -27,13 +46,12 @@ async function logPurchase({ productId, productName, buyerEmail, buyerName, amou
         buyer_name: buyerName || null,
         amount,
         currency,
-        payment_method: paymentMethod,
+        payment_method: 'paypal',
         payment_id: paymentId,
         status: 'approved'
       })
     });
   } catch (err) {
-    // No cortar la entrega del producto si falla el log
     console.error('Supabase log error:', err);
   }
 }
@@ -76,32 +94,43 @@ function buildEmail({ buyerName, product }) {
 }
 
 export default async function handler(req, res) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
+  const origin = req.headers.origin;
+  if (ALLOWED_ORIGINS.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
   }
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+  if (req.method === 'OPTIONS') return res.status(200).end();
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+
+  const { orderID, productId = 'recetario' } = req.body || {};
+  if (!orderID) return res.status(400).json({ error: 'No orderID' });
+
+  const product = PRODUCTS[productId] || PRODUCTS['recetario'];
 
   try {
-    const { type, data } = req.body;
+    const token = await getPayPalToken();
 
-    if (type !== 'payment') {
-      return res.status(200).json({ received: true });
+    const captureRes = await fetch(`${PAYPAL_BASE}/v2/checkout/orders/${orderID}/capture`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    const capture = await captureRes.json();
+
+    if (capture.status !== 'COMPLETED') {
+      return res.status(400).json({ error: 'Pago no completado', status: capture.status });
     }
 
-    const paymentId = data?.id;
-    if (!paymentId) return res.status(400).json({ error: 'No payment ID' });
-
-    const payment = await getPaymentDetails(paymentId);
-
-    if (payment.status !== 'approved') {
-      return res.status(200).json({ status: payment.status });
-    }
-
-    const buyerEmail = payment.payer?.email;
-    const buyerName = payment.payer?.first_name;
-    const productId = payment.external_reference || 'recetario';
-    const product = PRODUCTS[productId] || PRODUCTS['recetario'];
-
-    if (!buyerEmail) return res.status(400).json({ error: 'No buyer email' });
+    const payer = capture.payer;
+    const buyerEmail = payer?.email_address;
+    const buyerName = payer?.name?.given_name;
+    const captureUnit = capture.purchase_units?.[0]?.payments?.captures?.[0];
+    const amount = parseFloat(captureUnit?.amount?.value || product.usd);
 
     await Promise.all([
       resend.emails.send({
@@ -115,17 +144,16 @@ export default async function handler(req, res) {
         productName: product.name,
         buyerEmail,
         buyerName,
-        amount: payment.transaction_amount,
-        currency: payment.currency_id,
-        paymentMethod: 'mercadopago',
-        paymentId: String(paymentId)
+        amount,
+        currency: 'USD',
+        paymentId: orderID
       })
     ]);
 
     return res.status(200).json({ success: true });
 
   } catch (error) {
-    console.error('Webhook error:', error);
-    return res.status(500).json({ error: 'Internal server error' });
+    console.error('PayPal capture error:', error);
+    return res.status(500).json({ error: 'Error interno' });
   }
 }

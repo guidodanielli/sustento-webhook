@@ -1,23 +1,24 @@
+import { PRODUCTS } from './products.js';
+
+const ALLOWED_ORIGINS = [
+  'https://www.haceloconsustento.com',
+  'https://haceloconsustento.com'
+];
+
 export default async function handler(req, res) {
-  // Permitir CORS para ambas versiones del dominio
   const origin = req.headers.origin;
-  const allowedOrigins = [
-    'https://www.haceloconsustento.com',
-    'https://haceloconsustento.com'
-  ];
-  if (allowedOrigins.includes(origin)) {
+  if (ALLOWED_ORIGINS.includes(origin)) {
     res.setHeader('Access-Control-Allow-Origin', origin);
   }
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
+  if (req.method === 'OPTIONS') return res.status(200).end();
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
+  const { productId = 'recetario' } = req.body || {};
+  const product = PRODUCTS[productId];
+  if (!product) return res.status(400).json({ error: 'Producto inválido' });
 
   try {
     const response = await fetch('https://api.mercadopago.com/checkout/preferences', {
@@ -28,9 +29,10 @@ export default async function handler(req, res) {
       },
       body: JSON.stringify({
         items: [{
-          title: 'Recetario Digital Sustento',
+          id: product.id,
+          title: product.name,
           quantity: 1,
-          unit_price: 40000,
+          unit_price: product.ars,
           currency_id: 'ARS'
         }],
         back_urls: {
@@ -39,6 +41,7 @@ export default async function handler(req, res) {
           pending: 'https://www.haceloconsustento.com?pago=pendiente'
         },
         auto_return: 'approved',
+        external_reference: product.id,
         notification_url: 'https://sustento-webhook.vercel.app/api/webhook'
       })
     });

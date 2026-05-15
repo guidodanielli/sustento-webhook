@@ -1,4 +1,4 @@
-HTTP 200 
+﻿HTTP 200 
 Content-Type: text/html; charset=utf-8
 
 <!DOCTYPE html>
@@ -330,7 +330,131 @@ Content-Type: text/html; charset=utf-8
   .precio-ars { font-size: 0.85rem; color: rgba(255,255,255,0.7); margin-top: 6px; }
   .precio-cuotas { font-size: 0.8rem; color: rgba(255,255,255,0.55); margin-top: 8px; }
 
-  /* RECETARIO */
+
+  /* TIENDA */
+  .tienda {
+    padding: 100px 40px;
+    background: var(--crema);
+  }
+  .tienda-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+  .tienda-header {
+    text-align: center;
+    margin-bottom: 60px;
+  }
+  .tienda-header .eyebrow {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.8rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--verde);
+    margin-bottom: 12px;
+  }
+  .tienda-header .eyebrow::before {
+    content: '— ';
+  }
+  .tienda-header h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(1.9rem, 3.5vw, 2.8rem);
+    font-weight: 700;
+    color: var(--negro);
+    margin-bottom: 16px;
+  }
+  .tienda-header h2 em { font-style: italic; color: var(--verde); }
+  .tienda-header p {
+    font-size: 1.05rem;
+    color: #666;
+    max-width: 520px;
+    margin: 0 auto;
+    line-height: 1.7;
+  }
+  .tienda-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 28px;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  .producto-card {
+    background: #fff;
+    border-radius: 20px;
+    padding: 40px 32px;
+    position: relative;
+    border: 1.5px solid rgba(30,111,29,0.12);
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+  }
+  .producto-card:hover {
+    box-shadow: 0 8px 32px rgba(30,111,29,0.10);
+    transform: translateY(-2px);
+  }
+  .producto-badge {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: var(--verde);
+    color: #fff;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 4px 12px;
+    border-radius: 100px;
+  }
+  .producto-badge-proceso { background: #5a8f3c; }
+  .producto-icon { font-size: 2rem; line-height: 1; }
+  .producto-card h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.3rem;
+    color: var(--negro);
+    margin: 0;
+    line-height: 1.3;
+  }
+  .producto-desc {
+    font-size: 0.92rem;
+    color: #666;
+    line-height: 1.7;
+    flex: 1;
+    margin: 0;
+  }
+  .producto-precio {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .precio-ars {
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: var(--verde);
+  }
+  .precio-sep { color: #ccc; font-size: 0.9rem; }
+  .precio-usd {
+    font-size: 0.9rem;
+    color: #999;
+  }
+  .producto-btns {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 6px;
+  }
+  .producto-btns .btn-primary, .producto-btns .btn-secondary {
+    text-align: center;
+    width: 100%;
+    justify-content: center;
+  }
+  @media (max-width: 720px) {
+    .tienda { padding: 60px 24px; }
+    .tienda-grid { grid-template-columns: 1fr; }
+  }
+    /* RECETARIO */
   .recetario {
     padding: 100px 80px;
     background: var(--crema);
@@ -720,9 +844,10 @@ Content-Type: text/html; charset=utf-8
   <ul class="nav-links">
     <li><a href="#sobre">Sobre mí</a></li>
     <li><a href="#metodo">Método Sustento</a></li>
+    <li><a href="#tienda">Tienda</a></li>
     <li><a href="#recetario">Recetario</a></li>
     <li><a href="#contacto">Contacto</a></li>
-    <li><a href="#recetario" class="nav-cta">Comprar Recetario</a></li>
+    <li><a href="#tienda" class="nav-cta">Tienda</a></li>
     <li><a href="https://wa.me/541171417177" target="_blank" class="nav-cta" style="background:var(--tierra-claro);">WhatsApp 💬</a></li>
   </ul>
 </nav>
@@ -833,6 +958,47 @@ Content-Type: text/html; charset=utf-8
   </div>
 </section>
 
+<section class="tienda" id="tienda">
+  <div class="tienda-inner">
+    <div class="tienda-header reveal">
+      <p class="eyebrow">Todo lo que ofrezco</p>
+      <h2>Mi <em>Tienda</em></h2>
+      <p>Herramientas concretas para transformar tu relación con la comida.</p>
+    </div>
+    <div class="tienda-grid">
+
+      <div class="producto-card reveal">
+        <span class="producto-badge">Digital</span>
+        <div class="producto-icon">📖</div>
+        <h3>Recetario Digital Sustento</h3>
+        <p class="producto-desc">+60 recetas plant-based para el día a día. Simples, nutritivas, con ingredientes reales. Para que la cocina casera vuelva a ser parte de tu vida.</p>
+        <div class="producto-precio">
+          <span class="precio-ars">$40.000 ARS</span>
+          <span class="precio-sep">·</span>
+          <span class="precio-usd">USD 40</span>
+        </div>
+        <div class="producto-btns">
+          <button class="btn-primary" onclick="pagarConMP('recetario')" style="text-align:center;">Comprar con MercadoPago 🇦🇷</button>
+          <div id="paypal-recetario-tienda"></div>
+        </div>
+      </div>
+
+      <div class="producto-card reveal">
+        <span class="producto-badge producto-badge-proceso">Proceso</span>
+        <div class="producto-icon">🌱</div>
+        <h3>Método Sustento</h3>
+        <p class="producto-desc">90 días de acompañamiento personalizado para transformar tu alimentación, tus hábitos y tu vínculo con la comida. Comenzamos con una reunión de admisión gratuita.</p>
+        <div class="producto-precio">
+          <span class="precio-ars">Admisión gratuita</span>
+        </div>
+        <div class="producto-btns">
+          <a href="https://calendly.com/guidosustento-nutri/30min" target="_blank" class="btn-primary" style="text-align:center; display:block;">Reservar llamada 📅</a>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
 <section class="recetario" id="recetario">
   <div class="recetario-header reveal">
     <p class="eyebrow">Producto digital</p>
@@ -869,8 +1035,8 @@ Content-Type: text/html; charset=utf-8
       </ul>
       <p class="recetario-nota">Si ya trabajaste conmigo — una consulta, una clase, lo que sea — escribime y accedés a precio especial. Pertenecer al ecosistema tiene valor concreto.</p>
       <div class="recetario-btns">
-        <button id="btn-mp" class="btn-primary" onclick="pagarConMP()" style="text-align:center;">Comprar con MercadoPago 🇦🇷</button>
-        <a href="https://www.paypal.com/paypalme/guidosustento/40" target="_blank" class="btn-secondary" style="text-align:center;">Comprar con PayPal 🌍</a>
+        <button id="btn-mp" class="btn-primary" onclick="pagarConMP('recetario')" style="text-align:center;">Comprar con MercadoPago 🇦🇷</button>
+        <div id="paypal-recetario"></div>
       </div>
     </div>
   </div>
@@ -1027,7 +1193,7 @@ Content-Type: text/html; charset=utf-8
 
 <div class="sticky-bar" id="sticky-bar">
   <span class="sticky-text">Recetario Digital Sustento · <strong>+60 recetas plant-based</strong> · $40.000 ARS</span>
-  <button class="sticky-btn" onclick="pagarConMP()">Comprar ahora</button>
+  <button class="sticky-btn" onclick="pagarConMP('recetario')">Comprar ahora</button>
 </div>
 
 
@@ -1071,13 +1237,14 @@ Content-Type: text/html; charset=utf-8
   }
 
   // MERCADOPAGO
-  async function pagarConMP() {
-    const btns = document.querySelectorAll('#btn-mp, .sticky-btn');
-    btns.forEach(b => { b.textContent = 'Generando pago...'; b.disabled = true; });
+  async function pagarConMP(productId = 'recetario') {
+    const allMPBtns = document.querySelectorAll('#btn-mp, .sticky-btn');
+    allMPBtns.forEach(b => { b.dataset.originalText = b.textContent; b.textContent = 'Generando pago...'; b.disabled = true; });
     try {
       const response = await fetch('https://sustento-webhook.vercel.app/api/crear-preferencia', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productId })
       });
       const data = await response.json();
       if (data.init_point) {
@@ -1086,9 +1253,48 @@ Content-Type: text/html; charset=utf-8
         throw new Error('No init_point');
       }
     } catch (e) {
-      btns.forEach(b => { b.textContent = 'Comprar ahora'; b.disabled = false; });
-      alert('Hubo un problema. Intentá de nuevo o contactanos por Instagram.');
+      allMPBtns.forEach(b => { b.textContent = b.dataset.originalText || 'Comprar ahora'; b.disabled = false; });
+      alert('Hubo un problema. Intenta de nuevo o contactanos por Instagram.');
     }
+  }
+
+  // PAYPAL SDK
+  function initPayPalButtons() {
+    if (typeof paypal === 'undefined') return;
+    const containers = [
+      { id: 'paypal-recetario', productId: 'recetario' },
+      { id: 'paypal-recetario-tienda', productId: 'recetario' }
+    ];
+    containers.forEach(({ id, productId }) => {
+      if (!document.getElementById(id)) return;
+      paypal.Buttons({
+        style: { layout: 'horizontal', color: 'gold', shape: 'pill', label: 'paypal', height: 44, tagline: false },
+        createOrder: async () => {
+          const res = await fetch('https://sustento-webhook.vercel.app/api/paypal-create-order', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ productId })
+          });
+          const data = await res.json();
+          if (!data.orderID) throw new Error('No orderID');
+          return data.orderID;
+        },
+        onApprove: async (data) => {
+          const res = await fetch('https://sustento-webhook.vercel.app/api/paypal-capture-order', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ orderID: data.orderID, productId })
+          });
+          const result = await res.json();
+          if (result.success) {
+            window.location.href = 'https://www.haceloconsustento.com?pago=ok';
+          } else {
+            alert('El pago se proceso pero hubo un error. Contactanos por Instagram @guido.sustento');
+          }
+        },
+        onError: () => alert('Hubo un error con PayPal. Intenta de nuevo o usa MercadoPago.')
+      }).render('#' + id);
+    });
   }
 
   // EMAIL FORM → MAILCHIMP
@@ -1125,6 +1331,12 @@ Content-Type: text/html; charset=utf-8
       btn.disabled = false;
     }
   }
+</script>
+<!-- PayPal JS SDK — reemplazar YOUR_PAYPAL_CLIENT_ID con el Client ID de tu app en developer.paypal.com -->
+<script
+  src="https://www.paypal.com/sdk/js?client-id=AR82otj-368x1Nhr51DjVMpxiTYyCRuXNbELaEvlklRk0LIqCbH82osx0fICWJZgnGhA_CPm-T86aTGl&currency=USD&locale=es_AR"
+  onload="initPayPalButtons()"
+  onerror="console.warn('PayPal SDK no cargó')">
 </script>
 </body>
 </html>
