@@ -1,12 +1,36 @@
+HTTP 200 
+Content-Type: text/html; charset=utf-8
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Hacelo con Sustento — Guido Sustento</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<title>Hacelo con Sustento — Guido Sustento | Nutricionista y Cocinero Sustentable</title>
+  <!-- SEO Básico -->
+  <meta name="description" content="Guido Sustento, nutricionista y cocinero sustentable. Método de 90 días para transformar tu relación con la comida: nutrición real, hábitos sostenibles y cocina casera. Sin dietas. Sin restricciones.">
+  <meta name="robots" content="index, follow">
+  <meta name="author" content="Guido Sustento">
+  <link rel="canonical" href="https://haceloconsustento.com/">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://haceloconsustento.com/">
+  <meta property="og:title" content="Hacelo con Sustento — Guido Sustento | Nutricionista">
+  <meta property="og:description" content="Método de 90 días para transformar tu relación con la comida. Nutrición real, hábitos sostenibles y cocina casera. Sin dietas. Sin restricciones.">
+  <meta property="og:image" content="https://haceloconsustento.com/og-image.jpg">
+  <meta property="og:locale" content="es_AR">
+  <meta property="og:site_name" content="Guido Sustento">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Hacelo con Sustento — Guido Sustento | Nutricionista">
+  <meta name="twitter:description" content="Método de 90 días para transformar tu relación con la comida. Nutrición real, hábitos sostenibles y cocina casera.">
+  <meta name="twitter:image" content="https://haceloconsustento.com/og-image.jpg">
+
+<!-- Font Preload (performance) -->
+  <link rel="preload" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=DM+Sans:wght@400;500&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=DM+Sans:wght@400;500&display=swap"></noscript>
 <style>
   :root {
     --verde: #1e6f1d;
@@ -644,6 +668,50 @@
     .recetario { padding: 60px 24px; }
   }
 </style>
+
+  <!-- Schema Markup JSON-LD -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Person",
+        "@id": "https://haceloconsustento.com/#guido",
+        "name": "Guido Sustento",
+        "jobTitle": "Nutricionista y Cocinero Sustentable",
+        "url": "https://haceloconsustento.com",
+        "sameAs": [
+          "https://www.instagram.com/guidosustento"
+        ],
+        "description": "Nutricionista y cocinero sustentable. Acompaño a personas a recuperar la autonomía en su salud a través de la nutrición real y la cocina casera."
+      },
+      {
+        "@type": "Service",
+        "@id": "https://haceloconsustento.com/#metodo",
+        "name": "Método Sustento",
+        "provider": {
+          "@id": "https://haceloconsustento.com/#guido"
+        },
+        "description": "Programa de 90 días de acompañamiento personalizado en nutrición real, hábitos sostenibles y cocina casera. Sin dietas restrictivas.",
+        "url": "https://haceloconsustento.com/#metodo",
+        "areaServed": "AR",
+        "serviceType": "Nutrición y Coaching de Hábitos"
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://haceloconsustento.com/#website",
+        "url": "https://haceloconsustento.com",
+        "name": "Hacelo con Sustento",
+        "description": "Nutrición real y hábitos sostenibles con Guido Sustento",
+        "author": {
+          "@id": "https://haceloconsustento.com/#guido"
+        },
+        "inLanguage": "es-AR"
+      }
+    ]
+  }
+  </script>
+
 </head>
 <body>
 
@@ -662,7 +730,7 @@
 <section class="hero">
   <div class="hero-text">
     <p class="hero-eyebrow">Nutricionista · Cocinero Sustentable</p>
-    <h1 class="hero-title">
+    <h1 class="hero-title" aria-label="Nutrición real y hábitos sostenibles desde la expansión, no la restricción">
       Desde la <em>expansión</em>,<br>no la restricción.
     </h1>
     <p class="hero-subtitle">
@@ -733,7 +801,7 @@
 <section class="metodo" id="metodo">
   <div class="metodo-header reveal">
     <p class="eyebrow">Transformación real en 90 días</p>
-    <h2>El <em>Método Sustento</em> —<br>para recuperar la autonomía en tu salud.</h2>
+    <h2>El <em>Método Sustento</em> — nutrición real y hábitos sostenibles<br>para recuperar la autonomía en tu salud.</h2>
     <p>No es un plan de dieta ni una lista de lo que podés y no podés comer. Es un proceso integral y personalizado donde trabajamos juntos lo que realmente importa.</p>
   </div>
   <div class="metodo-grid reveal">
