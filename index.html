@@ -791,6 +791,24 @@ Content-Type: text/html; charset=utf-8
     .sticky-bar { padding: 14px 24px; gap: 16px; }
     .recetario { padding: 60px 24px; }
   }
+  /* BANNER PAGO EXITOSO */
+  .banner-pago {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 9999;
+    background: #1e6f1d; color: #fff;
+    padding: 18px 24px;
+    text-align: center;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 1rem;
+    display: flex; align-items: center; justify-content: center; gap: 16px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.18);
+  }
+  .banner-pago strong { font-weight: 700; }
+  .banner-pago-cerrar {
+    background: rgba(255,255,255,0.2); border: none; color: #fff;
+    border-radius: 100px; width: 28px; height: 28px;
+    cursor: pointer; font-size: 1rem; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+  }
 </style>
 
   <!-- Schema Markup JSON-LD -->
@@ -838,6 +856,11 @@ Content-Type: text/html; charset=utf-8
 
 </head>
 <body>
+
+<div id='banner-pago' class='banner-pago' style='display:none;'>
+  <span>🌱 <strong>¡Pago recibido!</strong> En minutos te llega el email con tu descarga. Revisá también el spam.</span>
+  <button class='banner-pago-cerrar' onclick="document.getElementById('banner-pago').style.display='none'" aria-label='Cerrar'>✕</button>
+</div>
 
 <nav>
   <a href="#" class="nav-logo">Guido Sustento</a>
@@ -1228,7 +1251,17 @@ Content-Type: text/html; charset=utf-8
   }, { threshold: 0.1 });
   document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
 
-  // FAQ ACCORDION
+  // BANNER PAGO EXITOSO
+  (function() {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('pago') === 'ok') {
+      document.getElementById('banner-pago').style.display = 'flex';
+      // Limpiar el param de la URL sin recargar
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  })();
+
+    // FAQ ACCORDION
   function toggleFaq(btn) {
     const item = btn.parentElement;
     const isOpen = item.classList.contains('open');
