@@ -38,6 +38,34 @@ async function logPurchase({ productId, productName, buyerEmail, buyerName, amou
   }
 }
 
+function buildClubEmail({ buyerName }) {
+  return `
+    <div style="font-family: Georgia, serif; max-width: 600px; margin: 0 auto; color: #111;">
+      <div style="background: #1e6f1d; padding: 28px 40px;">
+        <p style="color: #fff; font-family: Arial, sans-serif; font-size: 0.8rem; letter-spacing: 0.15em; text-transform: uppercase; margin: 0; opacity: 0.8;">Hacelo con Sustento</p>
+      </div>
+      <div style="padding: 48px 40px; background: #f5eee0;">
+        <h2 style="font-family: Georgia, serif; color: #1e6f1d; font-size: 1.5rem; margin-bottom: 16px;">
+          ¡Hola${buyerName ? ' ' + buyerName : ''}! Bienvenido/a al Club Sustento 🌿
+        </h2>
+        <p style="font-size: 1rem; line-height: 1.8; color: #444; margin-bottom: 20px;">
+          Gracias por sumarte. Tu pago de este mes ya está confirmado y desde ahora sos parte del Club.
+        </p>
+        <p style="font-size: 1rem; line-height: 1.8; color: #444; margin-bottom: 20px;">
+          En las próximas horas te voy a escribir para darte acceso al espacio con las recetas, los seminarios y la comunidad. Si tenés cualquier duda, respondé este mail o escribime a Instagram como <strong>@guido.sustento</strong>.
+        </p>
+        <p style="font-size: 1rem; line-height: 1.8; color: #444; margin-bottom: 4px;">Nos vemos adentro,</p>
+        <p style="font-size: 1rem; font-weight: bold; color: #1e6f1d; margin: 0;">Guido 🌱</p>
+      </div>
+      <div style="background: #111; padding: 20px 40px;">
+        <p style="font-size: 0.75rem; color: rgba(255,255,255,0.3); margin: 0; text-align: center;">
+          © 2026 Guido Sustento · <a href="https://www.haceloconsustento.com" style="color: rgba(255,255,255,0.4);">haceloconsustento.com</a>
+        </p>
+      </div>
+    </div>
+  `;
+}
+
 function buildEmail({ buyerName, product }) {
   return `
     <div style="font-family: Georgia, serif; max-width: 600px; margin: 0 auto; color: #111;">
@@ -103,12 +131,19 @@ export default async function handler(req, res) {
 
     if (!buyerEmail) return res.status(400).json({ error: 'No buyer email' });
 
+    // El Club es una suscripción (sin archivo para descargar): mail de bienvenida.
+    // El resto son productos digitales descargables: mail con el link.
+    const esDescargable = Boolean(product.driveUrl);
+    const emailContent = esDescargable
+      ? { subject: `¡Acá está tu ${product.name}! 🌿`, html: buildEmail({ buyerName, product }) }
+      : { subject: `¡Bienvenido/a al Club Sustento! 🌿`, html: buildClubEmail({ buyerName }) };
+
     await Promise.all([
       resend.emails.send({
         from: `Guido Sustento <${process.env.RESEND_FROM_EMAIL}>`,
         to: buyerEmail,
-        subject: `¡Acá está tu ${product.name}! 🌿`,
-        html: buildEmail({ buyerName, product })
+        subject: emailContent.subject,
+        html: emailContent.html
       }),
       logPurchase({
         productId: product.id,

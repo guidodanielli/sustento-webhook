@@ -2,29 +2,38 @@ import { Resend } from 'resend';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-async function agregarAMailchimp(email) {
-  const API_KEY = process.env.MAILCHIMP_API_KEY;
-  const AUDIENCE_ID = '95366c372a';
-  const DC = API_KEY.split('-').pop();
+async function agregarASupabase({ email, name, source, tags }) {
+  const SUPABASE_URL = process.env.SUPABASE_URL;
+  const SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
 
-  const response = await fetch(
-    `https://${DC}.api.mailchimp.com/3.0/lists/${AUDIENCE_ID}/members`,
-    {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Basic ${Buffer.from(`anystring:${API_KEY}`).toString('base64')}`
-      },
-      body: JSON.stringify({
-        email_address: email,
-        status: 'subscribed',
-        tags: ['landing-web']
-      })
-    }
-  );
+  const response = await fetch(`${SUPABASE_URL}/rest/v1/subscribers`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'apikey': SERVICE_KEY,
+      'Authorization': `Bearer ${SERVICE_KEY}`,
+      // Si el email ya existe, ignorar silenciosamente (no es un error).
+      // return=representation nos deja saber si realmente se insertó una fila.
+      'Prefer': 'resolution=ignore-duplicates,return=representation'
+    },
+    body: JSON.stringify({
+      email,
+      name: name || '',
+      source: source || 'formulario-web',
+      tags: tags || []
+    })
+  });
 
-  const data = await response.json();
-  return response.ok || data.title === 'Member Exists';
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    console.error('Supabase subscribers error:', response.status, data);
+    return { ok: false, isNew: false };
+  }
+
+  // Array con la fila insertada si es nuevo; array vacío si era duplicado ignorado.
+  const rows = await response.json().catch(() => []);
+  const isNew = Array.isArray(rows) && rows.length > 0;
+  return { ok: true, isNew };
 }
 
 async function enviarBienvenida(email) {
@@ -71,12 +80,13 @@ if (allowedOrigins.includes(origin)) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { email } = req.body;
+  const { email, name, source, tags } = req.body;
   if (!email) return res.status(400).json({ error: 'Email requerido' });
 
   try {
-    const agregado = await agregarAMailchimp(email);
-    if (agregado) {
+    const { ok, isNew } = await agregarASupabase({ email, name, source, tags });
+    // Solo mandamos el welcome email a suscriptores nuevos (no a duplicados).
+    if (ok && isNew) {
       await enviarBienvenida(email);
     }
     return res.status(200).json({ success: true });

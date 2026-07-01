@@ -913,6 +913,8 @@ Content-Type: text/html; charset=utf-8
     <li><a href="#metodo">Método Sustento</a></li>
     <li><a href="#tienda">Tienda</a></li>
     <li><a href="#recetario">Recetario</a></li>
+    <li><a href="#club">Club</a></li>
+    <li><a href="#red">Red</a></li>
     <li><a href="#contacto">Contacto</a></li>
     <li><a href="#tienda" class="nav-cta">Tienda</a></li>
     <li><a href="https://wa.me/541171417177" target="_blank" class="nav-cta" style="background:var(--tierra-claro);">WhatsApp 💬</a></li>
@@ -966,6 +968,197 @@ Content-Type: text/html; charset=utf-8
     <span class="ticker-item ticker-dot">✦</span>
   </div>
 </div>
+
+<style>
+  /* ===== QUIZ DE DIAGNÓSTICO ===== */
+  .quiz { padding: 90px 6vw; background: var(--crema); }
+  .quiz-box {
+    max-width: 640px; margin: 0 auto; background: #fff; border-radius: 20px;
+    padding: 40px; box-shadow: 0 18px 50px rgba(15,58,14,0.08); border: 1px solid var(--crema-oscuro);
+  }
+  .quiz-eyebrow {
+    font-family: Arial, sans-serif; font-size: 0.72rem; letter-spacing: 0.15em;
+    text-transform: uppercase; color: var(--tierra-claro); text-align: center; margin: 0 0 18px;
+  }
+  .quiz-progress { height: 6px; background: var(--crema-oscuro); border-radius: 4px; overflow: hidden; margin-bottom: 30px; }
+  .quiz-progress-bar { height: 100%; width: 0; background: var(--verde); border-radius: 4px; transition: width 0.35s ease; }
+  .quiz-stage { transition: opacity 0.18s ease; }
+  .quiz-stage h3 { font-size: clamp(1.4rem, 3vw, 1.8rem); color: var(--verde-oscuro); margin: 0 0 8px; line-height: 1.25; }
+  .quiz-stage p.quiz-sub { color: #666; margin: 0 0 24px; line-height: 1.6; }
+  .quiz-email-field {
+    width: 100%; padding: 14px 16px; border: 1.5px solid var(--crema-oscuro); border-radius: 10px;
+    font-size: 1rem; font-family: inherit; margin-bottom: 8px; box-sizing: border-box;
+  }
+  .quiz-email-field:focus { outline: none; border-color: var(--verde); }
+  .quiz-error { color: #c0392b; font-size: 0.85rem; min-height: 18px; margin: 0 0 14px; }
+  .quiz-options { display: flex; flex-direction: column; gap: 12px; margin-bottom: 8px; }
+  .quiz-card {
+    text-align: left; width: 100%; padding: 18px 20px; border: 1.5px solid var(--crema-oscuro);
+    border-radius: 12px; background: var(--crema); cursor: pointer; font-family: inherit; font-size: 1rem;
+    color: var(--verde-oscuro); transition: all 0.2s ease; line-height: 1.4;
+  }
+  .quiz-card:hover { border-color: var(--verde); background: #fff; transform: translateY(-2px); box-shadow: 0 8px 20px rgba(15,58,14,0.08); }
+  .quiz-card strong { display: block; font-weight: 700; margin-bottom: 2px; }
+  .quiz-card small { color: #777; font-size: 0.85rem; }
+  .quiz-result { text-align: center; }
+  .quiz-result .quiz-result-badge { font-size: 2.4rem; margin-bottom: 8px; }
+  .quiz-result h3 { color: var(--verde); }
+  .quiz-result .btn-primary { display: inline-flex; justify-content: center; margin-top: 8px; text-decoration: none; }
+  .quiz-restart {
+    display: block; margin: 18px auto 0; background: none; border: none; color: #999;
+    font-size: 0.85rem; cursor: pointer; text-decoration: underline; font-family: inherit;
+  }
+  @media (max-width: 600px) { .quiz-box { padding: 28px 22px; } }
+</style>
+
+<section class="quiz" id="quiz">
+  <div class="quiz-box reveal">
+    <p class="quiz-eyebrow">Test · 30 segundos</p>
+    <div class="quiz-progress"><div class="quiz-progress-bar" id="quizProgressBar"></div></div>
+    <div class="quiz-stage" id="quizStage"></div>
+  </div>
+</section>
+
+<script>
+  // ===== QUIZ DE DIAGNÓSTICO / VENTAS =====
+  (function () {
+    const QUIZ_API = 'https://sustento-webhook.vercel.app/api/suscribir';
+    const stage = document.getElementById('quizStage');
+    const bar = document.getElementById('quizProgressBar');
+    let quizEmail = '';
+
+    const RESULTS = {
+      club: {
+        emoji: '🌿', title: 'Tu lugar es el Club Sustento',
+        text: 'Necesitás recetas nuevas y acompañamiento para sostener los cambios mes a mes. El Club te da exactamente eso: comunidad, recetas y seminarios en formato largo.',
+        cta: 'Conocer el Club', target: '#club', source: 'quiz-club'
+      },
+      metodo: {
+        emoji: '🌱', title: 'Te recomiendo el Método Sustento 1:1',
+        text: 'Buscás una transformación profunda con apoyo personalizado. El acompañamiento 1:1 es el camino para construir hábitos a tu medida, con seguimiento real.',
+        cta: 'Ver el Método', target: '#metodo', source: 'quiz-metodo'
+      },
+      recetario: {
+        emoji: '📖', title: 'Empezá por el Recetario Digital',
+        text: 'Querés algo concreto para arrancar ya. +60 recetas plant-based, simples y sabrosas, para que la cocina casera vuelva a ser parte de tu día a día.',
+        cta: 'Ver el Recetario', target: '#recetario', source: 'quiz-recetario'
+      },
+      red: {
+        emoji: '👩‍⚕️', title: 'Sumate a Red Sustento',
+        text: 'Como profesional de la salud, vas a encontrar en la Red un espacio quincenal para compartir recorridos, crecer en comunidad y no transitar la profesión en soledad.',
+        cta: 'Sumarme a la Red', target: '#red', source: 'quiz-red'
+      }
+    };
+
+    function setStage(html, progress) {
+      stage.style.opacity = 0;
+      setTimeout(() => {
+        stage.innerHTML = html;
+        bar.style.width = progress + '%';
+        stage.style.opacity = 1;
+      }, 180);
+    }
+
+    function esEmailValido(v) {
+      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+    }
+
+    // Paso 0 — captura de email
+    function renderIntro() {
+      setStage(
+        '<h3>¿Por dónde empezar tu camino con Sustento?</h3>' +
+        '<p class="quiz-sub">Respondé un par de preguntas y te digo cuál de mis espacios es el ideal para vos. Primero, dejame tu email para enviarte el resultado.</p>' +
+        '<input type="email" class="quiz-email-field" id="quizEmail" placeholder="tu@email.com" autocomplete="email">' +
+        '<p class="quiz-error" id="quizEmailError"></p>' +
+        '<button class="btn-primary" style="width:100%;justify-content:center;" id="quizStartBtn">Empezar el test</button>',
+        8
+      );
+      setTimeout(() => {
+        const input = document.getElementById('quizEmail');
+        const btn = document.getElementById('quizStartBtn');
+        const err = document.getElementById('quizEmailError');
+        function start() {
+          const val = (input.value || '').trim();
+          if (!esEmailValido(val)) {
+            err.textContent = 'Ingresá un email válido para ver tu resultado.';
+            input.focus();
+            return;
+          }
+          quizEmail = val;
+          renderQ1();
+        }
+        btn.addEventListener('click', start);
+        input.addEventListener('keydown', (e) => { if (e.key === 'Enter') start(); });
+      }, 200);
+    }
+
+    // Paso 1 — segmentación
+    function renderQ1() {
+      setStage(
+        '<h3>¿Qué estás buscando?</h3>' +
+        '<p class="quiz-sub">Elegí la opción que más te representa hoy.</p>' +
+        '<div class="quiz-options">' +
+          '<button class="quiz-card" data-go="A"><strong>Mejorar mi alimentación y cocinar mejor</strong><small>Quiero comer rico, sano y sostenible en mi día a día</small></button>' +
+          '<button class="quiz-card" data-go="B"><strong>Soy profesional de la salud y busco comunidad</strong><small>Nutri u otra profesión de la salud que busca pares</small></button>' +
+        '</div>',
+        36
+      );
+      bindCards((go) => { if (go === 'A') renderQ2(); else renderResult('red'); });
+    }
+
+    // Paso 2 — obstáculo (solo camino A)
+    function renderQ2() {
+      setStage(
+        '<h3>¿Cuál es tu mayor obstáculo hoy?</h3>' +
+        '<p class="quiz-sub">No hay respuesta incorrecta — esto me ayuda a recomendarte mejor.</p>' +
+        '<div class="quiz-options">' +
+          '<button class="quiz-card" data-go="club"><strong>No sé por dónde empezar</strong></button>' +
+          '<button class="quiz-card" data-go="club"><strong>Empiezo pero no sostengo los cambios</strong></button>' +
+          '<button class="quiz-card" data-go="metodo"><strong>Quiero una transformación profunda y apoyo personalizado</strong></button>' +
+          '<button class="quiz-card" data-go="recetario"><strong>Quiero algo concreto para empezar ya</strong></button>' +
+        '</div>',
+        70
+      );
+      bindCards((go) => renderResult(go));
+    }
+
+    function bindCards(handler) {
+      setTimeout(() => {
+        stage.querySelectorAll('.quiz-card').forEach((card) => {
+          card.addEventListener('click', () => handler(card.getAttribute('data-go')));
+        });
+      }, 200);
+    }
+
+    // Resultado + alta del suscriptor con el source correspondiente
+    function renderResult(key) {
+      const r = RESULTS[key];
+      setStage(
+        '<div class="quiz-result">' +
+          '<div class="quiz-result-badge">' + r.emoji + '</div>' +
+          '<h3>' + r.title + '</h3>' +
+          '<p class="quiz-sub">' + r.text + '</p>' +
+          '<a href="' + r.target + '" class="btn-primary">' + r.cta + '</a>' +
+          '<button class="quiz-restart" id="quizRestart">Volver a empezar</button>' +
+        '</div>',
+        100
+      );
+      setTimeout(() => {
+        const rs = document.getElementById('quizRestart');
+        if (rs) rs.addEventListener('click', renderIntro);
+      }, 200);
+
+      // Alta en Supabase vía /api/suscribir (no bloquea la UI)
+      fetch(QUIZ_API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: quizEmail, source: r.source })
+      }).catch(() => {});
+    }
+
+    renderIntro();
+  })();
+</script>
 
 <section class="sobre" id="sobre">
   <div class="sobre-text reveal">
@@ -1108,6 +1301,149 @@ Content-Type: text/html; charset=utf-8
     </div>
   </div>
 </section>
+
+<style>
+  /* ===== CLUB SUSTENTO ===== */
+  .club { padding: 110px 6vw; background: var(--verde-oscuro); color: var(--crema); }
+  .club-header { max-width: 720px; margin: 0 auto 48px; text-align: center; }
+  .club-header .eyebrow { color: var(--tierra-claro); }
+  .club-header h2 { font-size: clamp(2rem, 4vw, 2.8rem); color: var(--crema); margin-bottom: 16px; }
+  .club-header h2 em { font-style: italic; color: var(--tierra-claro); }
+  .club-header p { font-size: 1.05rem; line-height: 1.7; color: rgba(245,238,224,0.78); }
+  .club-recurrente {
+    display: inline-block; font-family: Arial, sans-serif; font-size: 0.72rem;
+    letter-spacing: 0.12em; text-transform: uppercase; color: var(--verde-oscuro);
+    background: var(--tierra-claro); padding: 5px 12px; border-radius: 20px; margin-bottom: 18px; font-weight: 700;
+  }
+  .club-card {
+    max-width: 560px; margin: 0 auto; background: rgba(245,238,224,0.06);
+    border: 1px solid rgba(245,238,224,0.15); border-radius: 18px; padding: 40px;
+  }
+  .club-urgencia {
+    background: var(--tierra-claro); color: var(--verde-oscuro); border-radius: 12px;
+    padding: 14px 18px; text-align: center; font-weight: 600; font-size: 0.95rem; margin-bottom: 28px;
+  }
+  .club-urgencia strong { font-weight: 800; }
+  .club-precios { display: grid; gap: 10px; margin-bottom: 28px; }
+  .club-precio-row {
+    display: flex; justify-content: space-between; align-items: center; gap: 12px;
+    padding: 12px 16px; border-radius: 10px; background: rgba(245,238,224,0.08);
+    font-size: 0.95rem; color: var(--crema);
+  }
+  .club-precio-row.destacado { background: var(--tierra-claro); color: var(--verde-oscuro); }
+  .club-precio-row .valor { font-weight: 700; white-space: nowrap; text-align: right; }
+  .club-precio-row small { display: block; font-size: 0.75rem; opacity: 0.75; font-weight: 400; }
+  .club-lista { list-style: none; padding: 0; margin: 0 0 32px; }
+  .club-lista li {
+    padding: 10px 0 10px 30px; position: relative; line-height: 1.5;
+    border-bottom: 1px solid rgba(245,238,224,0.1); color: rgba(245,238,224,0.9);
+  }
+  .club-lista li:last-child { border-bottom: none; }
+  .club-lista li::before { content: "🌿"; position: absolute; left: 0; top: 10px; }
+  .club-btns { display: flex; flex-direction: column; gap: 12px; }
+  .club-btns .btn-primary, .club-btns .btn-secondary { width: 100%; justify-content: center; cursor: pointer; }
+  .club-btns .btn-secondary { color: var(--crema); border-color: rgba(245,238,224,0.4); }
+  .club-btns .btn-secondary:hover { background: var(--crema); color: var(--verde-oscuro); }
+  @media (max-width: 600px) { .club-card { padding: 28px 22px; } }
+</style>
+
+<section class="club" id="club">
+  <div class="club-header reveal">
+    <p class="eyebrow">Membresía mensual</p>
+    <span class="club-recurrente">🔁 Suscripción recurrente</span>
+    <h2><em>Club</em> Sustento</h2>
+    <p>Un espacio de suscripción mensual con recetas nuevas y seminarios en formato largo. Para seguir aprendiendo a cocinar rico, comer con placer y sostener los cambios en el tiempo.</p>
+  </div>
+  <div class="club-card reveal">
+    <!-- Banner de urgencia — Guido actualiza el número de miembros manualmente -->
+    <div class="club-urgencia">
+      Precio especial para los primeros 30 miembros — ya van <strong id="club-miembros">12</strong>.
+    </div>
+    <div class="club-precios">
+      <div class="club-precio-row destacado">
+        <span class="label">🌿 Miembros del Ecosistema Sustento<small>Clientes anteriores y consultantes del Método</small></span>
+        <span class="valor">USD $5/mes</span>
+      </div>
+      <div class="club-precio-row">
+        <span class="label">Nuevos inscriptos</span>
+        <span class="valor">USD $10/mes<small>o $15.000 ARS/mes</small></span>
+      </div>
+    </div>
+    <ul class="club-lista">
+      <li>Recetas nuevas todos los meses</li>
+      <li>Seminarios en formato largo para profundizar</li>
+      <li>Comunidad y acompañamiento continuo</li>
+      <li>Cancelás cuando quieras</li>
+    </ul>
+    <div class="club-btns">
+      <button class="btn-primary" onclick="unirseClub()">Unirme al Club 🌿</button>
+      <button class="btn-secondary" onclick="pagarConMP('club')">Pagar en pesos (MercadoPago) 🇦🇷</button>
+    </div>
+  </div>
+</section>
+
+<style>
+  /* ===== RED SUSTENTO (profesionales) ===== */
+  .red { padding: 110px 6vw; background: var(--crema-oscuro); }
+  .red-header { max-width: 720px; margin: 0 auto 40px; text-align: center; }
+  .red-header .eyebrow { color: var(--verde); }
+  .red-solo-pros {
+    display: inline-block; font-family: Arial, sans-serif; font-size: 0.72rem;
+    letter-spacing: 0.12em; text-transform: uppercase; color: #fff;
+    background: var(--verde); padding: 5px 14px; border-radius: 20px; margin-bottom: 18px; font-weight: 700;
+  }
+  .red-header h2 { font-size: clamp(2rem, 4vw, 2.8rem); color: var(--verde-oscuro); margin-bottom: 16px; }
+  .red-header h2 em { font-style: italic; color: var(--verde); }
+  .red-header p { font-size: 1.05rem; line-height: 1.7; color: #555; }
+  .red-card {
+    max-width: 620px; margin: 0 auto; background: #fff;
+    border: 1px solid var(--verde); border-radius: 18px; padding: 40px;
+  }
+  .red-precios { display: grid; gap: 10px; margin-bottom: 28px; }
+  .red-precio-row {
+    display: flex; justify-content: space-between; align-items: center; gap: 12px;
+    padding: 12px 16px; border-radius: 10px; background: var(--crema); font-size: 0.95rem;
+  }
+  .red-precio-row.destacado { background: var(--verde); color: #fff; }
+  .red-precio-row .label { color: inherit; }
+  .red-precio-row .valor { font-weight: 700; white-space: nowrap; }
+  .red-precio-row small { display: block; font-size: 0.75rem; opacity: 0.7; font-weight: 400; }
+  .red-card .btn-primary { width: 100%; justify-content: center; margin-bottom: 16px; }
+  .red-nota { font-size: 0.85rem; color: #777; text-align: center; line-height: 1.5; }
+  @media (max-width: 600px) { .red-card { padding: 28px 22px; } }
+</style>
+
+<section class="red" id="red">
+  <div class="red-header reveal">
+    <p class="eyebrow">Comunidad profesional</p>
+    <span class="red-solo-pros">👩‍⚕️ Solo profesionales de la salud</span>
+    <h2><em>Red</em> Sustento</h2>
+    <p>Un espacio de encuentro quincenal entre profesionales de la salud —especialmente nutris recién recibidos— para compartir caminos, recorridos profesionales y crecer en comunidad.</p>
+  </div>
+  <div class="red-card reveal">
+    <div class="red-precios">
+      <div class="red-precio-row destacado">
+        <span class="label">👩‍⚕️ Profesionales de la salud<small>Valor fijo mensual</small></span>
+        <span class="valor" id="red-precio-valor">$10.000 ARS/mes</span>
+      </div>
+    </div>
+    <a href="https://wa.me/541171417177?text=Hola%20Guido%2C%20quiero%20unirme%20a%20Red%20Sustento" target="_blank" rel="noopener" class="btn-primary">Quiero unirme 💬</a>
+    <p class="red-nota">El ingreso es manual: una vez que mandes el comprobante por WhatsApp, Guido te confirma y te suma a la comunidad.</p>
+  </div>
+</section>
+
+<script>
+  // Banner de urgencia del Club: traer el número real de miembros desde Supabase.
+  // Si falla, queda el número hardcodeado en el HTML.
+  (function () {
+    const el = document.getElementById('club-miembros');
+    if (!el) return;
+    fetch('https://sustento-webhook.vercel.app/api/club-miembros')
+      .then(r => r.json())
+      .then(d => { if (d && typeof d.count === 'number') el.textContent = d.count; })
+      .catch(() => {});
+  })();
+</script>
 
 <section class="testimonios" id="testimonios">
   <div class="testimonios-header reveal">
@@ -1283,11 +1619,38 @@ Content-Type: text/html; charset=utf-8
   </div>
   <div class="faq-item reveal">
     <button class="faq-question" onclick="toggleFaq(this)">
-      ¿Qué diferencia hay entre el Método Sustento y el Recetario?
+      ¿Qué diferencia hay entre el Recetario, el Club y el Método?
       <span class="faq-icon">+</span>
     </button>
     <div class="faq-answer">
-      <p>El Recetario es un producto digital con +60 recetas para empezar a cocinar diferente hoy mismo. El Método Sustento es un proceso personalizado de 90 días donde trabajamos juntos tu alimentación, hábitos y vínculo con la comida.</p>
+      <p>Son tres niveles de acompañamiento. El <strong>Recetario</strong> es un producto digital con +60 recetas para empezar a cocinar diferente hoy mismo, a tu ritmo. El <strong>Club Sustento</strong> es una suscripción mensual con recetas nuevas, seminarios y comunidad, para seguir aprendiendo de forma continua. El <strong>Método Sustento</strong> es un proceso personalizado de 90 días, 1:1, donde trabajamos juntos tu alimentación, hábitos y vínculo con la comida.</p>
+    </div>
+  </div>
+  <div class="faq-item reveal">
+    <button class="faq-question" onclick="toggleFaq(this)">
+      ¿Qué es el Club Sustento y qué incluye?
+      <span class="faq-icon">+</span>
+    </button>
+    <div class="faq-answer">
+      <p>Es un espacio de suscripción mensual para sostener los cambios en el tiempo. Incluye recetas nuevas todos los meses, seminarios en formato largo para profundizar, comunidad y acompañamiento continuo. Lo pensé para quienes ya quieren ir más allá del Recetario pero todavía no buscan un proceso 1:1. Cancelás cuando quieras.</p>
+    </div>
+  </div>
+  <div class="faq-item reveal">
+    <button class="faq-question" onclick="toggleFaq(this)">
+      ¿Cómo me uno al Club y cómo se paga?
+      <span class="faq-icon">+</span>
+    </button>
+    <div class="faq-answer">
+      <p>Desde la sección del Club elegís cómo pagar: por Whop en dólares (USD $10/mes, o USD $5/mes si ya sos parte del ecosistema) o en pesos por MercadoPago ($15.000/mes). La suscripción es mensual y la das de baja cuando quieras, sin vueltas.</p>
+    </div>
+  </div>
+  <div class="faq-item reveal">
+    <button class="faq-question" onclick="toggleFaq(this)">
+      ¿Qué es Red Sustento y quién puede entrar?
+      <span class="faq-icon">+</span>
+    </button>
+    <div class="faq-answer">
+      <p>Red Sustento es una comunidad pensada exclusivamente para profesionales de la salud —especialmente nutris recién recibidos— con encuentros quincenales para compartir recorridos y crecer en comunidad. El valor es de $10.000 ARS por mes. El ingreso es manual: te sumás escribiéndome por WhatsApp y, cuando mandás el comprobante, te confirmo el acceso.</p>
     </div>
   </div>
   <div class="faq-item reveal">
@@ -1304,7 +1667,7 @@ Content-Type: text/html; charset=utf-8
 <section class="email-section" id="contacto">
   <p class="eyebrow">Ecosistema Sustento</p>
   <h2>Quedate en el<br><em>ecosistema.</em></h2>
-  <p>Recibí recetas, recursos y novedades directamente en tu mail. Sin spam.</p>
+  <p>Te escribo cuando tengo algo que de verdad suma: una receta, un recurso, una novedad. Sin spam ni envíos de relleno.</p>
   <form class="email-form" onsubmit="handleSubmit(event)">
     <input type="email" class="email-input" placeholder="tu@email.com" required>
     <button type="submit" class="btn-email">Suscribirme</button>
@@ -1322,7 +1685,8 @@ Content-Type: text/html; charset=utf-8
     <ul>
       <li><a href="#metodo">Método Sustento · 90 días</a></li>
       <li><a href="#recetario">Recetario Digital</a></li>
-      <li><a href="https://www.instagram.com/guido.sustento/" target="_blank">Red Sustento</a></li>
+      <li><a href="#club">Club Sustento</a></li>
+      <li><a href="#red">Red Sustento</a></li>
     </ul>
   </div>
   <div class="footer-links">
@@ -1392,6 +1756,18 @@ Content-Type: text/html; charset=utf-8
     const isOpen = item.classList.contains('open');
     document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
     if (!isOpen) item.classList.add('open');
+  }
+
+  // CLUB SUSTENTO — Whop
+  // 👉 GUIDO: pegá acá el link de Whop del Club. Mientras esté vacío,
+  //    el botón "Unirme al Club" usa MercadoPago automáticamente.
+  const WHOP_CLUB_URL = 'https://whop.com/checkout/plan_5cUpzEWpFAjF7';
+  function unirseClub() {
+    if (WHOP_CLUB_URL) {
+      window.location.href = WHOP_CLUB_URL;
+    } else {
+      pagarConMP('club');
+    }
   }
 
   // MERCADOPAGO
