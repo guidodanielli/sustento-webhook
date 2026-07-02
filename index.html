@@ -1501,7 +1501,7 @@ Content-Type: text/html; charset=utf-8
   .club-header h2 em { font-style: italic; color: var(--tierra-claro); }
   .club-header p { font-size: 1.05rem; line-height: 1.7; color: rgba(245,238,224,0.78); }
   .club-recurrente {
-    display: inline-block; font-family: Arial, sans-serif; font-size: 0.72rem;
+    display: inline-block; font-size: 0.72rem;
     letter-spacing: 0.12em; text-transform: uppercase; color: var(--verde-oscuro);
     background: var(--tierra-claro); padding: 5px 12px; border-radius: 20px; margin-bottom: 18px; font-weight: 700;
   }
@@ -1534,6 +1534,7 @@ Content-Type: text/html; charset=utf-8
   .club-btns .btn-primary, .club-btns .btn-secondary { width: 100%; justify-content: center; cursor: pointer; }
   .club-btns .btn-secondary { color: var(--crema); border-color: rgba(245,238,224,0.4); }
   .club-btns .btn-secondary:hover { background: var(--crema); color: var(--verde-oscuro); }
+  .club-ayuda { text-align: center; font-size: 0.8rem; color: rgba(245,238,224,0.6); margin-top: 14px; }
   @media (max-width: 600px) { .club-card { padding: 28px 22px; } }
 </style>
 
@@ -1565,6 +1566,7 @@ Content-Type: text/html; charset=utf-8
       <button class="btn-primary" onclick="unirseClub()">Unirme al Club 🌿</button>
       <button class="btn-secondary" onclick="pagarConMP('club')">Pagar en pesos (MercadoPago) 🇦🇷</button>
     </div>
+    <p class="club-ayuda">Elegí cómo pagar según tu país — la membresía es la misma.</p>
   </div>
 </section>
 
@@ -1574,7 +1576,7 @@ Content-Type: text/html; charset=utf-8
   .red-header { max-width: 720px; margin: 0 auto 40px; text-align: center; }
   .red-header .eyebrow { color: var(--verde); }
   .red-solo-pros {
-    display: inline-block; font-family: Arial, sans-serif; font-size: 0.72rem;
+    display: inline-block; font-size: 0.72rem;
     letter-spacing: 0.12em; text-transform: uppercase; color: #fff;
     background: var(--verde); padding: 5px 14px; border-radius: 20px; margin-bottom: 18px; font-weight: 700;
   }
@@ -1594,6 +1596,18 @@ Content-Type: text/html; charset=utf-8
   .red-precio-row .label { color: inherit; }
   .red-precio-row .valor { font-weight: 700; white-space: nowrap; }
   .red-precio-row small { display: block; font-size: 0.75rem; opacity: 0.7; font-weight: 400; }
+  .red-lista { list-style: none; padding: 0; margin: 0 0 28px; display: grid; gap: 12px; }
+  .red-lista li {
+    display: flex; align-items: flex-start; gap: 11px;
+    font-size: 0.95rem; color: #333; line-height: 1.4;
+  }
+  .red-lista li::before {
+    content: '✓'; flex-shrink: 0;
+    width: 21px; height: 21px; border-radius: 50%;
+    background: var(--verde); color: #fff;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 0.72rem; font-weight: 700; margin-top: 1px;
+  }
   .red-card .btn-primary { width: 100%; justify-content: center; margin-bottom: 16px; }
   .red-nota { font-size: 0.85rem; color: #777; text-align: center; line-height: 1.5; }
   @media (max-width: 600px) { .red-card { padding: 28px 22px; } }
@@ -1613,6 +1627,11 @@ Content-Type: text/html; charset=utf-8
         <span class="valor" id="red-precio-valor">$10.000 ARS/mes</span>
       </div>
     </div>
+    <ul class="red-lista">
+      <li>Encuentros quincenales entre profesionales de la salud</li>
+      <li>Compartir caminos, recorridos y experiencias profesionales</li>
+      <li>Una comunidad para crecer, pensada para nutris recién recibidos</li>
+    </ul>
     <a href="https://wa.me/541171417177?text=Hola%20Guido%2C%20quiero%20unirme%20a%20Red%20Sustento" target="_blank" rel="noopener" class="btn-primary">Quiero unirme 💬</a>
     <p class="red-nota">El ingreso es manual: una vez que mandes el comprobante por WhatsApp, Guido te confirma y te suma a la comunidad.</p>
   </div>
