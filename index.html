@@ -486,6 +486,31 @@ Content-Type: text/html; charset=utf-8
   }
   .precio-ars { font-size: 0.85rem; color: rgba(255,255,255,0.7); margin-top: 6px; }
   .precio-cuotas { font-size: 0.8rem; color: rgba(255,255,255,0.55); margin-top: 8px; }
+  .precio-microcopy {
+    margin-top: 14px; font-size: 0.8rem; font-weight: 400;
+    color: rgba(255,255,255,0.9);
+  }
+  .precio-incluye { list-style: none; margin: 0; padding: 0; display: grid; gap: 13px; }
+  .precio-incluye li {
+    display: flex; align-items: flex-start; gap: 11px;
+    font-size: 0.92rem; font-weight: 400; color: var(--blanco); line-height: 1.35;
+  }
+  .precio-incluye li::before {
+    content: '✓'; flex-shrink: 0;
+    width: 21px; height: 21px; border-radius: 50%;
+    background: rgba(255,255,255,0.22); color: var(--blanco);
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 0.72rem; font-weight: 700; margin-top: 1px;
+  }
+  .metodo-quote { max-width: 640px; margin: 0 auto 44px; text-align: center; }
+  .metodo-quote p {
+    font-family: 'Playfair Display', serif; font-style: italic;
+    font-size: clamp(1.3rem, 2.4vw, 1.85rem); line-height: 1.4; color: var(--blanco);
+  }
+  .metodo-quote cite {
+    display: block; margin-top: 16px; font-style: normal;
+    font-size: 0.78rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--tierra-claro);
+  }
 
 
   /* TIENDA */
@@ -1361,15 +1386,25 @@ Content-Type: text/html; charset=utf-8
       <p>Última consulta con objetivos de cierre y un norte para el resto. Al terminar, tenés las herramientas para seguir solo.</p>
     </div>
   </div>
+  <blockquote class="metodo-quote reveal">
+    <p>«No dudes. Todo lo que no arrancás es tiempo perdido.»</p>
+    <cite>Alexis · Proceso de 90 días</cite>
+  </blockquote>
   <div class="metodo-precio reveal">
     <div class="precio-info">
       <h3>Método Sustento · 90 días</h3>
-      <p>3 consultas virtuales 1:1 · Plan de Acción personalizado después de cada consulta · Seguimiento quincenal · Canal abierto para lo que surja</p>
+      <p>Un proceso 1:1 para transformar tu relación con la comida, a tu ritmo y sin dietas.</p>
       <div class="precio-cta">
         <a href="https://calendly.com/guidosustento-nutri/30min" target="_blank" class="btn-blanco">Reservar llamada gratuita</a>
       </div>
+      <p class="precio-microcopy">Sin cargo · 30 minutos · Sin compromiso</p>
     </div>
-
+    <ul class="precio-incluye">
+      <li>3 consultas virtuales 1:1</li>
+      <li>Plan de Acción personalizado</li>
+      <li>Seguimiento quincenal</li>
+      <li>Canal abierto para lo que surja</li>
+    </ul>
   </div>
 </section>
 
