@@ -215,6 +215,20 @@ Content-Type: text/html; charset=utf-8
     transition: background 0.2s !important;
   }
   .nav-cta:hover { background: var(--verde-claro) !important; }
+  .nav-toggle {
+    display: none;
+    flex-direction: column; justify-content: center; gap: 5px;
+    width: 44px; height: 44px; padding: 10px;
+    background: none; border: none; cursor: pointer;
+  }
+  .nav-toggle span {
+    display: block; height: 2px; width: 100%;
+    background: var(--verde); border-radius: 2px;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+  }
+  .nav-toggle.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+  .nav-toggle.open span:nth-child(2) { opacity: 0; }
+  .nav-toggle.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
 
   /* HERO */
   .hero {
@@ -931,7 +945,25 @@ Content-Type: text/html; charset=utf-8
   /* RESPONSIVE */
   @media (max-width: 900px) {
     nav { padding: 16px 24px; }
-    .nav-links { display: none; }
+    .nav-toggle { display: flex; }
+    .nav-links {
+      display: flex; flex-direction: column; align-items: flex-start; gap: 2px;
+      position: absolute; top: 100%; left: 0; right: 0;
+      background: rgba(245,238,224,0.98);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid rgba(30,111,29,0.12);
+      box-shadow: 0 12px 32px rgba(0,0,0,0.08);
+      padding: 0 24px; max-height: 0; overflow: hidden;
+      opacity: 0; pointer-events: none;
+      transition: max-height 0.35s ease, opacity 0.25s ease, padding 0.35s ease;
+    }
+    .nav-links.open {
+      max-height: 85vh; overflow-y: auto;
+      padding: 8px 24px 20px; opacity: 1; pointer-events: auto;
+    }
+    .nav-links li { width: 100%; }
+    .nav-links a { font-size: 0.95rem; opacity: 0.85; padding: 12px 0; display: block; }
+    .nav-links .nav-cta { display: inline-block; padding: 10px 22px; margin-top: 10px; }
     .hero { grid-template-columns: 1fr; }
     .hero-text { padding: 60px 24px 40px; }
     .hero-image { height: 70vw; }
@@ -987,7 +1019,10 @@ Content-Type: text/html; charset=utf-8
 
 <nav>
   <a href="#" class="nav-logo">Guido Sustento</a>
-  <ul class="nav-links">
+  <button class="nav-toggle" id="navToggle" aria-label="Abrir menú" aria-expanded="false" aria-controls="navLinks">
+    <span></span><span></span><span></span>
+  </button>
+  <ul class="nav-links" id="navLinks">
     <li><a href="#sobre">Sobre mí</a></li>
     <li><a href="#metodo">Método Sustento</a></li>
     <li><a href="#tienda">Tienda</a></li>
@@ -995,7 +1030,6 @@ Content-Type: text/html; charset=utf-8
     <li><a href="#club">Club</a></li>
     <li><a href="#red">Red</a></li>
     <li><a href="#contacto">Contacto</a></li>
-    <li><a href="#tienda" class="nav-cta">Tienda</a></li>
     <li><a href="https://wa.me/541171417177" target="_blank" class="nav-cta" style="background:var(--tierra-claro);">WhatsApp 💬</a></li>
   </ul>
 </nav>
@@ -1650,6 +1684,36 @@ Content-Type: text/html; charset=utf-8
         </div>
       </div>
 
+      <!-- Laura -->
+      <div class="testimonio-card">
+        <div class="stars">★★★★★</div>
+        <blockquote>"El Método Sustento superó ampliamente mis expectativas. No solo recibí toda la info que necesitaba sobre nutrición, sino que logré organizar mis días para estar menos estresada, elegir bien mis alimentos, descansar y también hacer deporte.
+        <br><br>
+        Me siento con más energía, mucho mejor, más saludable. Ojalá todos puedan tener un nutri tan predispuesto y empático. Y esto recién empieza. 💪"</blockquote>
+        <div class="testimonio-autor">
+          <div class="autor-avatar">☀️</div>
+          <div class="autor-info">
+            <div class="nombre">Laura</div>
+            <div class="subtitulo">Proceso de 90 días</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Agustín -->
+      <div class="testimonio-card">
+        <div class="stars">★★★★★</div>
+        <blockquote>"El Método Sustento fue más de lo que esperaba, posta. No me ayudó con la alimentación como algo básico, sino a mejorar mi relación con la comida y a organizar cada cosa de forma correcta y completa, yendo hacia el objetivo que buscaba. En 90 días noto bastante el cambio desde que arranqué hasta ahora.
+        <br><br>
+        Pasé de estar súper cansado y rindiendo mal en el día a día a tener más energía y más constancia — mejorando mi salud y mi alimentación un poco más cada vez. Y todo esto gracias a la buena onda y los consejos en cada encuentro. 💪"</blockquote>
+        <div class="testimonio-autor">
+          <div class="autor-avatar">🔥</div>
+          <div class="autor-info">
+            <div class="nombre">Agustín</div>
+            <div class="subtitulo">Proceso de 90 días</div>
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>
 
@@ -1796,6 +1860,27 @@ Content-Type: text/html; charset=utf-8
 " title="Hablar por WhatsApp">💬</a>
 
 <script>
+  // MENÚ MOBILE (hamburguesa)
+  (function() {
+    const toggle = document.getElementById('navToggle');
+    const links = document.getElementById('navLinks');
+    if (!toggle || !links) return;
+    const closeMenu = () => {
+      links.classList.remove('open');
+      toggle.classList.remove('open');
+      toggle.setAttribute('aria-expanded', 'false');
+    };
+    toggle.addEventListener('click', () => {
+      const isOpen = links.classList.toggle('open');
+      toggle.classList.toggle('open', isOpen);
+      toggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+    });
+    // Cerrar al tocar cualquier link del menú
+    links.querySelectorAll('a').forEach(a => a.addEventListener('click', closeMenu));
+    // Cerrar con Escape
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeMenu(); });
+  })();
+
   // STICKY BAR
   const stickyBar = document.getElementById('sticky-bar');
   window.addEventListener('scroll', () => {
