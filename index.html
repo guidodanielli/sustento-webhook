@@ -76,13 +76,13 @@ Content-Type: text/html; charset=utf-8
         "name": "Recetario Digital Sustento",
         "description": "Más de 60 recetas plant-based simples y sabrosas, pensadas para el día a día.",
         "brand": { "@id": "https://haceloconsustento.com/#org" },
-        "url": "https://haceloconsustento.com/#recetario",
+        "url": "https://haceloconsustento.com/#tienda",
         "offers": {
           "@type": "Offer",
           "price": "40000",
           "priceCurrency": "ARS",
           "availability": "https://schema.org/InStock",
-          "url": "https://haceloconsustento.com/#recetario"
+          "url": "https://haceloconsustento.com/#tienda"
         }
       },
       {
@@ -1082,10 +1082,9 @@ Content-Type: text/html; charset=utf-8
   <ul class="nav-links" id="navLinks">
     <li><a href="#sobre">Sobre mí</a></li>
     <li><a href="#metodo">Método Sustento</a></li>
-    <li><a href="#tienda">Tienda</a></li>
-    <li><a href="#recetario">Recetario</a></li>
     <li><a href="#club">Club</a></li>
     <li><a href="#red">Red</a></li>
+    <li><a href="#tienda">Tienda</a></li>
     <li><a href="#contacto">Contacto</a></li>
     <li><a href="https://wa.me/541171417177" target="_blank" class="nav-cta" style="background:var(--tierra-claro);">WhatsApp 💬</a></li>
   </ul>
@@ -1221,7 +1220,7 @@ Content-Type: text/html; charset=utf-8
       recetario: {
         emoji: '📖', title: 'Empezá por el Recetario Digital',
         text: 'Querés algo concreto para arrancar ya. +60 recetas plant-based, simples y sabrosas, para que la cocina casera vuelva a ser parte de tu día a día.',
-        cta: 'Ver el Recetario', target: '#recetario', source: 'quiz-recetario'
+        cta: 'Ver el Recetario', target: '#tienda', source: 'quiz-recetario'
       },
       red: {
         emoji: '👩‍⚕️', title: 'Sumate a Red Sustento',
@@ -1408,89 +1407,6 @@ Content-Type: text/html; charset=utf-8
   </div>
 </section>
 
-<section class="tienda" id="tienda">
-  <div class="tienda-inner">
-    <div class="tienda-header reveal">
-      <p class="eyebrow">Todo lo que ofrezco</p>
-      <h2>Mi <em>Tienda</em></h2>
-      <p>Herramientas concretas para transformar tu relación con la comida.</p>
-    </div>
-    <div class="tienda-grid">
-
-      <div class="producto-card reveal">
-        <span class="producto-badge">Digital</span>
-        <div class="producto-icon">📖</div>
-        <h3>Recetario Digital Sustento</h3>
-        <p class="producto-desc">+60 recetas plant-based para el día a día. Simples, nutritivas, con ingredientes reales. Para que la cocina casera vuelva a ser parte de tu vida.</p>
-        <div class="producto-precio">
-          <span class="precio-ars">$40.000 ARS</span>
-          <span class="precio-sep">·</span>
-          <span class="precio-usd">USD 40</span>
-        </div>
-        <div class="producto-btns">
-          <button class="btn-primary" onclick="pagarConMP('recetario')" style="text-align:center;">Comprar con MercadoPago 🇦🇷</button>
-          <div id="paypal-recetario-tienda"></div>
-        </div>
-      </div>
-
-      <div class="producto-card reveal">
-        <span class="producto-badge producto-badge-proceso">Proceso</span>
-        <div class="producto-icon">🌱</div>
-        <h3>Método Sustento</h3>
-        <p class="producto-desc">90 días de acompañamiento personalizado para transformar tu alimentación, tus hábitos y tu vínculo con la comida. Comenzamos con una reunión de admisión gratuita.</p>
-        <div class="producto-precio">
-          <span class="precio-ars">Admisión gratuita</span>
-        </div>
-        <div class="producto-btns">
-          <a href="https://calendly.com/guidosustento-nutri/30min" target="_blank" class="btn-primary" style="text-align:center; display:block;">Reservar llamada 📅</a>
-        </div>
-      </div>
-
-    </div>
-  </div>
-</section>
-<section class="recetario" id="recetario">
-  <div class="recetario-header reveal">
-    <p class="eyebrow">Producto digital</p>
-    <h2><em>Recetario Digital</em> Sustento</h2>
-    <p>+60 recetas plant-based pensadas para el día a día. Simples, nutritivas, con ingredientes reales.</p>
-  </div>
-  <div class="recetario-layout">
-    <div class="recetario-portada reveal">
-      <img src="img/recetario-portada.webp" alt="Recetario Digital Sustento" class="portada-img" width="600" height="849" loading="lazy">
-      <div class="recetario-pages">
-        <div class="page-preview">
-          <img src="img/recetario-crepe-garbanzos.webp" alt="Crepe de harina de garbanzos" width="600" height="849" loading="lazy">
-        </div>
-        <div class="page-preview">
-          <img src="img/recetario-linguine-zucchini-tofu.webp" alt="Linguine cremoso con zucchini y tofu" width="600" height="849" loading="lazy">
-        </div>
-        <div class="page-preview">
-          <img src="img/recetario-muffins-chocolate.webp" alt="Muffins de chocolate" width="600" height="849" loading="lazy">
-        </div>
-      </div>
-    </div>
-    <div class="recetario-info reveal">
-      <div style="margin-bottom:20px;">
-        <span class="precio-tag">$40.000 ARS</span>
-        <span class="precio-ecosistema">🌿 Ecosistema: precio especial</span>
-      </div>
-      <p class="recetario-desc">"Para que la cocina casera vuelva a ser parte de tu vida."</p>
-      <ul class="recetario-lista">
-        <li>+60 recetas basadas en plantas, simples y sabrosas</li>
-        <li>Ingredientes reales, accesibles, para todos los días</li>
-        <li>Pensado para todos los paladares — no solo veganos</li>
-        <li>PDF descargable, lo tenés para siempre</li>
-        <li>Incluye crepes, pastas, postres y mucho más</li>
-      </ul>
-      <p class="recetario-nota">Si ya trabajaste conmigo — una consulta, una clase, lo que sea — escribime y accedés a precio especial. Pertenecer al ecosistema tiene valor concreto.</p>
-      <div class="recetario-btns">
-        <button id="btn-mp" class="btn-primary" onclick="pagarConMP('recetario')" style="text-align:center;">Comprar con MercadoPago 🇦🇷</button>
-        <div id="paypal-recetario"></div>
-      </div>
-    </div>
-  </div>
-</section>
 
 <style>
   /* ===== CLUB SUSTENTO ===== */
@@ -1634,6 +1550,49 @@ Content-Type: text/html; charset=utf-8
     </ul>
     <a href="https://wa.me/541171417177?text=Hola%20Guido%2C%20quiero%20unirme%20a%20Red%20Sustento" target="_blank" rel="noopener" class="btn-primary">Quiero unirme 💬</a>
     <p class="red-nota">El ingreso es manual: una vez que mandes el comprobante por WhatsApp, Guido te confirma y te suma a la comunidad.</p>
+  </div>
+</section>
+
+<section class="tienda" id="tienda">
+  <div class="tienda-inner">
+    <div class="tienda-header reveal">
+      <p class="eyebrow">Todo lo que ofrezco</p>
+      <h2>Mi <em>Tienda</em></h2>
+      <p>Herramientas concretas para transformar tu relación con la comida.</p>
+    </div>
+    <div class="tienda-grid">
+
+      <div class="producto-card reveal">
+        <span class="producto-badge">Digital</span>
+        <div class="producto-icon">📖</div>
+        <h3>Recetario Digital Sustento</h3>
+        <p class="producto-desc">+60 recetas plant-based para el día a día. Simples, nutritivas, con ingredientes reales. Para que la cocina casera vuelva a ser parte de tu vida.</p>
+        <div class="producto-precio">
+          <span class="precio-ars">$40.000 ARS</span>
+          <span class="precio-sep">·</span>
+          <span class="precio-usd">USD 40</span>
+        </div>
+        <span class="precio-ecosistema" style="align-self:flex-start; margin:0;">🌿 Ecosistema: precio especial</span>
+        <div class="producto-btns">
+          <button id="btn-mp" class="btn-primary" onclick="pagarConMP('recetario')" style="text-align:center;">Comprar con MercadoPago 🇦🇷</button>
+          <div id="paypal-recetario-tienda"></div>
+        </div>
+      </div>
+
+      <div class="producto-card reveal">
+        <span class="producto-badge producto-badge-proceso">Proceso</span>
+        <div class="producto-icon">🌱</div>
+        <h3>Método Sustento</h3>
+        <p class="producto-desc">90 días de acompañamiento personalizado para transformar tu alimentación, tus hábitos y tu vínculo con la comida. Comenzamos con una reunión de admisión gratuita.</p>
+        <div class="producto-precio">
+          <span class="precio-ars">Admisión gratuita</span>
+        </div>
+        <div class="producto-btns">
+          <a href="https://calendly.com/guidosustento-nutri/30min" target="_blank" class="btn-primary" style="text-align:center; display:block;">Reservar llamada 📅</a>
+        </div>
+      </div>
+
+    </div>
   </div>
 </section>
 
@@ -1919,7 +1878,7 @@ Content-Type: text/html; charset=utf-8
     <h4>Servicios</h4>
     <ul>
       <li><a href="#metodo">Método Sustento · 90 días</a></li>
-      <li><a href="#recetario">Recetario Digital</a></li>
+      <li><a href="#tienda">Recetario Digital</a></li>
       <li><a href="#club">Club Sustento</a></li>
       <li><a href="#red">Red Sustento</a></li>
     </ul>
@@ -2052,7 +2011,6 @@ Content-Type: text/html; charset=utf-8
   function initPayPalButtons() {
     if (typeof paypal === 'undefined') return;
     const containers = [
-      { id: 'paypal-recetario', productId: 'recetario' },
       { id: 'paypal-recetario-tienda', productId: 'recetario' }
     ];
     containers.forEach(({ id, productId }) => {
