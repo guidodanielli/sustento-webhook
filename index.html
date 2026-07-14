@@ -42,7 +42,8 @@ Content-Type: text/html; charset=utf-8
         "image": "https://haceloconsustento.com/og-image.jpg",
         "description": "Nutricionista y cocinero sustentable con enfoque plant-based. Trabaja desde la expansión y no la restricción: nutrición real, hábitos sostenibles y cocina casera.",
         "knowsAbout": ["Nutrición", "Alimentación plant-based", "Cocina sustentable", "Hábitos alimentarios"],
-        "sameAs": ["https://www.instagram.com/guido.sustento/"]
+        "sameAs": ["https://www.instagram.com/guido.sustento/"],
+        "worksFor": { "@id": "https://haceloconsustento.com/#org" }
       },
       {
         "@type": "Organization",
@@ -50,8 +51,15 @@ Content-Type: text/html; charset=utf-8
         "name": "Hacelo con Sustento",
         "url": "https://haceloconsustento.com/",
         "logo": "https://haceloconsustento.com/og-image.jpg",
+        "description": "Nutrición real, hábitos sostenibles y cocina casera con enfoque plant-based. Desde la expansión, no la restricción.",
         "founder": { "@id": "https://haceloconsustento.com/#guido" },
-        "sameAs": ["https://www.instagram.com/guido.sustento/"]
+        "sameAs": ["https://www.instagram.com/guido.sustento/"],
+        "contactPoint": {
+          "@type": "ContactPoint",
+          "contactType": "customer support",
+          "telephone": "+541171417177",
+          "availableLanguage": "Spanish"
+        }
       },
       {
         "@type": "WebSite",
@@ -75,28 +83,70 @@ Content-Type: text/html; charset=utf-8
         "@type": "Product",
         "name": "Recetario Digital Sustento",
         "description": "Más de 60 recetas plant-based simples y sabrosas, pensadas para el día a día.",
+        "image": "https://haceloconsustento.com/img/recetario-portada.webp",
+        "category": "Libro de recetas digital",
         "brand": { "@id": "https://haceloconsustento.com/#org" },
         "url": "https://haceloconsustento.com/#tienda",
-        "offers": {
-          "@type": "Offer",
-          "price": "40000",
-          "priceCurrency": "ARS",
-          "availability": "https://schema.org/InStock",
-          "url": "https://haceloconsustento.com/#tienda"
-        }
+        "offers": [
+          {
+            "@type": "Offer",
+            "price": "40000",
+            "priceCurrency": "ARS",
+            "availability": "https://schema.org/InStock",
+            "url": "https://haceloconsustento.com/#tienda"
+          },
+          {
+            "@type": "Offer",
+            "price": "40",
+            "priceCurrency": "USD",
+            "availability": "https://schema.org/InStock",
+            "url": "https://haceloconsustento.com/#tienda"
+          }
+        ]
       },
       {
         "@type": "Product",
         "name": "Club Sustento",
         "description": "Suscripción mensual con recetas nuevas, seminarios en formato largo, comunidad y acompañamiento continuo.",
+        "category": "Suscripción",
         "brand": { "@id": "https://haceloconsustento.com/#org" },
         "url": "https://haceloconsustento.com/#club",
+        "offers": [
+          {
+            "@type": "Offer",
+            "price": "15000",
+            "priceCurrency": "ARS",
+            "availability": "https://schema.org/InStock",
+            "url": "https://haceloconsustento.com/#club"
+          },
+          {
+            "@type": "Offer",
+            "price": "10",
+            "priceCurrency": "USD",
+            "availability": "https://schema.org/InStock",
+            "url": "https://haceloconsustento.com/#club"
+          }
+        ]
+      },
+      {
+        "@type": "Service",
+        "@id": "https://haceloconsustento.com/#red",
+        "name": "Red Sustento",
+        "provider": { "@id": "https://haceloconsustento.com/#guido" },
+        "description": "Comunidad profesional para profesionales de la salud, especialmente nutricionistas recién recibidos, con encuentros quincenales para compartir recorridos y crecer en comunidad.",
+        "url": "https://haceloconsustento.com/#red",
+        "areaServed": "AR",
+        "serviceType": "Comunidad profesional",
+        "audience": {
+          "@type": "Audience",
+          "audienceType": "Profesionales de la salud"
+        },
         "offers": {
           "@type": "Offer",
-          "price": "15000",
+          "price": "10000",
           "priceCurrency": "ARS",
           "availability": "https://schema.org/InStock",
-          "url": "https://haceloconsustento.com/#club"
+          "url": "https://haceloconsustento.com/#red"
         }
       },
       {
