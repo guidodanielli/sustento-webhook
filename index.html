@@ -636,67 +636,7 @@ Content-Type: text/html; charset=utf-8
     .tienda { padding: 60px 24px; }
     .tienda-grid { grid-template-columns: 1fr; }
   }
-    /* RECETARIO */
-  .recetario {
-    padding: 100px 80px;
-    background: var(--crema);
-  }
-  .recetario-header {
-    text-align: center; margin-bottom: 64px;
-  }
-  .recetario-header .eyebrow {
-    display: inline-flex; align-items: center; gap: 8px;
-    font-size: 0.72rem; font-weight: 500; letter-spacing: 0.18em;
-    text-transform: uppercase; color: var(--tierra-claro); margin-bottom: 20px;
-  }
-  .recetario-header .eyebrow::before {
-    content: ''; width: 6px; height: 6px; border-radius: 50%;
-    background: var(--tierra-claro); flex-shrink: 0;
-  }
-  .recetario-header h2 {
-    font-family: 'Playfair Display', serif;
-    font-size: clamp(2rem, 3.2vw, 3rem);
-    font-weight: 700; line-height: 1.15;
-    color: var(--negro); margin-bottom: 16px;
-  }
-  .recetario-header h2 em { font-style: italic; color: var(--verde); }
-  .recetario-header p {
-    font-size: 1rem; font-weight: 300; line-height: 1.8;
-    color: var(--gris); max-width: 540px; margin: 0 auto;
-  }
-  .recetario-layout {
-    display: grid; grid-template-columns: 1fr 1fr; gap: 60px;
-    align-items: start;
-  }
-  .recetario-portada {
-    position: relative;
-  }
-  .portada-img {
-    width: 100%; border-radius: 16px;
-    box-shadow: 0 24px 60px rgba(0,0,0,0.15);
-  }
-  .recetario-pages {
-    display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
-    margin-top: 16px;
-  }
-  .page-preview {
-    border-radius: 10px; overflow: hidden;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.1);
-    transition: transform 0.2s;
-    cursor: pointer;
-  }
-  .page-preview:hover { transform: scale(1.03); }
-  .page-preview img { width: 100%; display: block; }
-  .recetario-info {
-    padding-top: 20px;
-  }
-  .precio-tag {
-    display: inline-block;
-    background: var(--negro); color: var(--blanco);
-    padding: 10px 22px; border-radius: 100px;
-    font-size: 1.15rem; font-weight: 600;
-    margin-bottom: 8px;
-  }
+  /* Badge Ecosistema (usado en la tarjeta del Recetario dentro de la Tienda) */
   .precio-ecosistema {
     display: inline-block;
     background: var(--verde); color: var(--blanco);
@@ -704,30 +644,6 @@ Content-Type: text/html; charset=utf-8
     font-size: 0.8rem; font-weight: 500;
     margin-left: 8px; margin-bottom: 24px;
   }
-  .recetario-desc {
-    font-family: 'Playfair Display', serif;
-    font-size: 1.5rem; font-style: italic;
-    line-height: 1.5; color: var(--negro);
-    margin-bottom: 24px;
-  }
-  .recetario-lista {
-    list-style: none; margin-bottom: 32px;
-  }
-  .recetario-lista li {
-    font-size: 0.92rem; font-weight: 300; color: var(--gris);
-    padding: 10px 0; border-bottom: 1px solid rgba(0,0,0,0.06);
-    display: flex; align-items: center; gap: 10px;
-  }
-  .recetario-lista li::before {
-    content: '🌿'; font-size: 0.85rem; flex-shrink: 0;
-  }
-  .recetario-nota {
-    font-size: 0.82rem; color: var(--gris);
-    margin-bottom: 28px; font-style: italic;
-    padding: 16px; background: var(--crema-oscuro);
-    border-radius: 8px; border-left: 3px solid var(--verde);
-  }
-  .recetario-btns { display: flex; flex-direction: column; gap: 12px; }
 
   /* TESTIMONIOS SLIDER */
   .testimonios {
@@ -1025,7 +941,7 @@ Content-Type: text/html; charset=utf-8
     .hero-text { padding: 60px 24px 40px; }
     .hero-image { height: 70vw; }
     .hero-image img { height: 100%; width: 100%; object-fit: cover; left: 0; transform: none; position: absolute; }
-    .sobre, .recetario-layout { grid-template-columns: 1fr; padding: 60px 24px; gap: 40px; }
+    .sobre { grid-template-columns: 1fr; padding: 60px 24px; gap: 40px; }
     .metodo { padding: 60px 24px; }
     .metodo-grid { grid-template-columns: 1fr; gap: 2px; }
     .metodo-card:first-child { border-radius: 16px 16px 0 0; }
@@ -1043,7 +959,6 @@ Content-Type: text/html; charset=utf-8
     footer { grid-template-columns: 1fr; padding: 40px 24px; }
     .footer-bottom { padding: 16px 24px; flex-direction: column; gap: 8px; }
     .sticky-bar { padding: 14px 24px; gap: 16px; }
-    .recetario { padding: 60px 24px; }
   }
   /* BANNER PAGO EXITOSO */
   .banner-pago {
