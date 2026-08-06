@@ -39,6 +39,7 @@ async function agregarASupabase({ email, name, source, tags }) {
 async function enviarBienvenida(email) {
   await resend.emails.send({
     from: `Guido Sustento <hola@haceloconsustento.com>`,
+    reply_to: 'guidosustento.nutri@gmail.com',
     to: email,
     subject: 'Bienvenido/a al ecosistema 🌿',
     html: `

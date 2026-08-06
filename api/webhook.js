@@ -141,6 +141,7 @@ export default async function handler(req, res) {
     await Promise.all([
       resend.emails.send({
         from: `Guido Sustento <${process.env.RESEND_FROM_EMAIL}>`,
+        reply_to: 'guidosustento.nutri@gmail.com',
         to: buyerEmail,
         subject: emailContent.subject,
         html: emailContent.html
