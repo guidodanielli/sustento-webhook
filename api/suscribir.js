@@ -63,7 +63,7 @@ const VARIANTES = {
       { texto: 'Suscribirme por USD 10/mes 🌿', url: WHOP_CLUB },
       { texto: 'Suscribirme por $15.000 ARS/mes 🇦🇷', url: MPAGO_CLUB }
     ],
-    nota: `<strong>Si pagás en pesos, un paso más:</strong> MercadoPago no me avisa quién se suscribió, así que el ingreso lo hago a mano. Cuando te suscribas, <a href="${WHATSAPP_CLUB}" style="color: #1e6f1d; font-weight: bold;">mandame el comprobante por WhatsApp</a> con tu número y te sumo al Club. Por Whop el acceso es automático.`,
+    nota: `<strong>Si pagás en pesos, un paso más:</strong> MercadoPago no te manda la invitación a la comunidad como hace Whop. Cuando te suscribas, <a href="${WHATSAPP_CLUB}" style="color: #1e6f1d; font-weight: bold;">mandame el comprobante por WhatsApp</a> con tu número y te paso la invitación yo mismo. Por Whop entrás en el momento.`,
     cierre: ['Y si te queda alguna duda antes de pagar, respondé este mail. Lo leo yo.']
   },
   metodo: {

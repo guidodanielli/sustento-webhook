@@ -80,8 +80,8 @@ Para agregar o modificar un **producto de pago único**: editar `api/products.js
 
 | Moneda | Plataforma | Link | Acceso |
 |---|---|---|---|
-| USD 10/mes | Whop | `https://whop.com/checkout/plan_5cUpzEWpFAjF7` | Automático |
-| $15.000 ARS/mes | MercadoPago | `https://mpago.la/1U4znwx` | **Manual**: la persona manda comprobante y número por WhatsApp y Guido la suma |
+| USD 10/mes | Whop | `https://whop.com/checkout/plan_5cUpzEWpFAjF7` | Whop manda solo la invitación a la comunidad |
+| $15.000 ARS/mes | MercadoPago | `https://mpago.la/1U4znwx` | **Manual.** MercadoPago sí le avisa del pago a Guido, pero no manda ninguna invitación. Por eso se pide el comprobante por WhatsApp: confirma el pago y le da el número para mandar la invitación a la comunidad |
 
 La entrada `club` de `products.js` sigue existiendo porque el webhook la necesita para los pagos únicos viejos (hay uno del 06/08/2026). Para cambiar precios del Club hay que editar los dos links **y** los textos de la landing y de `suscribir.js`, no `products.js`.
 
