@@ -41,6 +41,12 @@ const BAJA_URL = 'https://sustento-webhook.vercel.app/api/baja';
 const CALENDLY = 'https://calendly.com/guidosustento-nutri/30min';
 const WHATSAPP = 'https://wa.me/541171417177?text=Hola%20Guido%2C%20quiero%20unirme%20a%20Red%20Sustento';
 
+// Las dos formas de suscribirse al Club. Son suscripciones mensuales reales.
+// Whop da el acceso automático; MercadoPago no, ahí el ingreso es manual.
+const WHOP_CLUB = 'https://whop.com/checkout/plan_5cUpzEWpFAjF7';
+const MPAGO_CLUB = 'https://mpago.la/1U4znwx';
+const WHATSAPP_CLUB = 'https://wa.me/541171417177?text=Hola%20Guido%2C%20me%20suscrib%C3%AD%20al%20Club%20por%20MercadoPago.%20Te%20paso%20el%20comprobante.';
+
 // El mail de bienvenida cambia según lo que la persona pidió. El quiz manda
 // source = quiz-club | quiz-metodo | quiz-recetario | quiz-red; el formulario
 // del pie manda formulario-web. Si mañana aparece otro source, cae en general.
@@ -51,9 +57,14 @@ const VARIANTES = {
       'Buenas buenas!! Soy Guido, nutricionista y cocinero.',
       'Hiciste el quiz y el resultado te llevó al Club Sustento, así que te cuento en dos líneas qué es.',
       'Es un espacio para aprender de forma continua: cada mes hay recetas nuevas con plantas, un encuentro en vivo de una hora y media sobre un tema puntual, y un entregable para que te quede algo aplicable y no solo un rato de charla.',
-      'Se paga mes a mes y te podés ir cuando quieras. Si te queda alguna duda, respondé este mail. Lo leo yo.'
+      'Si querés sumarte, elegí la moneda que te convenga. Es la misma membresía mensual en los dos casos y la cancelás cuando quieras.'
     ],
-    cta: { texto: 'Ver el Club', url: `${SITIO}/#club` }
+    ctas: [
+      { texto: 'Suscribirme por USD 10/mes 🌿', url: WHOP_CLUB },
+      { texto: 'Suscribirme por $15.000 ARS/mes 🇦🇷', url: MPAGO_CLUB }
+    ],
+    nota: `<strong>Si pagás en pesos, un paso más:</strong> MercadoPago no me avisa quién se suscribió, así que el ingreso lo hago a mano. Cuando te suscribas, <a href="${WHATSAPP_CLUB}" style="color: #1e6f1d; font-weight: bold;">mandame el comprobante por WhatsApp</a> con tu número y te sumo al Club. Por Whop el acceso es automático.`,
+    cierre: ['Y si te queda alguna duda antes de pagar, respondé este mail. Lo leo yo.']
   },
   metodo: {
     subject: 'Te cuento cómo es el Método 🌱',
@@ -63,7 +74,7 @@ const VARIANTES = {
       'Son 90 días de acompañamiento para cambiar tu relación con la comida. Sin dietas, sin listas de alimentos prohibidos y sin contar calorías. Desde la expansión, no desde la restricción.',
       'Antes de cualquier cosa hay una llamada de 30 minutos sin cargo, para ver si tiene sentido en tu caso. Si no tiene sentido, te lo digo.'
     ],
-    cta: { texto: 'Reservar la llamada gratuita', url: CALENDLY }
+    ctas: [{ texto: 'Reservar la llamada gratuita', url: CALENDLY }]
   },
   recetario: {
     subject: 'Te cuento qué tiene el Recetario 🌱',
@@ -73,7 +84,7 @@ const VARIANTES = {
       'Son más de 60 recetas con plantas pensadas para el día a día real, no para el domingo con tiempo de sobra. Ingredientes que se consiguen y que se repiten entre recetas, para que cocinar no sea una expedición.',
       'Es un PDF: lo descargás una vez y es tuyo para siempre.'
     ],
-    cta: { texto: 'Ver el Recetario', url: `${SITIO}/#tienda` }
+    ctas: [{ texto: 'Ver el Recetario', url: `${SITIO}/#tienda` }]
   },
   red: {
     subject: 'Te cuento de la Red 🌱',
@@ -83,7 +94,7 @@ const VARIANTES = {
       'Es una comunidad para colegas, sobre todo nutris recién recibidos, con encuentros quincenales para compartir recorridos y crecer en comunidad. Es lo que a mí me hubiera servido cuando arranqué y no existía.',
       'El ingreso es manual y lo coordinamos por WhatsApp.'
     ],
-    cta: { texto: 'Escribirme por WhatsApp 💬', url: WHATSAPP }
+    ctas: [{ texto: 'Escribirme por WhatsApp 💬', url: WHATSAPP }]
   },
   general: {
     subject: 'Bienvenido/a al ecosistema 🌱',
@@ -94,7 +105,7 @@ const VARIANTES = {
       `No te voy a llenar la casilla de mails. La mayor parte de lo que hago del día a día vive en Instagram, así que si querés seguirme por ahí te espero como <a href="https://www.instagram.com/guido.sustento/" style="color: #1e6f1d; font-weight: bold;">@guido.sustento</a>.`,
       'Y si querés un primer paso concreto, tengo el Recetario: más de 60 recetas con plantas para el día a día.'
     ],
-    cta: { texto: 'Ver el Recetario', url: `${SITIO}/#tienda` }
+    ctas: [{ texto: 'Ver el Recetario', url: `${SITIO}/#tienda` }]
   }
 };
 
@@ -107,10 +118,29 @@ function varianteDeSource(source) {
   return 'general';
 }
 
+function parrafo(texto) {
+  return `<p style="font-size: 1rem; line-height: 1.8; color: #444; margin: 0 0 20px 0;">${texto}</p>`;
+}
+
 function armarHtml({ variante, bajaUrl }) {
-  const parrafos = variante.parrafos
-    .map(p => `<p style="font-size: 1rem; line-height: 1.8; color: #444; margin: 0 0 20px 0;">${p}</p>`)
-    .join('');
+  const parrafos = variante.parrafos.map(parrafo).join('');
+
+  // El primer botón va lleno; los siguientes con borde, para que se vea cuál es
+  // la opción principal sin que la otra parezca de segunda.
+  const botones = variante.ctas
+    .map((cta, i) => {
+      const estilo = i === 0
+        ? 'background: #1e6f1d; color: #ffffff; border: 2px solid #1e6f1d;'
+        : 'background: transparent; color: #1e6f1d; border: 2px solid #1e6f1d;';
+      return `<a href="${cta.url}" style="${estilo} padding: 14px 30px; border-radius: 100px; text-decoration: none; font-family: Arial, sans-serif; font-weight: 600; font-size: 0.95rem; display: inline-block; margin: 0 0 10px 0;">${cta.texto}</a>`;
+    })
+    .join('<br>');
+
+  const nota = variante.nota
+    ? `<p style="font-size: 0.9rem; line-height: 1.7; color: #555; background: #fff; border-left: 3px solid #1e6f1d; padding: 14px 18px; margin: 0 0 24px 0;">${variante.nota}</p>`
+    : '';
+
+  const cierre = (variante.cierre || []).map(parrafo).join('');
 
   return `
     <div style="font-family: Georgia, serif; max-width: 600px; margin: 0 auto; color: #111; background: #f5eee0;">
@@ -119,9 +149,11 @@ function armarHtml({ variante, bajaUrl }) {
       </div>
       <div style="padding: 48px 40px; background: #f5eee0;">
         ${parrafos}
-        <div style="margin: 36px 0;">
-          <a href="${variante.cta.url}" style="background: #1e6f1d; color: #ffffff; padding: 16px 32px; border-radius: 100px; text-decoration: none; font-family: Arial, sans-serif; font-weight: 600; font-size: 1rem; display: inline-block;">${variante.cta.texto}</a>
+        <div style="margin: 32px 0 28px 0;">
+          ${botones}
         </div>
+        ${nota}
+        ${cierre}
         <p style="font-size: 1rem; line-height: 1.8; color: #444; margin: 0 0 4px 0;">Nos vemos,</p>
         <p style="font-size: 1rem; font-weight: bold; color: #1e6f1d; margin: 0;">Guido 🌱</p>
       </div>

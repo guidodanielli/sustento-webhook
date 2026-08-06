@@ -182,7 +182,7 @@ Content-Type: text/html; charset=utf-8
           {
             "@type": "Question",
             "name": "¿Cómo me uno al Club y cómo se paga?",
-            "acceptedAnswer": { "@type": "Answer", "text": "Desde la sección del Club: por Whop en dólares (USD $10/mes) o en pesos por MercadoPago ($15.000/mes). La suscripción es mensual y se cancela cuando quieras." }
+            "acceptedAnswer": { "@type": "Answer", "text": "Desde la sección del Club: por Whop en dólares (USD $10/mes) o en pesos por MercadoPago ($15.000/mes). La suscripción es mensual y se cancela cuando quieras. Por Whop el acceso es automático; por MercadoPago es manual, hay que mandar el comprobante y el número por WhatsApp." }
           },
           {
             "@type": "Question",
@@ -1417,7 +1417,9 @@ Content-Type: text/html; charset=utf-8
   .club-btns .btn-primary, .club-btns .btn-secondary { width: 100%; justify-content: center; cursor: pointer; }
   .club-btns .btn-secondary { color: var(--crema); border-color: rgba(245,238,224,0.4); }
   .club-btns .btn-secondary:hover { background: var(--crema); color: var(--verde-oscuro); }
-  .club-ayuda { text-align: center; font-size: 0.8rem; color: rgba(245,238,224,0.6); margin-top: 14px; }
+  .club-ayuda { text-align: center; font-size: 0.8rem; color: rgba(245,238,224,0.6); margin-top: 14px; line-height: 1.6; }
+  .club-ayuda strong { color: rgba(245,238,224,0.85); }
+  .club-ayuda a { color: var(--crema); text-decoration: underline; }
   @media (max-width: 600px) { .club-card { padding: 28px 22px; } }
 </style>
 
@@ -1445,11 +1447,18 @@ Content-Type: text/html; charset=utf-8
       <li>Comunidad y acompañamiento continuo</li>
       <li>Cancelás cuando quieras</li>
     </ul>
+    <!-- Las dos opciones son suscripciones mensuales reales, no pagos únicos.
+         Whop: acceso automático. MercadoPago: ingreso manual con comprobante. -->
     <div class="club-btns">
-      <button class="btn-primary" onclick="unirseClub()">Unirme al Club 🌿</button>
-      <button class="btn-secondary" onclick="pagarConMP('club')">Pagar en pesos (MercadoPago) 🇦🇷</button>
+      <a class="btn-primary" href="https://whop.com/checkout/plan_5cUpzEWpFAjF7" target="_blank" rel="noopener">Suscribirme por USD 10/mes 🌿</a>
+      <a class="btn-secondary" href="https://mpago.la/1U4znwx" target="_blank" rel="noopener">Suscribirme por $15.000 ARS/mes 🇦🇷</a>
     </div>
-    <p class="club-ayuda">Elegí cómo pagar según tu país — la membresía es la misma.</p>
+    <p class="club-ayuda">
+      Las dos son la misma membresía mensual y la cancelás cuando quieras. Elegí la moneda que te convenga.<br>
+      <strong>Si pagás en pesos:</strong> MercadoPago no te da el acceso automático. Cuando te suscribas,
+      <a href="https://wa.me/541171417177?text=Hola%20Guido%2C%20me%20suscrib%C3%AD%20al%20Club%20por%20MercadoPago.%20Te%20paso%20el%20comprobante." target="_blank" rel="noopener">mandame el comprobante por WhatsApp</a>
+      con tu número y te sumo al Club a mano.
+    </p>
   </div>
 </section>
 
@@ -1803,6 +1812,7 @@ Content-Type: text/html; charset=utf-8
     </button>
     <div class="faq-answer">
       <p>Desde la sección del Club elegís cómo pagar: por Whop en dólares (USD $10/mes) o en pesos por MercadoPago ($15.000/mes). La suscripción es mensual y la das de baja cuando quieras, sin vueltas.</p>
+      <p>Una diferencia entre las dos: por Whop el acceso es automático, y por MercadoPago es manual. Si pagás en pesos, mandame el comprobante y tu número por WhatsApp y te sumo al Club yo mismo.</p>
     </div>
   </div>
   <div class="faq-item reveal">
@@ -1940,19 +1950,12 @@ Content-Type: text/html; charset=utf-8
     if (!isOpen) item.classList.add('open');
   }
 
-  // CLUB SUSTENTO — Whop
-  // 👉 GUIDO: pegá acá el link de Whop del Club. Mientras esté vacío,
-  //    el botón "Unirme al Club" usa MercadoPago automáticamente.
-  const WHOP_CLUB_URL = 'https://whop.com/checkout/plan_5cUpzEWpFAjF7';
-  function unirseClub() {
-    if (WHOP_CLUB_URL) {
-      window.location.href = WHOP_CLUB_URL;
-    } else {
-      pagarConMP('club');
-    }
-  }
+  // CLUB SUSTENTO
+  // Los dos links de suscripción (Whop en USD y MercadoPago en ARS) están
+  // directo en el HTML de la sección #club, no acá. Ya no pasa por pagarConMP:
+  // eso generaba un pago ÚNICO y el Club es una suscripción.
 
-  // MERCADOPAGO
+  // MERCADOPAGO (solo para los productos descargables, ej. el Recetario)
   async function pagarConMP(productId = 'recetario') {
     const allMPBtns = document.querySelectorAll('#btn-mp');
     allMPBtns.forEach(b => { b.dataset.originalText = b.textContent; b.textContent = 'Generando pago...'; b.disabled = true; });
