@@ -1,5 +1,6 @@
 import { Resend } from 'resend';
 import { PRODUCTS } from './products.js';
+import { notificarVenta } from './notificar-venta.js';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -147,6 +148,15 @@ export default async function handler(req, res) {
         buyerName,
         amount,
         currency: 'USD',
+        paymentId: orderID
+      }),
+      notificarVenta({
+        product,
+        buyerEmail,
+        buyerName,
+        amount,
+        currency: 'USD',
+        paymentMethod: 'PayPal',
         paymentId: orderID
       })
     ]);

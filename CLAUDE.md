@@ -1,5 +1,5 @@
 ---
-Última actualización: 30/07/2026
+Última actualización: 06/08/2026
 ---
 
 # CLAUDE.md — Landing Page
@@ -52,6 +52,8 @@ Landing Page/
     │   ├── crear-preferencia.js ← crea preferencia de pago en MercadoPago
     │   ├── webhook.js           ← recibe notificación → envía email → loguea compra
     │   ├── suscribir.js         ← suscribe email a la lista → manda bienvenida
+    │   ├── notificar-venta.js   ← avisa a Guido por mail cuando entra una venta
+    │   ├── baja.js              ← baja de la lista de mails (link del pie)
     │   ├── club-miembros.js     ← devuelve el count de miembros del Club
     │   ├── paypal-create-order.js
     │   ├── paypal-capture-order.js
@@ -90,9 +92,20 @@ Para agregar o modificar un producto: editar `api/products.js`. El webhook y la 
 
 ## Funciones API
 
-**`/api/suscribir`** — Formulario de la landing (captura de email)
+**`/api/suscribir`** — Formulario de la landing y quiz (captura de email)
 - Guarda en Supabase `subscribers` con deduplicación silenciosa
-- Si el email es nuevo, envía el email de bienvenida al ecosistema
+- Si el email es nuevo, envía el email de bienvenida
+- El mail de bienvenida **cambia según el `source`**: quien pidió el Club recibe el del Club, quien pidió el Método recibe la invitación a la llamada, etc. Los textos están en la constante `VARIANTES` del mismo archivo
+- Todos los mails llevan link de baja y los headers `List-Unsubscribe` (ayuda a no caer en Promociones de Gmail)
+
+**`notificar-venta.js`** — No es un endpoint, es una función que usan `webhook.js` y `paypal-capture-order.js`
+- Manda un mail a `guidosustento.nutri@gmail.com` por cada venta aprobada, con producto, comprador, monto, medio de pago e ID
+- Si el producto no es descargable (el Club), el mail recuerda las dos cosas que hay que hacer a mano: dar el acceso y anotar que el cobro por MercadoPago o PayPal es de un mes solo
+- Si el aviso falla no corta la entrega del producto: solo queda el error en los logs de Vercel
+
+**`/api/baja`** — Baja de la lista de mails
+- `GET` con `?email=` cuando la persona hace clic en el pie del mail (devuelve una página de confirmación); `POST` para el botón nativo de Gmail
+- No borra la fila: le pone el tag `baja` en `subscribers`. **Cualquier envío masivo futuro tiene que filtrar por ese tag**
 
 **`/api/club-miembros`** — Banner de urgencia en la landing
 - Suma `BASE_MIEMBROS` (hardcodeado) + compras del Club en Supabase
