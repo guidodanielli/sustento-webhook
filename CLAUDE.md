@@ -69,12 +69,21 @@ Landing Page/
 
 ## Productos (`api/products.js`)
 
-| ID | Nombre | ARS | USD | Tipo |
+| ID | Nombre | ARS | USD | Cómo se cobra |
 |---|---|---|---|---|
-| `recetario` | Recetario Digital Sustento | $40.000 | $40 | Descargable (Drive) |
-| `club` | Club Sustento — Suscripción mensual | $15.000 | $10 | Acceso (sin descarga) |
+| `recetario` | Recetario Digital Sustento | $40.000 | $40 | Pago único por MercadoPago o PayPal, entrega automática (Drive) |
+| `club` | Club Sustento | $15.000/mes | $10/mes | **Suscripción, con links propios fuera de `products.js`** |
 
-Para agregar o modificar un producto: editar `api/products.js`. El webhook y la landing page lo leen desde ahí.
+Para agregar o modificar un **producto de pago único**: editar `api/products.js`. El webhook, PayPal y la landing lo leen desde ahí.
+
+**El Club es la excepción y conviene tenerlo claro.** Desde el 06/08/2026 no se cobra por `products.js` ni por `crear-preferencia.js`: esa ruta generaba un pago de un mes suelto, sin renovación ni acceso automático. Ahora la sección `#club` de la landing y el mail de bienvenida del Club linkean directo a dos suscripciones mensuales reales:
+
+| Moneda | Plataforma | Link | Acceso |
+|---|---|---|---|
+| USD 10/mes | Whop | `https://whop.com/checkout/plan_5cUpzEWpFAjF7` | Automático |
+| $15.000 ARS/mes | MercadoPago | `https://mpago.la/1U4znwx` | **Manual**: la persona manda comprobante y número por WhatsApp y Guido la suma |
+
+La entrada `club` de `products.js` sigue existiendo porque el webhook la necesita para los pagos únicos viejos (hay uno del 06/08/2026). Para cambiar precios del Club hay que editar los dos links **y** los textos de la landing y de `suscribir.js`, no `products.js`.
 
 ---
 
@@ -102,6 +111,7 @@ Para agregar o modificar un producto: editar `api/products.js`. El webhook y la 
 - Manda un mail a `guidosustento.nutri@gmail.com` por cada venta aprobada, con producto, comprador, monto, medio de pago e ID
 - Si el producto no es descargable (el Club), el mail recuerda las dos cosas que hay que hacer a mano: dar el acceso y anotar que el cobro por MercadoPago o PayPal es de un mes solo
 - Si el aviso falla no corta la entrega del producto: solo queda el error en los logs de Vercel
+- ⚠️ **Qué NO avisa:** solo se dispara desde el webhook de MercadoPago (`type: payment`) y desde la captura de PayPal. Las suscripciones al Club por **Whop** y por el **link de suscripción de MercadoPago** no pasan por acá, así que no generan aviso. De esas Guido se entera por Whop y por el comprobante que le mandan por WhatsApp. Para automatizarlas hacen falta el webhook de Whop y manejar el evento `subscription_authorized_payment` de MP (que además exige configurar la URL de notificación en el plan)
 
 **`/api/baja`** — Baja de la lista de mails
 - `GET` con `?email=` cuando la persona hace clic en el pie del mail (devuelve una página de confirmación); `POST` para el botón nativo de Gmail
