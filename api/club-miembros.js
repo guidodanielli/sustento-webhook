@@ -1,12 +1,14 @@
 // Devuelve la cantidad de miembros del Club Sustento para el banner de urgencia.
 //
-// Cuenta las compras del Club registradas en Supabase (las que entran por
-// MercadoPago vía el webhook). Los miembros que entran por Whop o manualmente
-// NO están en Supabase todavía, así que se suman con BASE_MIEMBROS.
+// Cuenta los miembros del Club registrados en Supabase, contando personas y no
+// pagos: una suscripción mensual deja una fila por mes, así que se deduplica
+// por mail. Sin eso, un solo miembro de seis meses figuraría como seis.
 //
-// 👉 GUIDO: actualizá BASE_MIEMBROS con los miembros que entraron por Whop o a
-//    mano (los que no pasan por MercadoPago). Las compras MP se suman solas.
-//    Cuando montemos el webhook de Whop, esto pasa a ser 100% automático.
+// BASE_MIEMBROS son los que entraron ANTES de que existieran los webhooks de
+// Whop y de las suscripciones de MercadoPago, que no dejaron rastro en Supabase.
+//
+// 👉 GUIDO: este número es histórico y ya no hay que tocarlo. Los miembros
+//    nuevos, entren por donde entren, se suman solos.
 const BASE_MIEMBROS = 12;
 
 const ALLOWED_ORIGINS = [
@@ -25,26 +27,29 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   try {
-    // HEAD con Prefer: count=exact devuelve el total en el header content-range.
+    // Se traen los mails en vez de pedir un count: PostgREST no cuenta valores
+    // distintos, y el volumen es de decenas de filas.
     const response = await fetch(
-      `${process.env.SUPABASE_URL}/rest/v1/purchases?product_id=eq.club&select=id`,
+      `${process.env.SUPABASE_URL}/rest/v1/purchases?product_id=eq.club&status=eq.approved&select=buyer_email`,
       {
         method: 'GET',
         headers: {
           'apikey': process.env.SUPABASE_SERVICE_KEY,
-          'Authorization': `Bearer ${process.env.SUPABASE_SERVICE_KEY}`,
-          'Prefer': 'count=exact',
-          'Range': '0-0'
+          'Authorization': `Bearer ${process.env.SUPABASE_SERVICE_KEY}`
         }
       }
     );
 
-    // content-range: "0-0/<total>"  ó  "*/<total>"
-    const contentRange = response.headers.get('content-range') || '';
-    const total = parseInt(contentRange.split('/').pop(), 10);
-    const comprasMP = Number.isFinite(total) ? total : 0;
+    if (!response.ok) throw new Error(`Supabase ${response.status}`);
 
-    return res.status(200).json({ count: BASE_MIEMBROS + comprasMP });
+    const filas = await response.json();
+    const personas = new Set(
+      (Array.isArray(filas) ? filas : [])
+        .map((fila) => fila.buyer_email?.trim().toLowerCase())
+        .filter(Boolean)
+    );
+
+    return res.status(200).json({ count: BASE_MIEMBROS + personas.size });
   } catch (error) {
     console.error('club-miembros error:', error);
     // Si falla, el front usa el número del HTML como fallback.

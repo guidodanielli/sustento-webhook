@@ -1,6 +1,7 @@
 import { Resend } from 'resend';
 import { PRODUCTS } from './products.js';
 import { notificarVenta } from './notificar-venta.js';
+import { registrarCompra, yaCompro } from './registrar-compra.js';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -11,32 +12,19 @@ async function getPaymentDetails(paymentId) {
   return response.json();
 }
 
-async function logPurchase({ productId, productName, buyerEmail, buyerName, amount, currency, paymentMethod, paymentId }) {
-  try {
-    await fetch(`${process.env.SUPABASE_URL}/rest/v1/purchases`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.SUPABASE_SERVICE_KEY}`,
-        'apikey': process.env.SUPABASE_SERVICE_KEY,
-        'Prefer': 'return=minimal'
-      },
-      body: JSON.stringify({
-        product_id: productId,
-        product_name: productName,
-        buyer_email: buyerEmail,
-        buyer_name: buyerName || null,
-        amount,
-        currency,
-        payment_method: paymentMethod,
-        payment_id: paymentId,
-        status: 'approved'
-      })
-    });
-  } catch (err) {
-    // No cortar la entrega del producto si falla el log
-    console.error('Supabase log error:', err);
-  }
+/**
+ * Trae la factura de una suscripción (el "authorized payment").
+ *
+ * El payload de una suscripción no trae el ID del pago real: trae el de la
+ * factura, que a su vez apunta al pago en `payment.id`. Recién con ese ID se
+ * puede pedir el pago normal, que es el único que trae el mail del pagador.
+ */
+async function getAuthorizedPayment(authorizedPaymentId) {
+  const response = await fetch(
+    `https://api.mercadopago.com/authorized_payments/${authorizedPaymentId}`,
+    { headers: { 'Authorization': `Bearer ${process.env.MP_ACCESS_TOKEN}` } }
+  );
+  return response.json();
 }
 
 function buildClubEmail({ buyerName }) {
@@ -110,14 +98,33 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { type, data } = req.body;
+    // MercadoPago manda el tema en `type` o en `topic` según el origen.
+    const { data } = req.body;
+    const type = req.body.type || req.body.topic;
 
-    if (type !== 'payment') {
+    const esSuscripcion = type === 'subscription_authorized_payment';
+
+    if (type !== 'payment' && !esSuscripcion) {
       return res.status(200).json({ received: true });
     }
 
-    const paymentId = data?.id;
-    if (!paymentId) return res.status(400).json({ error: 'No payment ID' });
+    const eventId = data?.id;
+    if (!eventId) return res.status(400).json({ error: 'No payment ID' });
+
+    // Las suscripciones del Club llegan como factura: hay que dar un salto más
+    // para llegar al pago real, que es el que trae el mail del pagador.
+    let paymentId = eventId;
+    let facturaSuscripcion = null;
+
+    if (esSuscripcion) {
+      facturaSuscripcion = await getAuthorizedPayment(eventId);
+      paymentId = facturaSuscripcion?.payment?.id;
+
+      if (!paymentId) {
+        console.error('Suscripción MP sin payment.id:', JSON.stringify(facturaSuscripcion));
+        return res.status(200).json({ received: true, warning: 'sin payment id' });
+      }
+    }
 
     const payment = await getPaymentDetails(paymentId);
 
@@ -127,7 +134,11 @@ export default async function handler(req, res) {
 
     const buyerEmail = payment.payer?.email;
     const buyerName = payment.payer?.first_name;
-    const productId = payment.external_reference || 'recetario';
+    // El único plan de suscripción que tiene Guido en MP es el del Club, así
+    // que una factura de suscripción es siempre el Club.
+    const productId = esSuscripcion
+      ? 'club'
+      : (payment.external_reference || 'recetario');
     const product = PRODUCTS[productId] || PRODUCTS['recetario'];
 
     if (!buyerEmail) return res.status(400).json({ error: 'No buyer email' });
@@ -135,26 +146,34 @@ export default async function handler(req, res) {
     // El Club es una suscripción (sin archivo para descargar): mail de bienvenida.
     // El resto son productos digitales descargables: mail con el link.
     const esDescargable = Boolean(product.driveUrl);
+
+    // Si ya compró este producto antes, esto es la renovación mensual: no
+    // corresponde darle la bienvenida de nuevo ni pedirle que espere el acceso.
+    const esRenovacion = esSuscripcion && await yaCompro({ buyerEmail, productId: product.id });
+
     const emailContent = esDescargable
       ? { subject: `¡Acá está tu ${product.name}! 🌿`, html: buildEmail({ buyerName, product }) }
       : { subject: `¡Bienvenido/a al Club Sustento! 🌿`, html: buildClubEmail({ buyerName }) };
 
     await Promise.all([
-      resend.emails.send({
-        from: `Guido Sustento <${process.env.RESEND_FROM_EMAIL}>`,
-        reply_to: 'guidosustento.nutri@gmail.com',
-        to: buyerEmail,
-        subject: emailContent.subject,
-        html: emailContent.html
-      }),
-      logPurchase({
+      // En una renovación el comprador no recibe nada: ya está adentro.
+      esRenovacion
+        ? Promise.resolve()
+        : resend.emails.send({
+            from: `Guido Sustento <${process.env.RESEND_FROM_EMAIL}>`,
+            reply_to: 'guidosustento.nutri@gmail.com',
+            to: buyerEmail,
+            subject: emailContent.subject,
+            html: emailContent.html
+          }),
+      registrarCompra({
         productId: product.id,
         productName: product.name,
         buyerEmail,
         buyerName,
         amount: payment.transaction_amount,
         currency: payment.currency_id,
-        paymentMethod: 'mercadopago',
+        paymentMethod: esSuscripcion ? 'mercadopago-suscripcion' : 'mercadopago',
         paymentId: String(paymentId)
       }),
       notificarVenta({
@@ -164,7 +183,9 @@ export default async function handler(req, res) {
         amount: payment.transaction_amount,
         currency: payment.currency_id,
         paymentMethod: 'MercadoPago',
-        paymentId: String(paymentId)
+        paymentId: String(paymentId),
+        recurrente: esSuscripcion,
+        renovacion: esRenovacion
       })
     ]);
 

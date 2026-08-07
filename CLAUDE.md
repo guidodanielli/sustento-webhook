@@ -1,5 +1,5 @@
 ---
-Última actualización: 06/08/2026
+Última actualización: 07/08/2026
 ---
 
 # CLAUDE.md — Landing Page
@@ -50,9 +50,11 @@ Landing Page/
     ├── api/                     ← funciones serverless
     │   ├── products.js          ← catálogo de productos (precios y links)
     │   ├── crear-preferencia.js ← crea preferencia de pago en MercadoPago
-    │   ├── webhook.js           ← recibe notificación → envía email → loguea compra
+    │   ├── webhook.js           ← MercadoPago: pagos únicos y suscripciones del Club
+    │   ├── whop-webhook.js      ← Whop: cobros y bajas del Club
     │   ├── suscribir.js         ← suscribe email a la lista → manda bienvenida
-    │   ├── notificar-venta.js   ← avisa a Guido por mail cuando entra una venta
+    │   ├── notificar-venta.js   ← avisa a Guido por mail: ventas y bajas
+    │   ├── registrar-compra.js  ← deja la compra en Supabase (lo usan los 3 cobros)
     │   ├── baja.js              ← baja de la lista de mails (link del pie)
     │   ├── club-miembros.js     ← devuelve el count de miembros del Club
     │   ├── paypal-create-order.js
@@ -111,16 +113,29 @@ La entrada `club` de `products.js` sigue existiendo porque el webhook la necesit
 - Manda un mail a `guidosustento.nutri@gmail.com` por cada venta aprobada, con producto, comprador, monto, medio de pago e ID
 - Si el producto no es descargable (el Club), el mail recuerda las dos cosas que hay que hacer a mano: dar el acceso y anotar que el cobro por MercadoPago o PayPal es de un mes solo
 - Si el aviso falla no corta la entrega del producto: solo queda el error en los logs de Vercel
-- ⚠️ **Qué NO avisa:** solo se dispara desde el webhook de MercadoPago (`type: payment`) y desde la captura de PayPal. Las suscripciones al Club por **Whop** y por el **link de suscripción de MercadoPago** no pasan por acá, así que no generan aviso. De esas Guido se entera por Whop y por el comprobante que le mandan por WhatsApp. Para automatizarlas hacen falta el webhook de Whop y manejar el evento `subscription_authorized_payment` de MP (que además exige configurar la URL de notificación en el plan)
+- Distingue **alta** de **renovación**: en una renovación el comprador no recibe nada (ya está adentro) y el aviso a Guido cambia de asunto. Ni MercadoPago ni Whop exponen un campo confiable para esto, así que se resuelve preguntándole a Supabase si esa persona ya compró el producto (`yaCompro()` en `registrar-compra.js`)
+- También manda el **aviso de baja** (`notificarBaja()`) cuando alguien cancela en Whop. Antes una cancelación no llegaba a ningún lado
+
+**`/api/whop-webhook`** — Suscripciones del Club por Whop (desde el 07/08/2026)
+- Verifica la firma con el esquema **Standard Webhooks**: headers `webhook-id`, `webhook-timestamp` y `webhook-signature`, HMAC-SHA256 sobre `"{id}.{timestamp}.{body}"` con el secret en base64. Rechaza con 401 la firma inválida, el body alterado y los eventos de más de 5 minutos
+- Necesita el body **sin parsear** (`bodyParser: false`), porque la firma se calcula sobre el texto crudo
+- Eventos: `payment.succeeded` (registra la plata y avisa), `membership.deactivated` (avisa la baja), `membership.activated` (solo log: la plata la reporta el evento de pago, duplicar acá inflaría el conteo)
+- ⚠️ **Sin configurar todavía.** Falta que Guido cree el webhook en el dashboard de Whop apuntando a `https://sustento-webhook.vercel.app/api/whop-webhook` y cargue `WHOP_WEBHOOK_SECRET` en Vercel. Hasta entonces el endpoint existe pero no lo llama nadie
+- ⚠️ Los nombres de los campos del payload de Whop están tomados de la documentación, no de un evento real. Si el primer cobro real llega con el mail en `null`, el body crudo queda en los logs de Vercel para ajustarlo
+
+**Suscripciones de MercadoPago en `webhook.js`**
+- El evento es `subscription_authorized_payment` y su `data.id` **no es el ID del pago**: es el de la factura. Hay que pedir `/authorized_payments/{id}`, sacar `payment.id` de ahí y recién entonces pedir el pago normal, que es el único que trae el mail del pagador
+- Toda factura de suscripción se asume del Club: es el único plan recurrente que existe
+- ⚠️ **Sin configurar todavía.** Falta que Guido apunte la URL de notificación del plan de suscripción a `https://sustento-webhook.vercel.app/api/webhook`. Sin eso MP no avisa nada y no hay código que lo arregle
 
 **`/api/baja`** — Baja de la lista de mails
 - `GET` con `?email=` cuando la persona hace clic en el pie del mail (devuelve una página de confirmación); `POST` para el botón nativo de Gmail
 - No borra la fila: le pone el tag `baja` en `subscribers`. **Cualquier envío masivo futuro tiene que filtrar por ese tag**
 
 **`/api/club-miembros`** — Banner de urgencia en la landing
-- Suma `BASE_MIEMBROS` (hardcodeado) + compras del Club en Supabase
-- `BASE_MIEMBROS` hay que actualizarlo a mano cuando entran miembros por Whop o manualmente (los que no pasan por MercadoPago)
-- Cuando se integre el webhook de Whop, esto pasa a ser 100% automático
+- Suma `BASE_MIEMBROS` + los miembros del Club registrados en Supabase
+- Cuenta **personas, no pagos**: deduplica por mail, porque una suscripción mensual deja una fila por mes y sin eso un miembro de seis meses figuraría como seis
+- `BASE_MIEMBROS` (12) son los que entraron antes de que existieran los webhooks. Es un número histórico: **ya no hay que tocarlo**, los nuevos se suman solos
 
 ---
 
@@ -164,6 +179,7 @@ Todas las credenciales viven en el panel de Vercel, nunca en el código.
 | `SUPABASE_SERVICE_KEY` | Clave de servicio de Supabase |
 | `PAYPAL_CLIENT_ID` | API de PayPal |
 | `PAYPAL_CLIENT_SECRET` | API de PayPal |
+| `WHOP_WEBHOOK_SECRET` | Firma del webhook de Whop — ⚠️ **falta cargarla** |
 
 ---
 

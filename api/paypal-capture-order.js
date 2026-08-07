@@ -1,6 +1,7 @@
 import { Resend } from 'resend';
 import { PRODUCTS } from './products.js';
 import { notificarVenta } from './notificar-venta.js';
+import { registrarCompra } from './registrar-compra.js';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -28,33 +29,6 @@ async function getPayPalToken() {
   });
   const data = await res.json();
   return data.access_token;
-}
-
-async function logPurchase({ productId, productName, buyerEmail, buyerName, amount, currency, paymentId }) {
-  try {
-    await fetch(`${process.env.SUPABASE_URL}/rest/v1/purchases`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.SUPABASE_SERVICE_KEY}`,
-        'apikey': process.env.SUPABASE_SERVICE_KEY,
-        'Prefer': 'return=minimal'
-      },
-      body: JSON.stringify({
-        product_id: productId,
-        product_name: productName,
-        buyer_email: buyerEmail,
-        buyer_name: buyerName || null,
-        amount,
-        currency,
-        payment_method: 'paypal',
-        payment_id: paymentId,
-        status: 'approved'
-      })
-    });
-  } catch (err) {
-    console.error('Supabase log error:', err);
-  }
 }
 
 function buildEmail({ buyerName, product }) {
@@ -141,13 +115,14 @@ export default async function handler(req, res) {
         subject: `¡Acá está tu ${product.name}! 🌿`,
         html: buildEmail({ buyerName, product })
       }),
-      logPurchase({
+      registrarCompra({
         productId: product.id,
         productName: product.name,
         buyerEmail,
         buyerName,
         amount,
         currency: 'USD',
+        paymentMethod: 'paypal',
         paymentId: orderID
       }),
       notificarVenta({

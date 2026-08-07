@@ -1,0 +1,12 @@
+# Dependencias: Vercel las instala solo en cada deploy.
+node_modules/
+
+# Credenciales: viven en el panel de Vercel, nunca en el repo.
+.env
+.env.*
+
+# Basura del sistema y del editor
+.DS_Store
+Thumbs.db
+.vercel/
+.claude/
