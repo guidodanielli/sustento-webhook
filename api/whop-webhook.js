@@ -7,12 +7,37 @@ import { registrarCompra } from './registrar-compra.js';
 const TOLERANCIA_SEGUNDOS = 5 * 60;
 
 /**
+ * Arma las claves candidatas a partir del secret.
+ *
+ * 🔴 Acá estaba el bug que tuvo el webhook diez días en 401: **el secret de
+ * Whop empieza con `ws_`**, y esta función solo sacaba el prefijo `whsec_`,
+ * que es el de otras plataformas. Con un secret `ws_...` el prefijo quedaba
+ * adentro de la clave, y además el guion bajo no es un carácter válido en
+ * base64, así que `Buffer.from(secret, 'base64')` devolvía bytes cualquiera.
+ * La firma no podía coincidir nunca.
+ *
+ * La documentación de Whop dice que la clave es el secret `ws_...` y que el
+ * verificador espera base64, pero no muestra el código exacto. Para no volver
+ * a comerse otra ronda de prueba y error se prueban las variantes razonables
+ * y se loguea cuál funcionó. Cuando esté confirmada, dejar solo esa.
+ */
+function clavesCandidatas(secret) {
+  const sinPrefijo = secret.replace(/^(ws_|whsec_)/, '');
+  return [
+    { nombre: 'base64 sin prefijo', clave: Buffer.from(sinPrefijo, 'base64') },
+    { nombre: 'utf8 sin prefijo', clave: Buffer.from(sinPrefijo, 'utf8') },
+    { nombre: 'base64 con prefijo', clave: Buffer.from(secret, 'base64') },
+    { nombre: 'utf8 con prefijo', clave: Buffer.from(secret, 'utf8') }
+  ];
+}
+
+/**
  * Verifica la firma con el esquema Standard Webhooks que usa Whop.
  *
  * Los headers son `webhook-id`, `webhook-timestamp` y `webhook-signature`.
- * Se firma la cadena "{id}.{timestamp}.{body}" con HMAC-SHA256 usando el
- * secret en base64, y la firma viaja como "v1,<base64>" (puede haber varias
- * separadas por espacio durante una rotación de secret).
+ * Se firma la cadena "{id}.{timestamp}.{body}" con HMAC-SHA256, y la firma
+ * viaja como "v1,<base64>" (puede haber varias separadas por espacio durante
+ * una rotación de secret).
  *
  * Devuelve el motivo del rechazo además del booleano: sin eso, un 401 no
  * distingue "llegó mal el cuerpo" de "el secret no es el que firma".
@@ -37,36 +62,35 @@ function verificarFirma(headers, bodyCrudo, secret) {
     };
   }
 
-  // El secret de Whop viene con el prefijo "whsec_" y el resto es base64.
-  const secretLimpio = secret.startsWith('whsec_') ? secret.slice(6) : secret;
-  const esperada = crypto
-    .createHmac('sha256', Buffer.from(secretLimpio, 'base64'))
-    .update(`${id}.${timestamp}.${bodyCrudo}`)
-    .digest('base64');
-
   const recibidas = String(header)
     .split(' ')
     .map((parte) => parte.split(',')[1])
     .filter(Boolean);
 
-  const esperadaBuf = Buffer.from(esperada);
-  const coincide = recibidas.some((recibida) => {
-    const recibidaBuf = Buffer.from(recibida);
-    // timingSafeEqual explota si los largos difieren: hay que chequearlo antes.
-    return recibidaBuf.length === esperadaBuf.length &&
-      crypto.timingSafeEqual(recibidaBuf, esperadaBuf);
-  });
+  const firmado = `${id}.${timestamp}.${bodyCrudo}`;
+  const esperadas = [];
 
-  if (!coincide) {
-    // Solo los primeros caracteres de cada firma. Son salidas de HMAC, no el
-    // secret, así que no se filtra nada y alcanza para comparar a ojo.
-    return {
-      ok: false,
-      motivo: `firma distinta (cuerpo de ${bodyCrudo.length} bytes; esperaba ${esperada.slice(0, 10)}…, llegó ${recibidas.map((r) => r.slice(0, 10)).join(' / ')}…)`
-    };
+  for (const { nombre, clave } of clavesCandidatas(secret)) {
+    const esperada = crypto.createHmac('sha256', clave).update(firmado).digest('base64');
+    esperadas.push(`${nombre}=${esperada.slice(0, 10)}…`);
+
+    const esperadaBuf = Buffer.from(esperada);
+    const coincide = recibidas.some((recibida) => {
+      const recibidaBuf = Buffer.from(recibida);
+      // timingSafeEqual explota si los largos difieren: hay que chequearlo antes.
+      return recibidaBuf.length === esperadaBuf.length &&
+        crypto.timingSafeEqual(recibidaBuf, esperadaBuf);
+    });
+
+    if (coincide) return { ok: true, variante: nombre };
   }
 
-  return { ok: true };
+  // Solo los primeros caracteres de cada firma. Son salidas de HMAC, no el
+  // secret, así que no se filtra nada y alcanza para comparar a ojo.
+  return {
+    ok: false,
+    motivo: `ninguna variante coincide (cuerpo de ${bodyCrudo.length} bytes; llegó ${recibidas.map((r) => r.slice(0, 10)).join(' / ')}…; probé ${esperadas.join(' ')})`
+  };
 }
 
 /**
@@ -132,6 +156,7 @@ export default {
         console.error('Whop webhook rechazado:', firma.motivo);
         return Response.json({ error: 'Firma inválida' }, { status: 401 });
       }
+      console.log('Whop webhook: firma válida con la variante', firma.variante);
 
       const payload = JSON.parse(bodyCrudo);
       // Whop cambió el nombre de este campo entre versiones de la API.
