@@ -3,20 +3,8 @@ import { PRODUCTS } from './products.js';
 import { notificarVenta, notificarBaja } from './notificar-venta.js';
 import { registrarCompra } from './registrar-compra.js';
 
-// Whop manda el body firmado: hay que leerlo crudo, sin que Vercel lo parsee.
-export const config = { api: { bodyParser: false } };
-
 // Tolerancia del timestamp, para que no sirva reenviar un webhook viejo.
 const TOLERANCIA_SEGUNDOS = 5 * 60;
-
-function leerBodyCrudo(req) {
-  return new Promise((resolve, reject) => {
-    let data = '';
-    req.on('data', (chunk) => { data += chunk; });
-    req.on('end', () => resolve(data));
-    req.on('error', reject);
-  });
-}
 
 /**
  * Verifica la firma con el esquema Standard Webhooks que usa Whop.
@@ -25,18 +13,28 @@ function leerBodyCrudo(req) {
  * Se firma la cadena "{id}.{timestamp}.{body}" con HMAC-SHA256 usando el
  * secret en base64, y la firma viaja como "v1,<base64>" (puede haber varias
  * separadas por espacio durante una rotación de secret).
+ *
+ * Devuelve el motivo del rechazo además del booleano: sin eso, un 401 no
+ * distingue "llegó mal el cuerpo" de "el secret no es el que firma".
  */
-function firmaValida(req, bodyCrudo, secret) {
-  const id = req.headers['webhook-id'];
-  const timestamp = req.headers['webhook-timestamp'];
-  const header = req.headers['webhook-signature'];
+function verificarFirma(headers, bodyCrudo, secret) {
+  const id = headers.get('webhook-id');
+  const timestamp = headers.get('webhook-timestamp');
+  const header = headers.get('webhook-signature');
 
-  if (!id || !timestamp || !header) return false;
+  if (!id || !timestamp || !header) {
+    return {
+      ok: false,
+      motivo: `faltan headers (id=${Boolean(id)} timestamp=${Boolean(timestamp)} firma=${Boolean(header)})`
+    };
+  }
 
   const ahora = Math.floor(Date.now() / 1000);
   if (Math.abs(ahora - Number(timestamp)) > TOLERANCIA_SEGUNDOS) {
-    console.error('Whop webhook: timestamp fuera de tolerancia');
-    return false;
+    return {
+      ok: false,
+      motivo: `timestamp fuera de tolerancia (llegó ${timestamp}, acá son las ${ahora})`
+    };
   }
 
   // El secret de Whop viene con el prefijo "whsec_" y el resto es base64.
@@ -46,18 +44,29 @@ function firmaValida(req, bodyCrudo, secret) {
     .update(`${id}.${timestamp}.${bodyCrudo}`)
     .digest('base64');
 
-  const esperadaBuf = Buffer.from(esperada);
-
-  return String(header)
+  const recibidas = String(header)
     .split(' ')
     .map((parte) => parte.split(',')[1])
-    .filter(Boolean)
-    .some((recibida) => {
-      const recibidaBuf = Buffer.from(recibida);
-      // timingSafeEqual explota si los largos difieren: hay que chequearlo antes.
-      return recibidaBuf.length === esperadaBuf.length &&
-        crypto.timingSafeEqual(recibidaBuf, esperadaBuf);
-    });
+    .filter(Boolean);
+
+  const esperadaBuf = Buffer.from(esperada);
+  const coincide = recibidas.some((recibida) => {
+    const recibidaBuf = Buffer.from(recibida);
+    // timingSafeEqual explota si los largos difieren: hay que chequearlo antes.
+    return recibidaBuf.length === esperadaBuf.length &&
+      crypto.timingSafeEqual(recibidaBuf, esperadaBuf);
+  });
+
+  if (!coincide) {
+    // Solo los primeros caracteres de cada firma. Son salidas de HMAC, no el
+    // secret, así que no se filtra nada y alcanza para comparar a ojo.
+    return {
+      ok: false,
+      motivo: `firma distinta (cuerpo de ${bodyCrudo.length} bytes; esperaba ${esperada.slice(0, 10)}…, llegó ${recibidas.map((r) => r.slice(0, 10)).join(' / ')}…)`
+    };
+  }
+
+  return { ok: true };
 }
 
 /**
@@ -96,101 +105,112 @@ function extraerDatos(data = {}) {
   return { email, nombre, monto, moneda };
 }
 
-export default async function handler(req, res) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
-
-  const secret = process.env.WHOP_WEBHOOK_SECRET;
-  if (!secret) {
-    console.error('Whop webhook: falta WHOP_WEBHOOK_SECRET en Vercel');
-    return res.status(500).json({ error: 'Webhook mal configurado' });
-  }
-
-  try {
-    const bodyCrudo = await leerBodyCrudo(req);
-
-    if (!firmaValida(req, bodyCrudo, secret)) {
-      return res.status(401).json({ error: 'Firma inválida' });
+/**
+ * Firma Web estándar, no la de Node con (req, res).
+ *
+ * Es a propósito: para verificar la firma hace falta el cuerpo crudo, tal cual
+ * lo mandó Whop, y en las funciones de Vercel con firma de Node el cuerpo llega
+ * ya parseado. `request.text()` devuelve los bytes exactos.
+ */
+export default {
+  async fetch(request) {
+    if (request.method !== 'POST') {
+      return Response.json({ error: 'Method not allowed' }, { status: 405 });
     }
 
-    const payload = JSON.parse(bodyCrudo);
-    // Whop cambió el nombre de este campo entre versiones de la API.
-    const evento = payload.action || payload.type || payload.event;
-    const data = payload.data || {};
+    const secret = process.env.WHOP_WEBHOOK_SECRET;
+    if (!secret) {
+      console.error('Whop webhook: falta WHOP_WEBHOOK_SECRET en Vercel');
+      return Response.json({ error: 'Webhook mal configurado' }, { status: 500 });
+    }
 
-    const { email, nombre, monto, moneda } = extraerDatos(data);
-    const product = PRODUCTS.club;
+    try {
+      const bodyCrudo = await request.text();
 
-    switch (evento) {
-      // Cobro exitoso: el alta y cada renovación mensual.
-      case 'payment.succeeded':
-      case 'payment_succeeded': {
-        if (!email) {
-          console.error('Whop payment.succeeded sin email:', bodyCrudo);
-          return res.status(200).json({ received: true, warning: 'sin email' });
+      const firma = verificarFirma(request.headers, bodyCrudo, secret);
+      if (!firma.ok) {
+        console.error('Whop webhook rechazado:', firma.motivo);
+        return Response.json({ error: 'Firma inválida' }, { status: 401 });
+      }
+
+      const payload = JSON.parse(bodyCrudo);
+      // Whop cambió el nombre de este campo entre versiones de la API.
+      const evento = payload.action || payload.type || payload.event;
+      const data = payload.data || {};
+
+      const { email, nombre, monto, moneda } = extraerDatos(data);
+      const product = PRODUCTS.club;
+
+      switch (evento) {
+        // Cobro exitoso: el alta y cada renovación mensual.
+        case 'payment.succeeded':
+        case 'payment_succeeded': {
+          if (!email) {
+            console.error('Whop payment.succeeded sin email:', bodyCrudo);
+            return Response.json({ received: true, warning: 'sin email' });
+          }
+
+          // Whop marca la primera factura de la suscripción. Si el campo no
+          // viene, se asume alta: es el caso que necesita atención de Guido.
+          const renovacion = data.billing_reason
+            ? data.billing_reason !== 'subscription_create'
+            : Boolean(data.renewal_period_start);
+
+          await Promise.all([
+            registrarCompra({
+              productId: product.id,
+              productName: product.name,
+              buyerEmail: email,
+              buyerName: nombre,
+              amount: monto,
+              currency: moneda,
+              paymentMethod: 'whop',
+              paymentId: String(data.id || request.headers.get('webhook-id'))
+            }),
+            notificarVenta({
+              product,
+              buyerEmail: email,
+              buyerName: nombre,
+              amount: monto,
+              currency: moneda,
+              paymentMethod: 'Whop',
+              paymentId: String(data.id || request.headers.get('webhook-id')),
+              recurrente: true,
+              accesoAutomatico: true,
+              renovacion
+            })
+          ]);
+          break;
         }
 
-        // Whop marca la primera factura de la suscripción. Si el campo no
-        // viene, se asume alta: es el caso que necesita atención de Guido.
-        const renovacion = data.billing_reason
-          ? data.billing_reason !== 'subscription_create'
-          : Boolean(data.renewal_period_start);
-
-        await Promise.all([
-          registrarCompra({
-            productId: product.id,
-            productName: product.name,
+        // Se cayó del Club: canceló, falló el cobro o se fue.
+        case 'membership.deactivated':
+        case 'membership_went_invalid': {
+          await notificarBaja({
             buyerEmail: email,
             buyerName: nombre,
-            amount: monto,
-            currency: moneda,
-            paymentMethod: 'whop',
-            paymentId: String(data.id || req.headers['webhook-id'])
-          }),
-          notificarVenta({
-            product,
-            buyerEmail: email,
-            buyerName: nombre,
-            amount: monto,
-            currency: moneda,
-            paymentMethod: 'Whop',
-            paymentId: String(data.id || req.headers['webhook-id']),
-            recurrente: true,
-            accesoAutomatico: true,
-            renovacion
-          })
-        ]);
-        break;
+            motivo: data.cancel_reason || data.status_reason || null,
+            plataforma: 'Whop'
+          });
+          break;
+        }
+
+        // El alta de la membresía no genera cobro propio: la plata la reporta
+        // payment.succeeded. Se deja en el log y no se duplica el aviso.
+        case 'membership.activated':
+        case 'membership_went_valid':
+          console.log('Whop: membresía activada para', email || 'sin email');
+          break;
+
+        default:
+          console.log('Whop: evento sin manejar:', evento);
       }
 
-      // Se cayó del Club: canceló, falló el cobro o se fue.
-      case 'membership.deactivated':
-      case 'membership_went_invalid': {
-        await notificarBaja({
-          buyerEmail: email,
-          buyerName: nombre,
-          motivo: data.cancel_reason || data.status_reason || null,
-          plataforma: 'Whop'
-        });
-        break;
-      }
+      return Response.json({ received: true });
 
-      // El alta de la membresía no genera cobro propio: la plata la reporta
-      // payment.succeeded. Se deja en el log y no se duplica el aviso.
-      case 'membership.activated':
-      case 'membership_went_valid':
-        console.log('Whop: membresía activada para', email || 'sin email');
-        break;
-
-      default:
-        console.log('Whop: evento sin manejar:', evento);
+    } catch (error) {
+      console.error('Whop webhook error:', error);
+      return Response.json({ error: 'Internal server error' }, { status: 500 });
     }
-
-    return res.status(200).json({ received: true });
-
-  } catch (error) {
-    console.error('Whop webhook error:', error);
-    return res.status(500).json({ error: 'Internal server error' });
   }
-}
+};
