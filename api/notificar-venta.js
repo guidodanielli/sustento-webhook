@@ -170,7 +170,7 @@ const ETIQUETA_SOURCE = {
  * Igual que notificarVenta, nunca tira error hacia afuera: si el aviso falla,
  * la persona igual quedó suscripta y su mail de bienvenida ya salió.
  */
-export async function notificarSuscriptor({ email, name, source, total = null }) {
+export async function notificarSuscriptor({ email, name, source, motivo = '', origen = '', total = null }) {
   try {
     const etiqueta = ETIQUETA_SOURCE[source] || source || 'sin origen';
 
@@ -189,9 +189,15 @@ export async function notificarSuscriptor({ email, name, source, total = null })
             <table style="width: 100%; border-collapse: collapse; margin-bottom: 28px;">
               ${fila('Persona', name ? `${name} (${email})` : email)}
               ${fila('Por dónde entró', etiqueta)}
+              ${origen ? fila('De dónde vino', origen) : ''}
               ${fila('Fecha', fechaArgentina())}
               ${total ? fila('Total en la lista', `${total} suscriptores`) : ''}
             </table>
+            ${motivo ? `
+            <div style="background: #fff; border-left: 3px solid #7a3b12; padding: 16px 20px; margin: 0 0 16px 0;">
+              <p style="font-family: Arial, sans-serif; font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; color: #888; margin: 0 0 8px 0;">Qué la trajo, en sus palabras</p>
+              <p style="font-size: 1rem; line-height: 1.7; color: #111; margin: 0; font-style: italic;">“${motivo}”</p>
+            </div>` : ''}
             <div style="background: #fff; border-left: 3px solid #2d6a5a; padding: 16px 20px;">
               <p style="font-size: 0.95rem; line-height: 1.7; color: #444; margin: 0;">
                 El mail de bienvenida que le corresponde a <strong>${etiqueta}</strong> ya le salió automáticamente. No tenés que hacer nada. Si querés escribirle, respondé este mail y le llega directo.

@@ -3,27 +3,44 @@ import { notificarSuscriptor } from './notificar-venta.js';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-async function agregarASupabase({ email, name, source, tags }) {
-  const SUPABASE_URL = process.env.SUPABASE_URL;
-  const SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
-
-  const response = await fetch(`${SUPABASE_URL}/rest/v1/subscribers`, {
+async function insertarFila(fila) {
+  return fetch(`${process.env.SUPABASE_URL}/rest/v1/subscribers`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'apikey': SERVICE_KEY,
-      'Authorization': `Bearer ${SERVICE_KEY}`,
+      'apikey': process.env.SUPABASE_SERVICE_KEY,
+      'Authorization': `Bearer ${process.env.SUPABASE_SERVICE_KEY}`,
       // Si el email ya existe, ignorar silenciosamente (no es un error).
       // return=representation nos deja saber si realmente se insertó una fila.
       'Prefer': 'resolution=ignore-duplicates,return=representation'
     },
-    body: JSON.stringify({
-      email,
-      name: name || '',
-      source: source || 'formulario-web',
-      tags: tags || []
-    })
+    body: JSON.stringify(fila)
   });
+}
+
+async function agregarASupabase({ email, name, source, tags, motivo, origen }) {
+  const base = {
+    email,
+    name: name || '',
+    source: source || 'formulario-web',
+    tags: tags || []
+  };
+
+  // motivo y origen viven en columnas que se agregaron después. Si el SQL de la
+  // migración todavía no corrió, Supabase rechaza la fila entera por columna
+  // desconocida. Antes que perder el alta, reintentamos sin esos dos campos:
+  // el alta importa, el dato extra no. Cuando la migración esté, no reintenta.
+  const extras = {};
+  if (motivo) extras.motivo = String(motivo).slice(0, 500);
+  if (origen) extras.origen = String(origen).slice(0, 120);
+
+  let response = await insertarFila({ ...base, ...extras });
+
+  if (!response.ok && Object.keys(extras).length > 0) {
+    const detalle = await response.text().catch(() => '');
+    console.error('Alta con columnas nuevas falló, reintento sin ellas:', response.status, detalle);
+    response = await insertarFila(base);
+  }
 
   if (!response.ok) {
     const data = await response.json().catch(() => ({}));
@@ -223,17 +240,17 @@ if (allowedOrigins.includes(origin)) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { email, name, source, tags } = req.body;
+  const { email, name, source, tags, motivo, origen } = req.body;
   if (!email) return res.status(400).json({ error: 'Email requerido' });
 
   try {
-    const { ok, isNew } = await agregarASupabase({ email, name, source, tags });
+    const { ok, isNew } = await agregarASupabase({ email, name, source, tags, motivo, origen });
     // Solo mandamos el welcome email a suscriptores nuevos (no a duplicados).
     if (ok && isNew) {
       await enviarBienvenida(email, source);
       // Y le avisamos a Guido. Va después de la bienvenida y se traga sus
       // propios errores, así que no puede romper el alta ni la respuesta.
-      await notificarSuscriptor({ email, name, source, total: await contarSuscriptores() });
+      await notificarSuscriptor({ email, name, source, motivo, origen, total: await contarSuscriptores() });
     }
     return res.status(200).json({ success: true });
   } catch (error) {

@@ -1168,7 +1168,29 @@
     const QUIZ_API = 'https://sustento-webhook.vercel.app/api/suscribir';
     const stage = document.getElementById('quizStage');
     const bar = document.getElementById('quizProgressBar');
-    let quizEmail = '';
+
+    // Lo que la persona fue eligiendo. El email se pide al final, no al principio.
+    let elegido = { q1: '', q2: '', resultado: '' };
+
+    // Eventos a Vercel Web Analytics. window.va lo define el snippet del <head>;
+    // si un bloqueador lo frena, esto no puede romper el quiz.
+    function track(name, data) {
+      try { if (window.va) window.va('event', data ? { name: name, data: data } : { name: name }); }
+      catch (e) {}
+    }
+
+    // De dónde vino la persona. Prioridad al utm_source (links de Instagram),
+    // si no el dominio que la trajo, si no "directo".
+    function origenVisita() {
+      try {
+        const p = new URLSearchParams(location.search);
+        const utm = ['utm_source', 'utm_medium', 'utm_campaign']
+          .map(function (k) { return p.get(k); }).filter(Boolean).join(' / ');
+        if (utm) return utm.slice(0, 120);
+        if (!document.referrer) return 'directo';
+        return new URL(document.referrer).hostname.slice(0, 120);
+      } catch (e) { return 'desconocido'; }
+    }
 
     const RESULTS = {
       club: {
@@ -1195,7 +1217,7 @@
 
     function setStage(html, progress) {
       stage.style.opacity = 0;
-      setTimeout(() => {
+      setTimeout(function () {
         stage.innerHTML = html;
         bar.style.width = progress + '%';
         stage.style.opacity = 1;
@@ -1206,47 +1228,33 @@
       return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
     }
 
-    // Paso 0 — captura de email
-    function renderIntro() {
-      setStage(
-        '<h3>¿Por dónde empezar tu camino con Sustento?</h3>' +
-        '<p class="quiz-sub">Respondé un par de preguntas y te digo cuál de mis espacios es el ideal para vos. Primero, dejame tu email para enviarte el resultado.</p>' +
-        '<input type="email" class="quiz-email-field" id="quizEmail" placeholder="tu@email.com" autocomplete="email">' +
-        '<p class="quiz-error" id="quizEmailError"></p>' +
-        '<button class="btn-primary" style="width:100%;justify-content:center;" id="quizStartBtn">Empezar el test</button>',
-        8
-      );
-      setTimeout(() => {
-        const input = document.getElementById('quizEmail');
-        const btn = document.getElementById('quizStartBtn');
-        const err = document.getElementById('quizEmailError');
-        function start() {
-          const val = (input.value || '').trim();
-          if (!esEmailValido(val)) {
-            err.textContent = 'Ingresá un email válido para ver tu resultado.';
-            input.focus();
-            return;
-          }
-          quizEmail = val;
-          renderQ1();
-        }
-        btn.addEventListener('click', start);
-        input.addEventListener('keydown', (e) => { if (e.key === 'Enter') start(); });
+    function bindCards(handler) {
+      setTimeout(function () {
+        stage.querySelectorAll('.quiz-card').forEach(function (card) {
+          card.addEventListener('click', function () { handler(card.getAttribute('data-go')); });
+        });
       }, 200);
     }
 
-    // Paso 1 — segmentación
+    // Paso 1 — segmentación. Antes acá se pedía el email, antes de preguntar
+    // nada y prometiendo "te envío el resultado" cuando el resultado se muestra
+    // en pantalla igual. Ahora se pregunta primero y el mail va al final.
     function renderQ1() {
+      track('quiz_inicio');
       setStage(
-        '<h3>¿Qué estás buscando?</h3>' +
-        '<p class="quiz-sub">Elegí la opción que más te representa hoy.</p>' +
+        '<h3>¿Por dónde empezar tu camino con Sustento?</h3>' +
+        '<p class="quiz-sub">Dos preguntas y te digo cuál de mis espacios es el ideal para vos.</p>' +
         '<div class="quiz-options">' +
           '<button class="quiz-card" data-go="A"><strong>Mejorar mi alimentación y cocinar mejor</strong><small>Quiero comer rico, sano y sostenible en mi día a día</small></button>' +
           '<button class="quiz-card" data-go="B"><strong>Soy profesional de la salud y busco comunidad</strong><small>Nutri u otra profesión de la salud que busca pares</small></button>' +
         '</div>',
-        36
+        25
       );
-      bindCards((go) => { if (go === 'A') renderQ2(); else renderResult('red'); });
+      bindCards(function (go) {
+        elegido.q1 = go;
+        track('quiz_p1', { opcion: go === 'A' ? 'alimentacion' : 'profesional' });
+        if (go === 'A') renderQ2(); else renderResult('red');
+      });
     }
 
     // Paso 2 — obstáculo (solo camino A)
@@ -1255,51 +1263,117 @@
         '<h3>¿Cuál es tu mayor obstáculo hoy?</h3>' +
         '<p class="quiz-sub">No hay respuesta incorrecta — esto me ayuda a recomendarte mejor.</p>' +
         '<div class="quiz-options">' +
-          '<button class="quiz-card" data-go="club"><strong>No sé por dónde empezar</strong></button>' +
-          '<button class="quiz-card" data-go="club"><strong>Empiezo pero no sostengo los cambios</strong></button>' +
-          '<button class="quiz-card" data-go="metodo"><strong>Quiero una transformación profunda y apoyo personalizado</strong></button>' +
-          '<button class="quiz-card" data-go="recetario"><strong>Quiero algo concreto para empezar ya</strong></button>' +
+          '<button class="quiz-card" data-go="club" data-et="no-se-por-donde"><strong>No sé por dónde empezar</strong></button>' +
+          '<button class="quiz-card" data-go="club" data-et="no-sostengo"><strong>Empiezo pero no sostengo los cambios</strong></button>' +
+          '<button class="quiz-card" data-go="metodo" data-et="transformacion"><strong>Quiero una transformación profunda y apoyo personalizado</strong></button>' +
+          '<button class="quiz-card" data-go="recetario" data-et="algo-concreto"><strong>Quiero algo concreto para empezar ya</strong></button>' +
         '</div>',
-        70
+        55
       );
-      bindCards((go) => renderResult(go));
-    }
-
-    function bindCards(handler) {
-      setTimeout(() => {
-        stage.querySelectorAll('.quiz-card').forEach((card) => {
-          card.addEventListener('click', () => handler(card.getAttribute('data-go')));
+      setTimeout(function () {
+        stage.querySelectorAll('.quiz-card').forEach(function (card) {
+          card.addEventListener('click', function () {
+            elegido.q2 = card.getAttribute('data-et');
+            track('quiz_p2', { opcion: elegido.q2 });
+            renderResult(card.getAttribute('data-go'));
+          });
         });
       }, 200);
     }
 
-    // Resultado + alta del suscriptor con el source correspondiente
+    // Paso 3 — resultado en pantalla + captura de email. El resultado se ve
+    // sin dejar el mail: el mail se pide para mandar el material, no como peaje.
     function renderResult(key) {
       const r = RESULTS[key];
+      elegido.resultado = key;
+      track('quiz_resultado', { resultado: key });
+
       setStage(
         '<div class="quiz-result">' +
           '<div class="quiz-result-badge">' + r.emoji + '</div>' +
           '<h3>' + r.title + '</h3>' +
           '<p class="quiz-sub">' + r.text + '</p>' +
-          '<a href="' + r.target + '" class="btn-primary">' + r.cta + '</a>' +
+          '<a href="' + r.target + '" class="btn-primary" id="quizCta">' + r.cta + '</a>' +
+          '<div style="margin:28px 0 0 0;padding:22px 0 0 0;border-top:1px solid rgba(0,0,0,.12);text-align:left;">' +
+            '<p class="quiz-sub" style="margin:0 0 12px 0;"><strong>¿Te dejo material para arrancar?</strong><br>Dejame tu mail y te sumo a mi lista: recetas, ideas y los avisos de los encuentros. Sin spam, y te podés borrar de un clic.</p>' +
+            '<input type="email" class="quiz-email-field" id="quizEmail" placeholder="tu@email.com" autocomplete="email">' +
+            '<textarea id="quizMotivo" rows="2" placeholder="Opcional: ¿qué te trajo hasta acá?" style="width:100%;margin-top:10px;padding:14px 16px;border:1px solid rgba(0,0,0,.18);border-radius:12px;font-family:inherit;font-size:.95rem;resize:vertical;background:#fff;color:#111;"></textarea>' +
+            '<p class="quiz-error" id="quizEmailError"></p>' +
+            '<button class="btn-primary" style="width:100%;justify-content:center;margin-top:10px;" id="quizSendBtn">Mandámelo</button>' +
+          '</div>' +
           '<button class="quiz-restart" id="quizRestart">Volver a empezar</button>' +
+        '</div>',
+        85
+      );
+
+      setTimeout(function () {
+        const input = document.getElementById('quizEmail');
+        const motivo = document.getElementById('quizMotivo');
+        const btn = document.getElementById('quizSendBtn');
+        const err = document.getElementById('quizEmailError');
+        const cta = document.getElementById('quizCta');
+        const rs = document.getElementById('quizRestart');
+
+        if (cta) cta.addEventListener('click', function () {
+          track('quiz_cta_click', { destino: key });
+        });
+        if (rs) rs.addEventListener('click', renderQ1);
+
+        function enviar() {
+          const val = (input.value || '').trim();
+          if (!esEmailValido(val)) {
+            err.textContent = 'Ingresá un email válido.';
+            input.focus();
+            return;
+          }
+          err.textContent = '';
+          btn.disabled = true;
+          btn.textContent = 'Enviando...';
+
+          const texto = (motivo.value || '').trim().slice(0, 500);
+          track('quiz_email_ok', { resultado: key });
+          if (texto) track('quiz_motivo');
+
+          fetch(QUIZ_API, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              email: val,
+              source: r.source,
+              motivo: texto,
+              origen: origenVisita()
+            })
+          }).catch(function () {});
+
+          renderGracias(r);
+        }
+
+        btn.addEventListener('click', enviar);
+        input.addEventListener('keydown', function (e) { if (e.key === 'Enter') enviar(); });
+      }, 200);
+    }
+
+    // Paso 4 — cierre
+    function renderGracias(r) {
+      setStage(
+        '<div class="quiz-result">' +
+          '<div class="quiz-result-badge">✅</div>' +
+          '<h3>Listo, te llega un mail en un minuto</h3>' +
+          '<p class="quiz-sub">Si no lo ves, mirá en Promociones o spam. Respondelo si querés: lo leo yo.</p>' +
+          '<a href="' + r.target + '" class="btn-primary" id="quizCtaFinal">' + r.cta + '</a>' +
+          '<button class="quiz-restart" id="quizRestart2">Volver a empezar</button>' +
         '</div>',
         100
       );
-      setTimeout(() => {
-        const rs = document.getElementById('quizRestart');
-        if (rs) rs.addEventListener('click', renderIntro);
+      setTimeout(function () {
+        const c = document.getElementById('quizCtaFinal');
+        const rs = document.getElementById('quizRestart2');
+        if (c) c.addEventListener('click', function () { track('quiz_cta_click', { destino: elegido.resultado, momento: 'post-mail' }); });
+        if (rs) rs.addEventListener('click', renderQ1);
       }, 200);
-
-      // Alta en Supabase vía /api/suscribir (no bloquea la UI)
-      fetch(QUIZ_API, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: quizEmail, source: r.source })
-      }).catch(() => {});
     }
 
-    renderIntro();
+    renderQ1();
   })();
 </script>
 
