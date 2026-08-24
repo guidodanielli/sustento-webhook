@@ -39,8 +39,14 @@ create table if not exists subscribers (
   email       text        not null unique,
   name        text,
   source      text,                       -- formulario-web | quiz-club | quiz-metodo | quiz-recetario | quiz-red
-  tags        text[]      default '{}'
+  tags        text[]      default '{}',
+  motivo      text,                       -- respuesta abierta del quiz: "¿qué te trajo hasta acá?"
+  origen      text                        -- utm_source del link, o el dominio que la refirió, o 'directo'
 );
+
+-- Si la tabla ya existía sin estas dos columnas, correr esto una vez:
+alter table subscribers add column if not exists motivo text;
+alter table subscribers add column if not exists origen text;
 
 create index if not exists subscribers_created_at_idx on subscribers (created_at desc);
 create index if not exists subscribers_source_idx on subscribers (source);
