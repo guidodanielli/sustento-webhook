@@ -148,3 +148,60 @@ export async function notificarBaja({ buyerEmail, buyerName, motivo, plataforma 
     console.error('Error al notificar la baja:', err);
   }
 }
+
+// Como se lee cada source en el aviso. El quiz manda quiz-*; el formulario del
+// pie manda formulario-web. Un source desconocido se muestra tal cual vino.
+const ETIQUETA_SOURCE = {
+  'quiz-club': 'Quiz · Club',
+  'quiz-metodo': 'Quiz · Método',
+  'quiz-recetario': 'Quiz · Recetario',
+  'quiz-red': 'Quiz · Red',
+  'formulario-web': 'Formulario del pie'
+};
+
+/**
+ * Avisa a Guido que alguien nuevo dejó el mail.
+ *
+ * Hasta el 24/08/2026 un alta no llegaba a ningún lado: entraba a Supabase en
+ * silencio y la única forma de enterarse era abrir la tabla a mano. El silencio
+ * se leía como que no había gente, y sí había.
+ *
+ * Solo se llama con altas reales (isNew), nunca con duplicados ignorados.
+ * Igual que notificarVenta, nunca tira error hacia afuera: si el aviso falla,
+ * la persona igual quedó suscripta y su mail de bienvenida ya salió.
+ */
+export async function notificarSuscriptor({ email, name, source, total = null }) {
+  try {
+    const etiqueta = ETIQUETA_SOURCE[source] || source || 'sin origen';
+
+    await resend.emails.send({
+      from: `Ventas Sustento <${process.env.RESEND_FROM_EMAIL}>`,
+      // Responder al aviso escribe directo a la persona que se suscribió.
+      reply_to: email || undefined,
+      to: AVISO_A,
+      subject: `Alta nueva: ${etiqueta} 🌱`,
+      html: `
+        <div style="font-family: Georgia, serif; max-width: 600px; margin: 0 auto; color: #111;">
+          <div style="background: #2d6a5a; padding: 24px 32px;">
+            <p style="color: #fff; font-family: Arial, sans-serif; font-size: 0.8rem; letter-spacing: 0.15em; text-transform: uppercase; margin: 0; opacity: 0.8;">Alguien nuevo dejó el mail</p>
+          </div>
+          <div style="padding: 32px; background: #f5eee0;">
+            <table style="width: 100%; border-collapse: collapse; margin-bottom: 28px;">
+              ${fila('Persona', name ? `${name} (${email})` : email)}
+              ${fila('Por dónde entró', etiqueta)}
+              ${fila('Fecha', fechaArgentina())}
+              ${total ? fila('Total en la lista', `${total} suscriptores`) : ''}
+            </table>
+            <div style="background: #fff; border-left: 3px solid #2d6a5a; padding: 16px 20px;">
+              <p style="font-size: 0.95rem; line-height: 1.7; color: #444; margin: 0;">
+                El mail de bienvenida que le corresponde a <strong>${etiqueta}</strong> ya le salió automáticamente. No tenés que hacer nada. Si querés escribirle, respondé este mail y le llega directo.
+              </p>
+            </div>
+          </div>
+        </div>
+      `
+    });
+  } catch (err) {
+    console.error('Error al notificar el alta:', err);
+  }
+}

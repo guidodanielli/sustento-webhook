@@ -1,4 +1,5 @@
 import { Resend } from 'resend';
+import { notificarSuscriptor } from './notificar-venta.js';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -34,6 +35,30 @@ async function agregarASupabase({ email, name, source, tags }) {
   const rows = await response.json().catch(() => []);
   const isNew = Array.isArray(rows) && rows.length > 0;
   return { ok: true, isNew };
+}
+
+// Cuántos hay en total, solo para que el aviso diga "van N en la lista".
+// Es un HEAD: pide cero filas y lee el total del header Content-Range.
+// Si falla devuelve null y el aviso omite esa línea; nunca frena el alta.
+async function contarSuscriptores() {
+  try {
+    const SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
+    const response = await fetch(`${process.env.SUPABASE_URL}/rest/v1/subscribers?select=id`, {
+      method: 'HEAD',
+      headers: {
+        'apikey': SERVICE_KEY,
+        'Authorization': `Bearer ${SERVICE_KEY}`,
+        'Prefer': 'count=exact',
+        'Range': '0-0'
+      }
+    });
+    // Content-Range viene como "0-20/21": el total está después de la barra.
+    const total = Number(String(response.headers.get('content-range') || '').split('/')[1]);
+    return Number.isFinite(total) ? total : null;
+  } catch (err) {
+    console.error('No se pudo contar los suscriptores:', err);
+    return null;
+  }
 }
 
 const SITIO = 'https://www.haceloconsustento.com';
@@ -206,6 +231,9 @@ if (allowedOrigins.includes(origin)) {
     // Solo mandamos el welcome email a suscriptores nuevos (no a duplicados).
     if (ok && isNew) {
       await enviarBienvenida(email, source);
+      // Y le avisamos a Guido. Va después de la bienvenida y se traga sus
+      // propios errores, así que no puede romper el alta ni la respuesta.
+      await notificarSuscriptor({ email, name, source, total: await contarSuscriptores() });
     }
     return res.status(200).json({ success: true });
   } catch (error) {
