@@ -147,9 +147,17 @@ export default async function handler(req, res) {
     // El resto son productos digitales descargables: mail con el link.
     const esDescargable = Boolean(product.driveUrl);
 
+    // Si el producto es recurrente, esto es una suscripción, venga como venga
+    // el evento. MercadoPago manda estos cobros unas veces como
+    // subscription_authorized_payment y otras como un payment común, así que
+    // el tipo de evento no sirve para decidir: el producto sí. Atarlo a
+    // esSuscripcion hacía que toda cuota mensual del Club cobrada por MP se
+    // anunciara como venta nueva y le remandara la bienvenida al socio.
+    const esRecurrente = Boolean(product.recurring);
+
     // Si ya compró este producto antes, esto es la renovación mensual: no
     // corresponde darle la bienvenida de nuevo ni pedirle que espere el acceso.
-    const esRenovacion = esSuscripcion && await yaCompro({ buyerEmail, productId: product.id });
+    const esRenovacion = esRecurrente && await yaCompro({ buyerEmail, productId: product.id });
 
     const emailContent = esDescargable
       ? { subject: `¡Acá está tu ${product.name}! 🌿`, html: buildEmail({ buyerName, product }) }
@@ -173,7 +181,7 @@ export default async function handler(req, res) {
         buyerName,
         amount: payment.transaction_amount,
         currency: payment.currency_id,
-        paymentMethod: esSuscripcion ? 'mercadopago-suscripcion' : 'mercadopago',
+        paymentMethod: esRecurrente ? 'mercadopago-suscripcion' : 'mercadopago',
         paymentId: String(paymentId)
       }),
       notificarVenta({
@@ -184,7 +192,7 @@ export default async function handler(req, res) {
         currency: payment.currency_id,
         paymentMethod: 'MercadoPago',
         paymentId: String(paymentId),
-        recurrente: esSuscripcion,
+        recurrente: esRecurrente,
         renovacion: esRenovacion
       })
     ]);
