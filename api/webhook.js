@@ -109,7 +109,14 @@ export default async function handler(req, res) {
     }
 
     const eventId = data?.id;
-    if (!eventId) return res.status(400).json({ error: 'No payment ID' });
+    if (!eventId) {
+      // MercadoPago tiene dos formatos: el de webhooks manda type + data.id,
+      // y el viejo (IPN) manda topic + resource, donde data.id no existe.
+      // Logueamos el cuerpo crudo para saber cuál está llegando: sin esto un
+      // pago que se cae acá es invisible, no queda en purchases y no avisa nada.
+      console.error('MP sin data.id. Cuerpo crudo:', JSON.stringify(req.body));
+      return res.status(400).json({ error: 'No payment ID' });
+    }
 
     // Las suscripciones del Club llegan como factura: hay que dar un salto más
     // para llegar al pago real, que es el que trae el mail del pagador.
@@ -141,7 +148,10 @@ export default async function handler(req, res) {
       : (payment.external_reference || 'recetario');
     const product = PRODUCTS[productId] || PRODUCTS['recetario'];
 
-    if (!buyerEmail) return res.status(400).json({ error: 'No buyer email' });
+    if (!buyerEmail) {
+      console.error('MP sin payer.email. paymentId:', paymentId, 'pago:', JSON.stringify(payment));
+      return res.status(400).json({ error: 'No buyer email' });
+    }
 
     // El Club es una suscripción (sin archivo para descargar): mail de bienvenida.
     // El resto son productos digitales descargables: mail con el link.
