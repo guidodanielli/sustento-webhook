@@ -107,6 +107,24 @@ export default async function handler(req, res) {
     const captureUnit = capture.purchase_units?.[0]?.payments?.captures?.[0];
     const amount = parseFloat(captureUnit?.amount?.value || product.usd);
 
+    // Se registra antes de entregar. Si el pago ya estaba, es una captura
+    // repetida: no se reenvia el link ni se avisa de nuevo.
+    const { esNueva } = await registrarCompra({
+      productId: product.id,
+      productName: product.name,
+      buyerEmail,
+      buyerName,
+      amount,
+      currency: 'USD',
+      paymentMethod: 'paypal',
+      paymentId: orderID
+    });
+
+    if (!esNueva) {
+      console.log('PayPal: orden ya procesada, no se reenvia. id:', orderID);
+      return res.status(200).json({ success: true, duplicado: true });
+    }
+
     await Promise.all([
       resend.emails.send({
         from: `Guido Sustento <${process.env.RESEND_FROM_EMAIL}>`,
@@ -114,16 +132,6 @@ export default async function handler(req, res) {
         to: buyerEmail,
         subject: `¡Acá está tu ${product.name}! 🌿`,
         html: buildEmail({ buyerName, product })
-      }),
-      registrarCompra({
-        productId: product.id,
-        productName: product.name,
-        buyerEmail,
-        buyerName,
-        amount,
-        currency: 'USD',
-        paymentMethod: 'paypal',
-        paymentId: orderID
       }),
       notificarVenta({
         product,

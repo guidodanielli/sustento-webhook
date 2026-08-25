@@ -173,6 +173,25 @@ export default async function handler(req, res) {
       ? { subject: `¡Acá está tu ${product.name}! 🌿`, html: buildEmail({ buyerName, product }) }
       : { subject: `¡Bienvenido/a al Club Sustento! 🌿`, html: buildClubEmail({ buyerName }) };
 
+    // Se registra ANTES de avisar y de entregar. Si el pago ya estaba en la
+    // tabla, la pasarela está reenviando una notificación vieja y no hay que
+    // volver a hacer nada: ni mail al comprador ni aviso a Guido.
+    const { esNueva } = await registrarCompra({
+      productId: product.id,
+      productName: product.name,
+      buyerEmail,
+      buyerName,
+      amount: payment.transaction_amount,
+      currency: payment.currency_id,
+      paymentMethod: esRecurrente ? 'mercadopago-suscripcion' : 'mercadopago',
+      paymentId: String(paymentId)
+    });
+
+    if (!esNueva) {
+      console.log('MP reenvió un pago ya procesado, no se avisa. id:', paymentId);
+      return res.status(200).json({ received: true, duplicado: true });
+    }
+
     await Promise.all([
       // En una renovación el comprador no recibe nada: ya está adentro.
       esRenovacion
@@ -184,16 +203,6 @@ export default async function handler(req, res) {
             subject: emailContent.subject,
             html: emailContent.html
           }),
-      registrarCompra({
-        productId: product.id,
-        productName: product.name,
-        buyerEmail,
-        buyerName,
-        amount: payment.transaction_amount,
-        currency: payment.currency_id,
-        paymentMethod: esRecurrente ? 'mercadopago-suscripcion' : 'mercadopago',
-        paymentId: String(paymentId)
-      }),
       notificarVenta({
         product,
         buyerEmail,

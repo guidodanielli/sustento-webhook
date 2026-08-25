@@ -4,7 +4,7 @@ import { notificarSuscriptor } from './notificar-venta.js';
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 async function insertarFila(fila) {
-  return fetch(`${process.env.SUPABASE_URL}/rest/v1/subscribers`, {
+  return fetch(`${process.env.SUPABASE_URL}/rest/v1/subscribers?on_conflict=email`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -12,6 +12,9 @@ async function insertarFila(fila) {
       'Authorization': `Bearer ${process.env.SUPABASE_SERVICE_KEY}`,
       // Si el email ya existe, ignorar silenciosamente (no es un error).
       // return=representation nos deja saber si realmente se insertó una fila.
+      // El on_conflict=email de la URL es imprescindible: sin él PostgREST mira
+      // la clave primaria (id, un uuid nuevo cada vez), nunca detecta el choque
+      // y el duplicado vuelve como 409 en lugar de ignorarse.
       'Prefer': 'resolution=ignore-duplicates,return=representation'
     },
     body: JSON.stringify(fila)
@@ -36,7 +39,8 @@ async function agregarASupabase({ email, name, source, tags, motivo, origen }) {
 
   let response = await insertarFila({ ...base, ...extras });
 
-  if (!response.ok && Object.keys(extras).length > 0) {
+  // Un 409 es email repetido, no un problema de columnas: reintentar no aporta.
+  if (!response.ok && response.status !== 409 && Object.keys(extras).length > 0) {
     const detalle = await response.text().catch(() => '');
     console.error('Alta con columnas nuevas falló, reintento sin ellas:', response.status, detalle);
     response = await insertarFila(base);

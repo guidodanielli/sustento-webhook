@@ -4,8 +4,16 @@
  * Lo usan los tres caminos de cobro: el webhook de MercadoPago (pagos únicos y
  * suscripciones del Club), la captura de PayPal y el webhook de Whop.
  *
+ * Devuelve { ok, esNueva }. `esNueva` es false cuando ese payment_id ya estaba
+ * registrado, o sea cuando la pasarela reenvía la notificación de un pago que ya
+ * procesamos. MercadoPago lo hace: el 24/08/2026 reenvió la notificación de un
+ * pago del 06/08 y Guido recibió un aviso de venta por algo de 18 días antes.
+ * Quien llama tiene que usar ese flag para no avisar ni entregar dos veces.
+ *
  * Nunca tira error hacia afuera: si Supabase falla, la entrega del producto al
- * comprador tiene que seguir su curso igual. Solo queda el log en Vercel.
+ * comprador tiene que seguir su curso igual. Solo queda el log en Vercel. En ese
+ * caso devuelve esNueva=true, que es el lado seguro: entregar de más molesta
+ * menos que no entregar.
  */
 export async function registrarCompra({
   productId,
@@ -18,13 +26,17 @@ export async function registrarCompra({
   paymentId
 }) {
   try {
-    const response = await fetch(`${process.env.SUPABASE_URL}/rest/v1/purchases`, {
+    const response = await fetch(`${process.env.SUPABASE_URL}/rest/v1/purchases?on_conflict=payment_id`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${process.env.SUPABASE_SERVICE_KEY}`,
         'apikey': process.env.SUPABASE_SERVICE_KEY,
-        'Prefer': 'return=minimal'
+        // on_conflict=payment_id + ignore-duplicates: si ese pago ya existe la
+        // respuesta vuelve vacía en vez de tirar 409, y así distinguimos un pago
+        // nuevo de una notificación reenviada. Sin el on_conflict de la URL,
+        // PostgREST mira la clave primaria (id) y el duplicado igual explota.
+        'Prefer': 'resolution=ignore-duplicates,return=representation'
       },
       body: JSON.stringify({
         product_id: productId,
@@ -41,10 +53,24 @@ export async function registrarCompra({
 
     // Supabase devuelve 4xx con el detalle en el body: sin esto el error es invisible.
     if (!response.ok) {
-      console.error('Supabase log error:', response.status, await response.text());
+      const detalle = await response.text();
+      console.error('Supabase log error:', response.status, detalle);
+      // 409 es choque de unicidad: el pago ya estaba. No es un fallo, es un
+      // duplicado, y hay que tratarlo como tal aunque el on_conflict falle.
+      const duplicado = response.status === 409 || detalle.includes('23505');
+      return { ok: false, esNueva: !duplicado };
     }
+
+    // Array con la fila insertada si es un pago nuevo; vacío si era duplicado.
+    const filas = await response.json().catch(() => []);
+    const esNueva = Array.isArray(filas) && filas.length > 0;
+    if (!esNueva) {
+      console.log('Pago duplicado ignorado, payment_id:', paymentId);
+    }
+    return { ok: true, esNueva };
   } catch (err) {
     console.error('Supabase log error:', err);
+    return { ok: false, esNueva: true };
   }
 }
 

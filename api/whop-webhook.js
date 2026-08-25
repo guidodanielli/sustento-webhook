@@ -181,17 +181,25 @@ export default {
             ? data.billing_reason !== 'subscription_create'
             : Boolean(data.renewal_period_start);
 
+          // Whop tambien reintenta webhooks. Si el pago ya estaba registrado,
+          // no se vuelve a avisar.
+          const { esNueva } = await registrarCompra({
+            productId: product.id,
+            productName: product.name,
+            buyerEmail: email,
+            buyerName: nombre,
+            amount: monto,
+            currency: moneda,
+            paymentMethod: 'whop',
+            paymentId: String(data.id || request.headers.get('webhook-id'))
+          });
+
+          if (!esNueva) {
+            console.log('Whop reenvio un pago ya procesado, no se avisa.');
+            return Response.json({ received: true, duplicado: true });
+          }
+
           await Promise.all([
-            registrarCompra({
-              productId: product.id,
-              productName: product.name,
-              buyerEmail: email,
-              buyerName: nombre,
-              amount: monto,
-              currency: moneda,
-              paymentMethod: 'whop',
-              paymentId: String(data.id || request.headers.get('webhook-id'))
-            }),
             notificarVenta({
               product,
               buyerEmail: email,
