@@ -784,14 +784,25 @@
   }
   .slider-btn:hover { background: rgba(255,255,255,0.16); border-color: rgba(255,255,255,0.25); }
   .slider-dots {
-    display: flex; gap: 8px; align-items: center;
+    display: flex; gap: 0; align-items: center;
   }
+  /* El boton es el area tocable (26x40) y el punto visible lo dibuja ::before.
+     Antes el boton media 7x7: en un celular es casi imposible acertarle con el
+     pulgar. No se puede llegar a los 44x44 que recomienda Google sin separar
+     los puntos tanto que se note, asi que 26x40 es el punto medio: casi 20
+     veces mas superficie, sin cambiar como se ve. */
   .slider-dot {
-    width: 7px; height: 7px; border-radius: 50%;
-    background: rgba(255,255,255,0.2); cursor: pointer;
-    transition: background 0.3s, transform 0.3s; border: none; padding: 0;
+    width: 26px; height: 40px; padding: 0; border: none;
+    background: transparent; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
   }
-  .slider-dot.active {
+  .slider-dot::before {
+    content: ''; display: block;
+    width: 10px; height: 10px; border-radius: 50%;
+    background: rgba(255,255,255,0.2);
+    transition: background 0.3s, transform 0.3s;
+  }
+  .slider-dot.active::before {
     background: var(--tierra-claro); transform: scale(1.25);
   }
 
