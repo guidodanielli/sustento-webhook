@@ -195,7 +195,7 @@
           {
             "@type": "Question",
             "name": "¿Qué es el Club Sustento y qué incluye?",
-            "acceptedAnswer": { "@type": "Answer", "text": "Es una suscripción mensual con recetas nuevas todos los meses, seminarios en formato largo, comunidad y acompañamiento continuo. Se da de baja cuando quieras." }
+            "acceptedAnswer": { "@type": "Answer", "text": "Es una suscripción mensual con recetas nuevas todas las semanas, un seminario en vivo por mes, comunidad y acompañamiento continuo. Se da de baja cuando quieras." }
           },
           {
             "@type": "Question",
@@ -1327,7 +1327,7 @@
           '<p class="quiz-sub">' + r.text + '</p>' +
           '<a href="' + r.target + '" class="btn-primary" id="quizCta">' + r.cta + '</a>' +
           '<div style="margin:28px 0 0 0;padding:22px 0 0 0;border-top:1px solid rgba(0,0,0,.12);text-align:left;">' +
-            '<p class="quiz-sub" style="margin:0 0 12px 0;"><strong>¿Te dejo material para arrancar?</strong><br>Dejame tu mail y te sumo a mi lista: recetas, ideas y los avisos de los encuentros. Sin spam, y te podés borrar de un clic.</p>' +
+            '<p class="quiz-sub" style="margin:0 0 12px 0;"><strong>Te dejo el Mini Recetario</strong><br>9 recetas con plantas para empezar hoy, sin ingredientes raros ni pasos imposibles. Dejame tu mail y te lo mando ahora. Sin spam, y te podés borrar de un clic.</p>' +
             '<input type="email" class="quiz-email-field" id="quizEmail" placeholder="tu@email.com" autocomplete="email">' +
             '<textarea id="quizMotivo" rows="2" placeholder="Opcional: ¿qué te trajo hasta acá?" style="width:100%;margin-top:10px;padding:14px 16px;border:1px solid rgba(0,0,0,.18);border-radius:12px;font-family:inherit;font-size:.95rem;resize:vertical;background:#fff;color:#111;"></textarea>' +
             '<p class="quiz-error" id="quizEmailError"></p>' +
@@ -1390,8 +1390,8 @@
       setStage(
         '<div class="quiz-result">' +
           '<div class="quiz-result-badge">✅</div>' +
-          '<h3>Listo, te llega un mail en un minuto</h3>' +
-          '<p class="quiz-sub">Si no lo ves, mirá en Promociones o spam. Respondelo si querés: lo leo yo.</p>' +
+          '<h3>Listo, el Mini Recetario va en camino</h3>' +
+          '<p class="quiz-sub">Te llega por mail en un minuto. Si no lo ves, mirá en Promociones o spam. Respondelo si querés: lo leo yo.</p>' +
           '<a href="' + r.target + '" class="btn-primary" id="quizCtaFinal">' + r.cta + '</a>' +
           '<button class="quiz-restart" id="quizRestart2">Volver a empezar</button>' +
         '</div>',
@@ -1545,8 +1545,8 @@
       </div>
     </div>
     <ul class="club-lista">
-      <li>Recetas nuevas todos los meses</li>
-      <li>Seminarios en formato largo para profundizar</li>
+      <li>Recetas nuevas todas las semanas</li>
+      <li>Un seminario en vivo por mes para profundizar</li>
       <li>Comunidad y acompañamiento continuo</li>
       <li>Cancelás cuando quieras</li>
     </ul>
@@ -1907,7 +1907,7 @@
       <span class="faq-icon">+</span>
     </button>
     <div class="faq-answer">
-      <p>Es un espacio de suscripción mensual para sostener los cambios en el tiempo. Incluye recetas nuevas todos los meses, seminarios en formato largo para profundizar, comunidad y acompañamiento continuo. Lo pensé para quienes ya quieren ir más allá del Recetario pero todavía no buscan un proceso 1:1. Cancelás cuando quieras.</p>
+      <p>Es un espacio de suscripción mensual para sostener los cambios en el tiempo. Incluye recetas nuevas todas las semanas, un seminario en vivo por mes para profundizar, comunidad y acompañamiento continuo. Lo pensé para quienes ya quieren ir más allá del Recetario pero todavía no buscan un proceso 1:1. Cancelás cuando quieras.</p>
     </div>
   </div>
   <div class="faq-item reveal">
@@ -1943,12 +1943,12 @@
 <section class="email-section" id="contacto">
   <p class="eyebrow">Ecosistema Sustento</p>
   <h2>Quedate en el<br><em>ecosistema.</em></h2>
-  <p>Te escribo cuando tengo algo que de verdad suma: una receta, un recurso, una novedad. Sin spam ni envíos de relleno.</p>
+  <p>Dejame tu mail y te mando el Mini Recetario: 9 recetas con plantas para empezar hoy. Después te escribo solo cuando tengo algo que de verdad suma, sin envíos de relleno.</p>
   <form class="email-form" onsubmit="handleSubmit(event)">
     <input type="email" class="email-input" placeholder="tu@email.com" required>
     <button type="submit" class="btn-email">Suscribirme</button>
   </form>
-  <p id="form-msg" style="margin-top:16px;font-size:0.85rem;opacity:0.8;display:none;">¡Gracias! Te sumamos al ecosistema. 🌱</p>
+  <p id="form-msg" style="margin-top:16px;font-size:0.85rem;opacity:0.8;display:none;">Listo, el Mini Recetario va en camino. 🌱</p>
 </section>
 
 <footer>
@@ -2233,7 +2233,7 @@
       });
       const data = await response.json();
       if (data.success) {
-        msg.textContent = '¡Gracias! Te sumamos al ecosistema. 🌱';
+        msg.textContent = 'Listo, el Mini Recetario va en camino. 🌱';
         msg.style.display = 'block';
         form.reset();
       } else {

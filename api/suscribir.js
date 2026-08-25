@@ -93,6 +93,21 @@ const WHOP_CLUB = 'https://whop.com/checkout/plan_5cUpzEWpFAjF7';
 const MPAGO_CLUB = 'https://mpago.la/1U4znwx';
 const WHATSAPP_CLUB = 'https://wa.me/541171417177?text=Hola%20Guido%2C%20me%20suscrib%C3%AD%20al%20Club%20por%20MercadoPago.%20Te%20paso%20el%20comprobante.';
 
+// El Mini Recetario es lo que la persona recibe a cambio del mail, así que va en
+// las cinco variantes y va primero: el quiz lo promete, el mail lo entrega. Vive
+// en Drive con acceso público por link (verificado sin sesión el 25/08/2026).
+const MINI_RECETARIO = 'https://drive.google.com/file/d/12QXdwlGmmWPHqaPuS4XJHxKLVlFpbATW/view?usp=sharing';
+
+const REGALO = {
+  parrafo: 'Antes que nada, acá tenés el Mini Recetario: 9 recetas con plantas para empezar hoy, sin ingredientes raros ni pasos imposibles.',
+  cta: { texto: 'Descargar el Mini Recetario 🌱', url: MINI_RECETARIO }
+};
+
+// Pedirlo acá y no dentro del PDF es a propósito: en el PDF la persona tendría
+// que cerrarlo, volver a la casilla y buscar el mail. Acá ya lo tiene abierto.
+// Además, que respondan le dice a Gmail que estos mails son deseados.
+const RESPONDEME = 'Y si probás alguna de las recetas, contame cómo te fue: respondé este mail, lo leo yo.';
+
 // El mail de bienvenida cambia según lo que la persona pidió. El quiz manda
 // source = quiz-club | quiz-metodo | quiz-recetario | quiz-red; el formulario
 // del pie manda formulario-web. Si mañana aparece otro source, cae en general.
@@ -102,7 +117,7 @@ const VARIANTES = {
     parrafos: [
       'Buenas buenas!! Soy Guido, nutricionista y cocinero.',
       'Hiciste el quiz y el resultado te llevó al Club Sustento, así que te cuento en dos líneas qué es.',
-      'Es un espacio para aprender de forma continua: cada mes hay recetas nuevas con plantas, un encuentro en vivo de una hora y media sobre un tema puntual, y un entregable para que te quede algo aplicable y no solo un rato de charla.',
+      'Es un espacio para aprender de forma continua: todas las semanas hay recetas nuevas con plantas, una vez al mes hay un seminario en vivo sobre un tema puntual, y te queda un entregable para que no sea solo un rato de charla.',
       'Si querés sumarte, elegí la moneda que te convenga. Es la misma membresía mensual en los dos casos y la cancelás cuando quieras.'
     ],
     ctas: [
@@ -110,7 +125,7 @@ const VARIANTES = {
       { texto: 'Suscribirme por $15.000 ARS/mes 🇦🇷', url: MPAGO_CLUB }
     ],
     nota: `<strong>Si pagás en pesos, un paso más:</strong> MercadoPago no te manda la invitación a la comunidad como hace Whop. Cuando te suscribas, <a href="${WHATSAPP_CLUB}" style="color: #1e6f1d; font-weight: bold;">mandame el comprobante por WhatsApp</a> con tu número y te paso la invitación yo mismo. Por Whop entrás en el momento.`,
-    cierre: ['Y si te queda alguna duda antes de pagar, respondé este mail. Lo leo yo.']
+    cierre: ['Y si probás alguna de las recetas o te queda una duda antes de pagar, respondé este mail. Lo leo yo.']
   },
   metodo: {
     subject: 'Te cuento cómo es el Método 🌱',
@@ -120,7 +135,8 @@ const VARIANTES = {
       'Son 90 días de acompañamiento para cambiar tu relación con la comida. Sin dietas, sin listas de alimentos prohibidos y sin contar calorías. Desde la expansión, no desde la restricción.',
       'Antes de cualquier cosa hay una llamada de 30 minutos sin cargo, para ver si tiene sentido en tu caso. Si no tiene sentido, te lo digo.'
     ],
-    ctas: [{ texto: 'Reservar la llamada gratuita', url: CALENDLY }]
+    ctas: [{ texto: 'Reservar la llamada gratuita', url: CALENDLY }],
+    cierre: [RESPONDEME]
   },
   recetario: {
     subject: 'Te cuento qué tiene el Recetario 🌱',
@@ -130,7 +146,8 @@ const VARIANTES = {
       'Son más de 60 recetas con plantas pensadas para el día a día real, no para el domingo con tiempo de sobra. Ingredientes que se consiguen y que se repiten entre recetas, para que cocinar no sea una expedición.',
       'Es un PDF: lo descargás una vez y es tuyo para siempre.'
     ],
-    ctas: [{ texto: 'Ver el Recetario', url: `${SITIO}/#tienda` }]
+    ctas: [{ texto: 'Ver el Recetario', url: `${SITIO}/#tienda` }],
+    cierre: [RESPONDEME]
   },
   red: {
     subject: 'Te cuento de la Red 🌱',
@@ -140,7 +157,8 @@ const VARIANTES = {
       'Es una comunidad para colegas, sobre todo nutris recién recibidos, con encuentros quincenales para compartir recorridos y crecer en comunidad. Es lo que a mí me hubiera servido cuando arranqué y no existía.',
       'El ingreso es manual y lo coordinamos por WhatsApp.'
     ],
-    ctas: [{ texto: 'Escribirme por WhatsApp 💬', url: WHATSAPP }]
+    ctas: [{ texto: 'Escribirme por WhatsApp 💬', url: WHATSAPP }],
+    cierre: [RESPONDEME]
   },
   general: {
     subject: 'Bienvenido/a al ecosistema 🌱',
@@ -151,7 +169,8 @@ const VARIANTES = {
       `No te voy a llenar la casilla de mails. La mayor parte de lo que hago del día a día vive en Instagram, así que si querés seguirme por ahí te espero como <a href="https://www.instagram.com/guido.sustento/" style="color: #1e6f1d; font-weight: bold;">@guido.sustento</a>.`,
       'Y si querés un primer paso concreto, tengo el Recetario: más de 60 recetas con plantas para el día a día.'
     ],
-    ctas: [{ texto: 'Ver el Recetario', url: `${SITIO}/#tienda` }]
+    ctas: [{ texto: 'Ver el Recetario', url: `${SITIO}/#tienda` }],
+    cierre: [RESPONDEME]
   }
 };
 
@@ -179,7 +198,15 @@ function aTexto(html) {
 // manda a Promociones. Esta versión viaja junto a la HTML en el mismo mail:
 // el lector elige cuál mostrar.
 function armarTexto({ variante, bajaUrl }) {
-  const partes = variante.parrafos.map(aTexto);
+  // Mismo orden que la versión HTML: saludo, el Mini Recetario, y recién
+  // después el resto. Lo prometido va primero, en las dos versiones.
+  const [saludo, ...resto] = variante.parrafos;
+  const partes = [
+    aTexto(saludo),
+    aTexto(REGALO.parrafo),
+    `${REGALO.cta.texto}: ${REGALO.cta.url}`,
+    ...resto.map(aTexto)
+  ];
 
   variante.ctas.forEach((cta) => partes.push(`${cta.texto}: ${cta.url}`));
 
@@ -197,18 +224,26 @@ function parrafo(texto) {
   return `<p style="font-size: 1rem; line-height: 1.8; color: #444; margin: 0 0 20px 0;">${texto}</p>`;
 }
 
+function boton(cta, principal) {
+  const estilo = principal
+    ? 'background: #1e6f1d; color: #ffffff; border: 2px solid #1e6f1d;'
+    : 'background: transparent; color: #1e6f1d; border: 2px solid #1e6f1d;';
+  return `<a href="${cta.url}" style="${estilo} padding: 14px 30px; border-radius: 100px; text-decoration: none; font-family: Arial, sans-serif; font-weight: 600; font-size: 0.95rem; display: inline-block; margin: 0 0 10px 0;">${cta.texto}</a>`;
+}
+
 function armarHtml({ variante, bajaUrl }) {
-  const parrafos = variante.parrafos.map(parrafo).join('');
+  // La persona dejó el mail por el Mini Recetario, así que lo primero que ve
+  // después del saludo es el Mini Recetario. Después viene lo demás.
+  const [saludo, ...resto] = variante.parrafos;
+  const parrafos = parrafo(saludo)
+    + parrafo(REGALO.parrafo)
+    + `<div style="margin: 0 0 28px 0;">${boton(REGALO.cta, true)}</div>`
+    + resto.map(parrafo).join('');
 
   // El primer botón va lleno; los siguientes con borde, para que se vea cuál es
   // la opción principal sin que la otra parezca de segunda.
   const botones = variante.ctas
-    .map((cta, i) => {
-      const estilo = i === 0
-        ? 'background: #1e6f1d; color: #ffffff; border: 2px solid #1e6f1d;'
-        : 'background: transparent; color: #1e6f1d; border: 2px solid #1e6f1d;';
-      return `<a href="${cta.url}" style="${estilo} padding: 14px 30px; border-radius: 100px; text-decoration: none; font-family: Arial, sans-serif; font-weight: 600; font-size: 0.95rem; display: inline-block; margin: 0 0 10px 0;">${cta.texto}</a>`;
-    })
+    .map((cta, i) => boton(cta, i === 0))
     .join('<br>');
 
   const nota = variante.nota
