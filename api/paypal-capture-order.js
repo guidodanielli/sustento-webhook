@@ -31,6 +31,19 @@ async function getPayPalToken() {
   return data.access_token;
 }
 
+// Va junto al HTML: un mail que viaja solo en HTML le parece envio masivo a
+// Gmail y termina en Promociones.
+function textoDescarga({ buyerName, product }) {
+  return [
+    `Hola${buyerName ? ' ' + buyerName : ''}! Tu ${product.name} ya es tuyo.`,
+    'Gracias por tu compra. Este es el link para descargarlo:',
+    product.driveUrl,
+    'Si tenés alguna duda, me encontrás en Instagram como @guido.sustento.',
+    'Que lo disfrutes!',
+    'Guido'
+  ].join('\n\n');
+}
+
 function buildEmail({ buyerName, product }) {
   return `
     <div style="font-family: Georgia, serif; max-width: 600px; margin: 0 auto; color: #111;">
@@ -131,7 +144,8 @@ export default async function handler(req, res) {
         reply_to: 'guidosustento.nutri@gmail.com',
         to: buyerEmail,
         subject: `¡Acá está tu ${product.name}! 🌿`,
-        html: buildEmail({ buyerName, product })
+        html: buildEmail({ buyerName, product }),
+        text: textoDescarga({ buyerName, product })
       }),
       notificarVenta({
         product,

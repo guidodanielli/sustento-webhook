@@ -55,6 +55,28 @@ function buildClubEmail({ buyerName }) {
   `;
 }
 
+// Version en texto de los dos mails al comprador. Van junto al HTML: un mail
+// que viaja solo en HTML le parece envio masivo a Gmail y cae en Promociones.
+function textoDescarga({ buyerName, product }) {
+  return [
+    `Hola${buyerName ? ' ' + buyerName : ''}! Tu ${product.name} ya es tuyo.`,
+    'Gracias por tu compra. Este es el link para descargarlo:',
+    product.driveUrl,
+    'Si tenés alguna duda, me encontrás en Instagram como @guido.sustento.',
+    'Que lo disfrutes!',
+    'Guido'
+  ].join('\n\n');
+}
+
+function textoClub({ buyerName }) {
+  return [
+    `Hola${buyerName ? ' ' + buyerName : ''}! Ya estás adentro del Club Sustento.`,
+    'En las próximas horas te escribo para darte el acceso al espacio de la comunidad.',
+    'Si tenés alguna duda, respondé este mail. Lo leo yo.',
+    'Guido'
+  ].join('\n\n');
+}
+
 function buildEmail({ buyerName, product }) {
   return `
     <div style="font-family: Georgia, serif; max-width: 600px; margin: 0 auto; color: #111;">
@@ -170,8 +192,8 @@ export default async function handler(req, res) {
     const esRenovacion = esRecurrente && await yaCompro({ buyerEmail, productId: product.id });
 
     const emailContent = esDescargable
-      ? { subject: `¡Acá está tu ${product.name}! 🌿`, html: buildEmail({ buyerName, product }) }
-      : { subject: `¡Bienvenido/a al Club Sustento! 🌿`, html: buildClubEmail({ buyerName }) };
+      ? { subject: `¡Acá está tu ${product.name}! 🌿`, html: buildEmail({ buyerName, product }), text: textoDescarga({ buyerName, product }) }
+      : { subject: `¡Bienvenido/a al Club Sustento! 🌿`, html: buildClubEmail({ buyerName }), text: textoClub({ buyerName }) };
 
     // Se registra ANTES de avisar y de entregar. Si el pago ya estaba en la
     // tabla, la pasarela está reenviando una notificación vieja y no hay que
@@ -201,7 +223,8 @@ export default async function handler(req, res) {
             reply_to: 'guidosustento.nutri@gmail.com',
             to: buyerEmail,
             subject: emailContent.subject,
-            html: emailContent.html
+            html: emailContent.html,
+            text: emailContent.text
           }),
       notificarVenta({
         product,

@@ -164,6 +164,35 @@ function varianteDeSource(source) {
   return 'general';
 }
 
+// Los párrafos llevan algún <a> o <strong> adentro. Para la versión en texto
+// plano hay que sacar las etiquetas y dejar el link visible entre paréntesis,
+// que si no la frase queda coja.
+function aTexto(html) {
+  return String(html)
+    .replace(/<a[^>]*href="([^"]*)"[^>]*>(.*?)<\/a>/gi, '$2 ($1)')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&amp;/g, '&').replace(/&nbsp;/g, ' ')
+    .trim();
+}
+
+// Gmail toma un mail que va solo en HTML como señal de envío masivo, y lo
+// manda a Promociones. Esta versión viaja junto a la HTML en el mismo mail:
+// el lector elige cuál mostrar.
+function armarTexto({ variante, bajaUrl }) {
+  const partes = variante.parrafos.map(aTexto);
+
+  variante.ctas.forEach((cta) => partes.push(`${cta.texto}: ${cta.url}`));
+
+  if (variante.nota) partes.push(aTexto(variante.nota));
+  (variante.cierre || []).forEach((c) => partes.push(aTexto(c)));
+
+  partes.push('Nos vemos,');
+  partes.push('Guido');
+  partes.push(`Si no querés recibir más mails míos, date de baja acá: ${bajaUrl}`);
+
+  return partes.join('\n\n');
+}
+
 function parrafo(texto) {
   return `<p style="font-size: 1rem; line-height: 1.8; color: #444; margin: 0 0 20px 0;">${texto}</p>`;
 }
@@ -228,7 +257,8 @@ async function enviarBienvenida(email, source) {
       'List-Unsubscribe': `<${bajaUrl}>, <mailto:guidosustento.nutri@gmail.com?subject=Baja>`,
       'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click'
     },
-    html: armarHtml({ variante, bajaUrl })
+    html: armarHtml({ variante, bajaUrl }),
+    text: armarTexto({ variante, bajaUrl })
   });
 }
 

@@ -30,6 +30,12 @@ function fila(label, valor) {
   `;
 }
 
+// Version en texto plano de una tabla de datos. Todos los mails llevan las dos
+// versiones: uno que va solo en HTML le parece envio masivo a Gmail.
+function bloqueTexto(pares) {
+  return pares.filter(([, v]) => v).map(([k, v]) => `${k}: ${v}`).join('\n');
+}
+
 /**
  * Avisa a Guido por mail que entró una venta.
  *
@@ -77,6 +83,23 @@ export async function notificarVenta({ product, buyerEmail, buyerName, amount, c
       reply_to: buyerEmail,
       to: AVISO_A,
       subject: `${renovacion ? 'Renovación' : 'Venta'}: ${product.name} · ${monto} 🌱`,
+      text: [
+        renovacion ? 'Se renovó una suscripción.' : 'Entró una venta.',
+        bloqueTexto([
+          ['Producto', product.name],
+          ['Monto', monto],
+          ['Comprador', buyerName ? `${buyerName} (${buyerEmail})` : buyerEmail],
+          ['Medio de pago', paymentMethod],
+          ['Fecha', fechaArgentina()],
+          ['ID de pago', paymentId]
+        ]),
+        esDescargable
+          ? 'El link de descarga ya le salió por mail. No tenés que hacer nada.'
+          : (accesoAutomatico
+              ? 'Whop ya le dio el acceso. No tenés que hacer nada.'
+              : 'Te toca darle el acceso al espacio del Club a mano.'),
+        'Si respondés este mail, le escribís directo al comprador.'
+      ].join('\n\n'),
       html: `
         <div style="font-family: Georgia, serif; max-width: 600px; margin: 0 auto; color: #111;">
           <div style="background: #1e6f1d; padding: 24px 32px;">
@@ -121,6 +144,18 @@ export async function notificarBaja({ buyerEmail, buyerName, motivo, plataforma 
       reply_to: buyerEmail || undefined,
       to: AVISO_A,
       subject: `Baja del Club: ${buyerName || buyerEmail || 'un miembro'}`,
+      text: [
+        'Alguien se dio de baja del Club.',
+        bloqueTexto([
+          ['Miembro', buyerName ? `${buyerName} (${buyerEmail || 'sin mail'})` : (buyerEmail || 'sin datos')],
+          ['Plataforma', plataforma],
+          ['Motivo', motivo || 'no informado'],
+          ['Fecha', fechaArgentina()]
+        ]),
+        plataforma === 'Whop'
+          ? 'Whop ya le sacó el acceso. Este mail responde directo a su casilla.'
+          : 'Revisá si todavía tiene acceso al espacio del Club y sacáselo a mano.'
+      ].join('\n\n'),
       html: `
         <div style="font-family: Georgia, serif; max-width: 600px; margin: 0 auto; color: #111;">
           <div style="background: #7a3b12; padding: 24px 32px;">
@@ -180,6 +215,18 @@ export async function notificarSuscriptor({ email, name, source, motivo = '', or
       reply_to: email || undefined,
       to: AVISO_A,
       subject: `Alta nueva: ${etiqueta} 🌱`,
+      text: [
+        'Alguien nuevo dejó el mail.',
+        bloqueTexto([
+          ['Persona', name ? `${name} (${email})` : email],
+          ['Por dónde entró', etiqueta],
+          ['De dónde vino', origen],
+          ['Fecha', fechaArgentina()],
+          ['Total en la lista', total ? `${total} suscriptores` : '']
+        ]),
+        motivo ? `Qué la trajo, en sus palabras:\n"${motivo}"` : '',
+        `El mail de bienvenida de ${etiqueta} ya le salió. No tenés que hacer nada. Si respondés este mail, le escribís directo.`
+      ].filter(Boolean).join('\n\n'),
       html: `
         <div style="font-family: Georgia, serif; max-width: 600px; margin: 0 auto; color: #111;">
           <div style="background: #2d6a5a; padding: 24px 32px;">
