@@ -5,6 +5,14 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 // A dónde llegan los avisos de venta. Es la casilla que Guido lee todos los días.
 const AVISO_A = 'guidosustento.nutri@gmail.com';
 
+// En la bandeja, el nombre del remitente pesa más que el asunto: es lo primero
+// y lo más grande que se lee. Por eso cada tipo de aviso usa el suyo. Cuando los
+// tres salían como "Ventas Sustento", un alta a la lista se leía como si hubiera
+// entrado plata, y no entró nada: la persona solo dejó el mail.
+function remitente(nombre) {
+  return `${nombre} <${process.env.RESEND_FROM_EMAIL}>`;
+}
+
 function formatearMonto(amount, currency) {
   const numero = new Intl.NumberFormat('es-AR').format(amount);
   return currency === 'USD' ? `USD ${numero}` : `$${numero} ARS`;
@@ -79,7 +87,7 @@ export async function notificarVenta({ product, buyerEmail, buyerName, amount, c
     }
 
     await resend.emails.send({
-      from: `Ventas Sustento <${process.env.RESEND_FROM_EMAIL}>`,
+      from: remitente('Ventas Sustento'),
       reply_to: buyerEmail,
       to: AVISO_A,
       subject: `${renovacion ? 'Renovación' : 'Venta'}: ${product.name} · ${monto} 🌱`,
@@ -140,7 +148,7 @@ export async function notificarVenta({ product, buyerEmail, buyerName, amount, c
 export async function notificarBaja({ buyerEmail, buyerName, motivo, plataforma = 'Whop' }) {
   try {
     await resend.emails.send({
-      from: `Ventas Sustento <${process.env.RESEND_FROM_EMAIL}>`,
+      from: remitente('Avisos Sustento'),
       reply_to: buyerEmail || undefined,
       to: AVISO_A,
       subject: `Baja del Club: ${buyerName || buyerEmail || 'un miembro'}`,
@@ -210,11 +218,13 @@ export async function notificarSuscriptor({ email, name, source, motivo = '', or
     const etiqueta = ETIQUETA_SOURCE[source] || source || 'sin origen';
 
     await resend.emails.send({
-      from: `Ventas Sustento <${process.env.RESEND_FROM_EMAIL}>`,
+      from: remitente('Lista Sustento'),
       // Responder al aviso escribe directo a la persona que se suscribió.
       reply_to: email || undefined,
       to: AVISO_A,
-      subject: `Alta nueva: ${etiqueta} 🌱`,
+      // "Alta" solo también se leía como un alta al Club. Nombrar la lista saca
+      // la duda de si entró plata: no entró, la persona dejó el mail y nada más.
+      subject: `Nuevo en la lista: ${etiqueta} 🌱`,
       text: [
         'Alguien nuevo dejó el mail.',
         bloqueTexto([
