@@ -87,6 +87,8 @@ Para agregar o modificar un **producto de pago único**: editar `api/products.js
 
 La entrada `club` de `products.js` sigue existiendo porque el webhook la necesita para los pagos únicos viejos (hay uno del 06/08/2026). Para cambiar precios del Club hay que editar los dos links **y** los textos de la landing y de `suscribir.js`, no `products.js`.
 
+**Qué incluye el Club, y es fácil escribirlo mal:** recetas nuevas **todas las semanas** y **un seminario en vivo por mes**. La cadencia semanal es el mayor diferencial del producto. Hasta el 26/08/2026 la landing decía "recetas nuevas todos los meses" en tres lugares (la lista de `#club`, la respuesta del FAQ y el JSON-LD del FAQ) y el mail de bienvenida del Club decía lo mismo: estaba subvendiendo el producto. Si se toca ese texto, **son cuatro lugares**, no uno.
+
 ---
 
 ## Flujo de pago (MercadoPago)
@@ -107,6 +109,8 @@ La entrada `club` de `products.js` sigue existiendo porque el webhook la necesit
 - Guarda en Supabase `subscribers` con deduplicación silenciosa
 - Si el email es nuevo, envía el email de bienvenida
 - El mail de bienvenida **cambia según el `source`**: quien pidió el Club recibe el del Club, quien pidió el Método recibe la invitación a la llamada, etc. Los textos están en la constante `VARIANTES` del mismo archivo
+- **Las cinco variantes entregan el Mini Recetario, y va primero**, apenas después del saludo (constante `REGALO`). La persona dejó el mail por eso: si el material no aparece arriba de todo, el mail incumple lo que prometió el quiz
+- **Las cinco cierran pidiendo que respondan el mail** (constante `RESPONDEME`). Ese pedido se sacó a propósito del PDF: adentro de un PDF obliga a cerrarlo y volver a la casilla, y además las respuestas le dicen a Gmail que estos mails son deseados
 - Todos los mails llevan link de baja y los headers `List-Unsubscribe` (ayuda a no caer en Promociones de Gmail)
 
 **`notificar-venta.js`** — No es un endpoint, es una función que usan `webhook.js` y `paypal-capture-order.js`
@@ -115,18 +119,20 @@ La entrada `club` de `products.js` sigue existiendo porque el webhook la necesit
 - Si el aviso falla no corta la entrega del producto: solo queda el error en los logs de Vercel
 - Distingue **alta** de **renovación**: en una renovación el comprador no recibe nada (ya está adentro) y el aviso a Guido cambia de asunto. Ni MercadoPago ni Whop exponen un campo confiable para esto, así que se resuelve preguntándole a Supabase si esa persona ya compró el producto (`yaCompro()` en `registrar-compra.js`)
 - También manda el **aviso de baja** (`notificarBaja()`) cuando alguien cancela en Whop. Antes una cancelación no llegaba a ningún lado
+- **Cada tipo de aviso usa su propio nombre de remitente** (`remitente()`): `Ventas Sustento` para venta o renovación, `Avisos Sustento` para una baja, `Lista Sustento` para un alta a la lista. Hasta el 26/08/2026 los tres salían como "Ventas Sustento" y un alta se leía como si hubiera entrado plata: en la bandeja el nombre del remitente pesa más que el asunto. **Un aviso nuevo elige su remitente según si hubo dinero o no**
 
 **`/api/whop-webhook`** — Suscripciones del Club por Whop (desde el 07/08/2026)
 - Verifica la firma con el esquema **Standard Webhooks**: headers `webhook-id`, `webhook-timestamp` y `webhook-signature`, HMAC-SHA256 sobre `"{id}.{timestamp}.{body}"` con el secret en base64. Rechaza con 401 la firma inválida, el body alterado y los eventos de más de 5 minutos
 - Necesita el body **sin parsear** (`bodyParser: false`), porque la firma se calcula sobre el texto crudo
 - Eventos: `payment.succeeded` (registra la plata y avisa), `membership.deactivated` (avisa la baja), `membership.activated` (solo log: la plata la reporta el evento de pago, duplicar acá inflaría el conteo)
-- ⚠️ **Sin configurar todavía.** Falta que Guido cree el webhook en el dashboard de Whop apuntando a `https://sustento-webhook.vercel.app/api/whop-webhook` y cargue `WHOP_WEBHOOK_SECRET` en Vercel. Hasta entonces el endpoint existe pero no lo llama nadie
-- ⚠️ Los nombres de los campos del payload de Whop están tomados de la documentación, no de un evento real. Si el primer cobro real llega con el mail en `null`, el body crudo queda en los logs de Vercel para ajustarlo
+- ✅ **Funcionando desde el 26/08/2026 o antes.** Ese día entró una renovación real por Whop, con su `payment_id`, y el aviso salió bien. O sea que el webhook está creado en el dashboard y `WHOP_WEBHOOK_SECRET` está cargada en Vercel. Los nombres de los campos del payload, que estaban tomados de la documentación y no de un evento real, quedaron confirmados
+- El monto que reporta Whop puede ser menor al precio de lista si el socio entró con un precio viejo. Hay al menos un socio de lanzamiento a USD 6,99 contra los USD 10 actuales: **un monto raro no es necesariamente un bug**, conviene preguntar antes de tocar nada
 
 **Suscripciones de MercadoPago en `webhook.js`**
+- **MercadoPago avisa en dos formatos y no deja elegir.** El de webhooks manda `type` + `data.id` (en el cuerpo o en la query); el viejo (IPN) manda `topic` + `id` en la query, o un `resource` que a veces es la URL completa del recurso y a veces el id pelado. `extraerTipo()` y `extraerEventId()` miran en los cuatro lugares. Hasta el 26/08/2026 solo se leía `data.id`, así que un IPN moría con 400: el pago no quedaba en `purchases`, no salía aviso, y como `yaCompro()` mira esa tabla, la cuota siguiente de esa persona habría aparecido como venta nueva
 - El evento es `subscription_authorized_payment` y su `data.id` **no es el ID del pago**: es el de la factura. Hay que pedir `/authorized_payments/{id}`, sacar `payment.id` de ahí y recién entonces pedir el pago normal, que es el único que trae el mail del pagador
 - Toda factura de suscripción se asume del Club: es el único plan recurrente que existe
-- ⚠️ **Sin configurar todavía.** Falta que Guido apunte la URL de notificación del plan de suscripción a `https://sustento-webhook.vercel.app/api/webhook`. Sin eso MP no avisa nada y no hay código que lo arregle
+- ⚠️ **Sin verificar.** Hace falta que la URL de notificación del plan de suscripción apunte a `https://sustento-webhook.vercel.app/api/webhook`. Sin eso MP no avisa nada y no hay código que lo arregle. Se comprueba en el panel de MercadoPago, no desde acá. **Ojo con dar esto por pendiente**: el webhook de Whop figuró como "sin configurar" en este archivo durante semanas y resultó estar funcionando
 
 **`/api/baja`** — Baja de la lista de mails
 - `GET` con `?email=` cuando la persona hace clic en el pie del mail (devuelve una página de confirmación); `POST` para el botón nativo de Gmail
@@ -143,11 +149,20 @@ La entrada `club` de `products.js` sigue existiendo porque el webhook la necesit
 
 **`subscribers`**
 ```
-email    TEXT  PK
+email    TEXT  UNIQUE   (la PK es un uuid `id`, no el email)
 name     TEXT
-source   TEXT   (ej: "formulario-web")
+source   TEXT   (ej: "formulario-web", "quiz-club")
 tags     JSONB
+motivo   TEXT   (respuesta abierta del quiz, opcional)
+origen   TEXT   (utm_source o dominio referidor, opcional)
 ```
+
+`motivo` y `origen` se agregaron el 24/08/2026. Que el email sea UNIQUE y **no**
+PK importa: por eso toda inserción que quiera ignorar duplicados necesita
+`?on_conflict=email` en la URL, y `purchases` lo mismo con `payment_id`. Sin ese
+parámetro PostgREST resuelve el choque contra la PK (un uuid nuevo cada vez),
+nunca lo detecta, y el duplicado vuelve como 409. Está explicado en detalle en el
+`CLAUDE.md` de la carpeta de arriba.
 
 **`purchases`**
 ```

@@ -114,29 +114,52 @@ function buildEmail({ buyerName, product }) {
   `;
 }
 
+// MercadoPago avisa en dos formatos y no deja elegir cuál manda. El de webhooks
+// usa `type` + `data.id`; el viejo (IPN) usa `topic` + `id` en la query, o un
+// `resource` que a veces es la URL completa del recurso y a veces el id pelado.
+// Por eso se busca en los cuatro lugares: un pago que no encontremos acá se
+// pierde entero. No queda en `purchases`, no sale aviso, y como `yaCompro()`
+// mira esa tabla, la cuota siguiente de esa persona parecería una venta nueva
+// en vez de una renovación.
+function extraerTipo(req) {
+  return req.body?.type || req.body?.topic || req.query?.type || req.query?.topic;
+}
+
+function extraerEventId(req) {
+  const query = req.query || {};
+  const directo = req.body?.data?.id || query['data.id'] || query.id;
+  if (directo) return String(directo);
+
+  const resource = req.body?.resource;
+  if (!resource) return null;
+
+  // "https://api.mercadopago.com/v1/payments/123" y "123" tienen que dar 123.
+  const ultimo = String(resource).split('?')[0].split('/').filter(Boolean).pop();
+  return /^[\w-]+$/.test(ultimo || '') ? ultimo : null;
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
-    // MercadoPago manda el tema en `type` o en `topic` según el origen.
-    const { data } = req.body;
-    const type = req.body.type || req.body.topic;
-
+    const type = extraerTipo(req);
     const esSuscripcion = type === 'subscription_authorized_payment';
 
     if (type !== 'payment' && !esSuscripcion) {
       return res.status(200).json({ received: true });
     }
 
-    const eventId = data?.id;
+    const eventId = extraerEventId(req);
     if (!eventId) {
-      // MercadoPago tiene dos formatos: el de webhooks manda type + data.id,
-      // y el viejo (IPN) manda topic + resource, donde data.id no existe.
-      // Logueamos el cuerpo crudo para saber cuál está llegando: sin esto un
-      // pago que se cae acá es invisible, no queda en purchases y no avisa nada.
-      console.error('MP sin data.id. Cuerpo crudo:', JSON.stringify(req.body));
+      // Si llegamos acá es un formato que no conocíamos: queda el cuerpo y la
+      // query crudos para poder leerlo, porque el pago no se registra en
+      // ningún lado y no hay forma de reconstruirlo después.
+      console.error(
+        'MP sin id de pago. Cuerpo:', JSON.stringify(req.body),
+        'Query:', JSON.stringify(req.query)
+      );
       return res.status(400).json({ error: 'No payment ID' });
     }
 
