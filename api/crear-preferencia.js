@@ -31,6 +31,9 @@ export default async function handler(req, res) {
         items: [{
           id: product.id,
           title: product.name,
+          // La ve el comprador en el checkout de MercadoPago, así sabe qué está
+          // pagando. Sale de products.js, que ya la tenía escrita sin usar.
+          description: product.description,
           quantity: 1,
           unit_price: product.ars,
           currency_id: 'ARS'
@@ -41,6 +44,11 @@ export default async function handler(req, res) {
           pending: 'https://www.haceloconsustento.com?pago=pendiente'
         },
         auto_return: 'approved',
+        // ⚠️ Va el id del producto y tiene que seguir siendo el id del producto.
+        // `webhook.js` lee este campo para saber qué se compró. MercadoPago
+        // sugiere mandar acá "un código único" por transacción: si alguien le
+        // hace caso sin tocar el webhook, toda compra pasa a registrarse como
+        // "recetario", incluidas las del Club. Son dos archivos que cambian juntos.
         external_reference: product.id,
         notification_url: 'https://sustento-webhook.vercel.app/api/webhook'
       })
