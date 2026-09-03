@@ -2,6 +2,8 @@ import { Resend } from 'resend';
 import { PRODUCTS } from './products.js';
 import { notificarVenta } from './notificar-venta.js';
 import { registrarCompra, yaCompro } from './registrar-compra.js';
+import { linkDeDescarga, HORAS_DE_VIDA } from './entrega.js';
+import { verificarFirmaMP, ESTADOS } from './verificar-firma-mp.js';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -57,15 +59,18 @@ function buildClubEmail({ buyerName }) {
 
 // Version en texto de los dos mails al comprador. Van junto al HTML: un mail
 // que viaja solo en HTML le parece envio masivo a Gmail y cae en Promociones.
-function textoDescarga({ buyerName, product }) {
+function textoDescarga({ buyerName, product, link }) {
   return [
     `Hola${buyerName ? ' ' + buyerName : ''}! Tu ${product.name} ya es tuyo.`,
     'Gracias por tu compra. Este es el link para descargarlo:',
-    product.driveUrl,
+    link.url,
+    link.expira
+      ? `El link vale por ${HORAS_DE_VIDA} horas, asi que bajate el archivo y guardalo en tu compu. Si se te vencio, respondeme este mail y te mando uno nuevo.`
+      : null,
     'Si tenés alguna duda, me encontrás en Instagram como @guido.sustento.',
     'Que lo disfrutes!',
     'Guido'
-  ].join('\n\n');
+  ].filter(Boolean).join('\n\n');
 }
 
 function textoClub({ buyerName }) {
@@ -77,7 +82,7 @@ function textoClub({ buyerName }) {
   ].join('\n\n');
 }
 
-function buildEmail({ buyerName, product }) {
+function buildEmail({ buyerName, product, link }) {
   return `
     <div style="font-family: Georgia, serif; max-width: 600px; margin: 0 auto; color: #111;">
       <div style="background: #1e6f1d; padding: 28px 40px;">
@@ -91,13 +96,16 @@ function buildEmail({ buyerName, product }) {
           Gracias por tu compra. Acá abajo encontrás el link para descargar tu ${product.name}.
         </p>
         <div style="text-align: center; margin: 36px 0;">
-          <a href="${product.driveUrl}" style="background: #1e6f1d; color: #ffffff; padding: 16px 36px; border-radius: 100px; text-decoration: none; font-family: Arial, sans-serif; font-weight: 600; font-size: 1rem; display: inline-block;">
+          <a href="${link.url}" style="background: #1e6f1d; color: #ffffff; padding: 16px 36px; border-radius: 100px; text-decoration: none; font-family: Arial, sans-serif; font-weight: 600; font-size: 1rem; display: inline-block;">
             📥 Descargar ${product.name}
           </a>
         </div>
+        ${link.expira ? `<p style="font-size: 0.95rem; line-height: 1.7; color: #444; margin-bottom: 20px; text-align: center;">
+          El link vale por ${HORAS_DE_VIDA} horas, así que bajate el archivo y guardalo en tu compu. Si se te venció, respondeme este mail y te mando uno nuevo.
+        </p>` : ''}
         <p style="font-size: 0.88rem; color: #888; margin-bottom: 20px; text-align: center;">
           Si el botón no funciona, copiá este link:<br>
-          <a href="${product.driveUrl}" style="color: #1e6f1d;">${product.driveUrl}</a>
+          <a href="${link.url}" style="color: #1e6f1d;">${link.url}</a>
         </p>
         <p style="font-size: 1rem; line-height: 1.8; color: #444; margin-bottom: 20px;">
           Si tenés alguna duda, me encontrás en Instagram como <strong>@guido.sustento</strong>.
@@ -141,6 +149,32 @@ function extraerEventId(req) {
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  // La firma se mira antes que nada: si alguien está inventando
+  // notificaciones, no vale la pena ni consultarle el pago a MercadoPago.
+  //
+  // MP_FIRMA_ESTRICTA arranca apagada a propósito. Con la variable apagada
+  // esto solo deja el resultado en el log y las ventas siguen su curso pase lo
+  // que pase; recién cuando el log muestre "firma: ok" en un cobro real
+  // conviene prenderla, y ahí sí una firma inválida corta la notificación.
+  // Es la única forma de no deployar a ciegas un cambio que puede romper
+  // ventas que hoy funcionan.
+  const firma = verificarFirmaMP(req);
+  const modoEstricto = process.env.MP_FIRMA_ESTRICTA === 'true';
+
+  if (firma.estado === ESTADOS.INVALIDA) {
+    console.error(
+      `MP firma INVÁLIDA: ${firma.detalle}.`,
+      modoEstricto ? 'Modo estricto: se rechaza.' : 'Modo observación: se procesa igual.'
+    );
+    if (modoEstricto) {
+      return res.status(401).json({ error: 'Firma inválida' });
+    }
+  } else {
+    // Las notificaciones viejas (IPN) no traen firma y son legítimas: quedan
+    // como `sin-firma`, no como error.
+    console.log(`MP firma: ${firma.estado} (${firma.detalle}).`);
   }
 
   try {
@@ -214,8 +248,12 @@ export default async function handler(req, res) {
     // corresponde darle la bienvenida de nuevo ni pedirle que espere el acceso.
     const esRenovacion = esRecurrente && await yaCompro({ buyerEmail, productId: product.id });
 
+    // Se firma recién acá, con la venta ya confirmada, para que las 24hs del
+    // link empiecen a correr cuando el mail sale y no antes.
+    const link = esDescargable ? await linkDeDescarga(product) : null;
+
     const emailContent = esDescargable
-      ? { subject: `¡Acá está tu ${product.name}! 🌿`, html: buildEmail({ buyerName, product }), text: textoDescarga({ buyerName, product }) }
+      ? { subject: `¡Acá está tu ${product.name}! 🌿`, html: buildEmail({ buyerName, product, link }), text: textoDescarga({ buyerName, product, link }) }
       : { subject: `¡Bienvenido/a al Club Sustento! 🌿`, html: buildClubEmail({ buyerName }), text: textoClub({ buyerName }) };
 
     // Se registra ANTES de avisar y de entregar. Si el pago ya estaba en la

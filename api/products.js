@@ -7,6 +7,13 @@ export const PRODUCTS = {
     description: 'Más de 60 recetas con plantas para el día a día',
     ars: 40000,
     usd: 40,
+    // Dónde vive el PDF dentro del store privado de Vercel Blob. Cada compra
+    // genera un link firmado a este archivo que vence a las 24hs (ver
+    // `entrega.js`). Si el archivo todavía no está subido, la entrega se cae
+    // sola al `driveUrl` de abajo.
+    blobPathname: 'recetario/recetario-digital-sustento.pdf',
+    // El link viejo de Drive. NO borrarlo: es la red de seguridad de la que
+    // depende `entrega.js` cuando Blob no responde.
     driveUrl: 'https://drive.google.com/file/d/1i5kirECHgf4Cy-BMz5rhtIorT3pfwzuV/view?usp=sharing',
   },
   club: {

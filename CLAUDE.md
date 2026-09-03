@@ -28,7 +28,7 @@ Landing page de Guido Sustento y las funciones serverless que procesan pagos, su
 | Pagos | MercadoPago (principal) + PayPal |
 | Email | Resend (`hola@haceloconsustento.com`) |
 | Base de datos | Supabase (subscribers + purchases) |
-| Dependencia | `resend` (instalada con npm) |
+| Dependencias | `resend` y `@vercel/blob` (instaladas con npm) |
 
 **No hay bundler, no hay framework, no hay build step.** El `index.html` se sirve estático; las funciones de `api/` las ejecuta Vercel en el servidor.
 
@@ -73,7 +73,7 @@ Landing Page/
 
 | ID | Nombre | ARS | USD | Cómo se cobra |
 |---|---|---|---|---|
-| `recetario` | Recetario Digital Sustento | $40.000 | $40 | Pago único por MercadoPago o PayPal, entrega automática (Drive) |
+| `recetario` | Recetario Digital Sustento | $40.000 | $40 | Pago único por MercadoPago o PayPal, entrega automática con **link firmado que vence a las 24hs** (Vercel Blob) |
 | `club` | Club Sustento | $15.000/mes | $10/mes | **Suscripción, con links propios fuera de `products.js`** |
 
 Para agregar o modificar un **producto de pago único**: editar `api/products.js`. El webhook, PayPal y la landing lo leen desde ahí.
@@ -133,6 +133,18 @@ La entrada `club` de `products.js` sigue existiendo porque el webhook la necesit
 - El evento es `subscription_authorized_payment` y su `data.id` **no es el ID del pago**: es el de la factura. Hay que pedir `/authorized_payments/{id}`, sacar `payment.id` de ahí y recién entonces pedir el pago normal, que es el único que trae el mail del pagador
 - Toda factura de suscripción se asume del Club: es el único plan recurrente que existe
 - ✅ **Verificado el 26/08/2026.** La URL de notificación estaba puesta desde antes. Guido mandó una notificación de prueba desde `Developers → Webhooks → Simular` y el endpoint contestó **200**. Con un id de pago inventado la respuesta correcta es `200` con `{"status":404}`: significa "recibí el aviso, fui a buscar ese pago y no existe". Un 400 o un 500 ahí sí serían un problema
+
+**`entrega.js`** — No es un endpoint. Arma el link de descarga de los productos digitales
+- El PDF vive en un **store privado de Vercel Blob** y cada compra genera su propio link firmado, que **vence a las 24hs**. Antes se mandaba un link de Drive permanente: quien compraba podía reenviarlo y el que lo recibía tenía el Recetario completo sin pagar
+- **Si algo de Blob falla, se cae al `driveUrl` de siempre.** Una venta cobrada entrega el producto igual, aunque sea con el link viejo. Por eso se puede deployar antes de que exista el store
+- Antes de firmar, confirma con un pedido `head` que el archivo esté realmente en el store. Sin ese chequeo, un store creado con el PDF todavía sin subir daría un link impecable que del otro lado es un 404, que es peor que el link viejo: el comprador no recibe nada y nosotros creemos que sí
+- El mail avisa que el link vence y ofrece responder para pedir uno nuevo. **Es la contra de este cambio:** quien compra y no descarga en 24hs tiene que escribir
+
+**`verificar-firma-mp.js`** — No es un endpoint. Verifica la firma de las notificaciones de MercadoPago
+- MP manda el header `x-signature` con `ts` y `v1`. Se arma el manifest `id:<data.id>;request-id:<x-request-id>;ts:<ts>;` y se le calcula HMAC-SHA256 con `MP_WEBHOOK_SECRET`. Si da igual a `v1`, la notificación es auténtica
+- El `data.id` sale del **query param**, no del cuerpo, y va en minúsculas cuando es alfanumérico
+- 🔴 **Las notificaciones IPN (las del formato viejo, con `topic`) NO traen firma y son legítimas igual.** Por eso se distingue `sin-firma` de `invalida`: rechazar las dos por igual rompería ventas que hoy funcionan
+- **Arranca en modo observación:** con `MP_FIRMA_ESTRICTA` apagada solo deja el resultado en el log y las ventas siguen su curso. Recién cuando el log muestre `MP firma: ok` en un cobro real conviene prenderla, y ahí una firma inválida corta con 401
 
 **`/api/baja`** — Baja de la lista de mails
 - `GET` con `?email=` cuando la persona hace clic en el pie del mail (devuelve una página de confirmación); `POST` para el botón nativo de Gmail
@@ -194,7 +206,10 @@ Todas las credenciales viven en el panel de Vercel, nunca en el código.
 | `SUPABASE_SERVICE_KEY` | Clave de servicio de Supabase |
 | `PAYPAL_CLIENT_ID` | API de PayPal |
 | `PAYPAL_CLIENT_SECRET` | API de PayPal |
-| `WHOP_WEBHOOK_SECRET` | Firma del webhook de Whop — ⚠️ **falta cargarla** |
+| `WHOP_WEBHOOK_SECRET` | Firma del webhook de Whop — ✅ cargada (confirmado con la renovación real del 26/08/2026) |
+| `MP_WEBHOOK_SECRET` | Firma del webhook de MercadoPago — ✅ cargada el 07/08/2026 |
+| `MP_FIRMA_ESTRICTA` | `true` hace que una firma inválida de MP se rechace con 401. **Sin cargar a propósito:** hasta que un cobro real muestre `MP firma: ok` en los logs, conviene dejarla apagada |
+| `BLOB_STORE_ID` + `VERCEL_OIDC_TOKEN` | Las pone Vercel solo al conectar el store de Blob al proyecto. No se cargan a mano |
 
 ---
 
