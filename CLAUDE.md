@@ -143,6 +143,8 @@ La entrada `club` de `products.js` sigue existiendo porque el webhook la necesit
 - **Si algo de Blob falla, se cae al `driveUrl` de siempre.** Una venta cobrada entrega el producto igual, aunque sea con el link viejo. Por eso se puede deployar antes de que exista el store
 - Antes de firmar, confirma con un pedido `head` que el archivo esté realmente en el store. Sin ese chequeo, un store creado con el PDF todavía sin subir daría un link impecable que del otro lado es un 404, que es peor que el link viejo: el comprador no recibe nada y nosotros creemos que sí
 - El mail avisa que el link vence y ofrece responder para pedir uno nuevo. **Es la contra de este cambio:** quien compra y no descarga en 24hs tiene que escribir
+- El store se llama `recetario`, es **privado** (no se puede cambiar después) y está en la región **GRU1**, San Pablo. Creado el 03/09/2026
+- ⚠️ **El PDF quedó subido como `recetario-digital-sustento.pdf.pdf`, con la extensión repetida.** macOS esconde las extensiones y al renombrarlo se le sumó una segunda. `blobPathname` en `products.js` tiene que coincidir con eso, no con el nombre que uno esperaría. **Se nota del lado del comprador:** el `content-disposition` del store manda ese nombre y es el que ve al guardar el archivo. Para limpiarlo: borrar el blob, volver a subirlo escribiendo el nombre **sin** el `.pdf`, y cambiar esa línea
 
 **`api/_lib/verificar-firma-mp.js`** — No es un endpoint. Verifica la firma de las notificaciones de MercadoPago
 - MP manda el header `x-signature` con `ts` y `v1`. Se arma el manifest `id:<data.id>;request-id:<x-request-id>;ts:<ts>;` y se le calcula HMAC-SHA256 con `MP_WEBHOOK_SECRET`. Si da igual a `v1`, la notificación es auténtica
