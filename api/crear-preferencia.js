@@ -1,4 +1,4 @@
-import { PRODUCTS } from './products.js';
+import { PRODUCTS } from '../lib/products.js';
 
 const ALLOWED_ORIGINS = [
   'https://www.haceloconsustento.com',
