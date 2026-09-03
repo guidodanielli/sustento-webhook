@@ -12,15 +12,12 @@ export const PRODUCTS = {
     // `entrega.js`). Si el archivo no está subido, la entrega se cae sola al
     // `driveUrl` de abajo.
     //
-    // ⚠️ EL `.pdf.pdf` NO ES UN ERROR DE TIPEO: es el nombre real con el que
-    // el archivo quedó subido el 03/09/2026. Pasó porque macOS esconde las
-    // extensiones y al renombrarlo se le sumó una segunda. Tiene una
-    // consecuencia visible: el `content-disposition` que manda el store dice
-    // ese nombre, así que es el que ve el comprador al guardarlo. Para
-    // limpiarlo hay que borrar el blob, volver a subirlo con el nombre bueno
-    // y cambiar esta línea. Mientras tanto, esto tiene que coincidir con lo
-    // que hay en el store, no con lo que nos gustaría que hubiera.
-    blobPathname: 'recetario-digital-sustento.pdf.pdf',
+    // Esto tiene que coincidir con el nombre real del archivo en el store, no
+    // con el que uno esperaría. El store manda ese mismo nombre en el
+    // `content-disposition`, así que es el que ve el comprador al guardarlo.
+    // Ojo al resubir desde una Mac: como esconde las extensiones, escribir el
+    // `.pdf` al renombrar deja el archivo como `.pdf.pdf`.
+    blobPathname: 'recetario-digital-sustento.pdf',
     // El link viejo de Drive. NO borrarlo: es la red de seguridad de la que
     // depende `entrega.js` cuando Blob no responde.
     driveUrl: 'https://drive.google.com/file/d/1i5kirECHgf4Cy-BMz5rhtIorT3pfwzuV/view?usp=sharing',
