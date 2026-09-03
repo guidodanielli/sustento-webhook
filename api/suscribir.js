@@ -1,5 +1,5 @@
 import { Resend } from 'resend';
-import { notificarSuscriptor } from '../lib/notificar-venta.js';
+import { notificarSuscriptor } from './_lib/notificar-venta.js';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 

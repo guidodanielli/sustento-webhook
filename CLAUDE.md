@@ -45,7 +45,7 @@ Landing Page/
     ├── index.html               ← landing page principal
     ├── og-image.jpg             ← imagen para Open Graph / WhatsApp
     ├── robots.txt · sitemap.xml
-    ├── package.json             ← deps: resend, @vercel/blob
+    ├── package.json             ← manifiesto de la raíz (el que manda es el de api/)
     ├── supabase-schema.sql      ← schema de las tablas en Supabase
     ├── api/                     ← SOLO endpoints. Cada archivo acá = una función serverless
     │   ├── crear-preferencia.js ← crea preferencia de pago en MercadoPago
@@ -56,13 +56,14 @@ Landing Page/
     │   ├── club-miembros.js     ← devuelve el count de miembros del Club
     │   ├── paypal-create-order.js
     │   ├── paypal-capture-order.js
-    │   └── package.json
-    ├── lib/                     ← código compartido. NO son endpoints, no cuentan como funciones
-    │   ├── products.js          ← catálogo de productos (precios y links)
-    │   ├── notificar-venta.js   ← avisa a Guido por mail: ventas y bajas
-    │   ├── registrar-compra.js  ← deja la compra en Supabase (lo usan los 3 cobros)
-    │   ├── entrega.js           ← arma el link de descarga firmado (Vercel Blob)
-    │   └── verificar-firma-mp.js ← valida la firma de las notificaciones de MercadoPago
+    │   ├── package.json          ← deps (resend, @vercel/blob) y "type": "module"
+    │   └── _lib/                 ← código compartido. El `_` hace que NO sean funciones
+    │       ├── products.js          ← catálogo de productos (precios y links)
+    │       ├── notificar-venta.js   ← avisa a Guido por mail: ventas y bajas
+    │       ├── registrar-compra.js  ← deja la compra en Supabase (lo usan los 3 cobros)
+    │       ├── entrega.js           ← arma el link de descarga firmado (Vercel Blob)
+    │       └── verificar-firma-mp.js ← valida la firma de las notificaciones de MercadoPago
+
     ├── blog/                    ← artículos SEO (cada uno en su carpeta)
     │   ├── index.html           ← índice del blog
     │   ├── style.css
@@ -72,7 +73,7 @@ Landing Page/
 
 ---
 
-## Productos (`lib/products.js`)
+## Productos (`api/_lib/products.js`)
 
 | ID | Nombre | ARS | USD | Cómo se cobra |
 |---|---|---|---|---|
@@ -116,11 +117,11 @@ La entrada `club` de `products.js` sigue existiendo porque el webhook la necesit
 - **Las cinco cierran pidiendo que respondan el mail** (constante `RESPONDEME`). Ese pedido se sacó a propósito del PDF: adentro de un PDF obliga a cerrarlo y volver a la casilla, y además las respuestas le dicen a Gmail que estos mails son deseados
 - Todos los mails llevan link de baja y los headers `List-Unsubscribe` (ayuda a no caer en Promociones de Gmail)
 
-**`lib/notificar-venta.js`** — No es un endpoint, es una función que usan `webhook.js` y `paypal-capture-order.js`
+**`api/_lib/notificar-venta.js`** — No es un endpoint, es una función que usan `webhook.js` y `paypal-capture-order.js`
 - Manda un mail a `guidosustento.nutri@gmail.com` por cada venta aprobada, con producto, comprador, monto, medio de pago e ID
 - Si el producto no es descargable (el Club), el mail recuerda las dos cosas que hay que hacer a mano: dar el acceso y anotar que el cobro por MercadoPago o PayPal es de un mes solo
 - Si el aviso falla no corta la entrega del producto: solo queda el error en los logs de Vercel
-- Distingue **alta** de **renovación**: en una renovación el comprador no recibe nada (ya está adentro) y el aviso a Guido cambia de asunto. Ni MercadoPago ni Whop exponen un campo confiable para esto, así que se resuelve preguntándole a Supabase si esa persona ya compró el producto (`yaCompro()` en `lib/registrar-compra.js`)
+- Distingue **alta** de **renovación**: en una renovación el comprador no recibe nada (ya está adentro) y el aviso a Guido cambia de asunto. Ni MercadoPago ni Whop exponen un campo confiable para esto, así que se resuelve preguntándole a Supabase si esa persona ya compró el producto (`yaCompro()` en `api/_lib/registrar-compra.js`)
 - También manda el **aviso de baja** (`notificarBaja()`) cuando alguien cancela en Whop. Antes una cancelación no llegaba a ningún lado
 - **Cada tipo de aviso usa su propio nombre de remitente** (`remitente()`): `Ventas Sustento` para venta o renovación, `Avisos Sustento` para una baja, `Lista Sustento` para un alta a la lista. Hasta el 26/08/2026 los tres salían como "Ventas Sustento" y un alta se leía como si hubiera entrado plata: en la bandeja el nombre del remitente pesa más que el asunto. **Un aviso nuevo elige su remitente según si hubo dinero o no**
 
@@ -137,13 +138,13 @@ La entrada `club` de `products.js` sigue existiendo porque el webhook la necesit
 - Toda factura de suscripción se asume del Club: es el único plan recurrente que existe
 - ✅ **Verificado el 26/08/2026.** La URL de notificación estaba puesta desde antes. Guido mandó una notificación de prueba desde `Developers → Webhooks → Simular` y el endpoint contestó **200**. Con un id de pago inventado la respuesta correcta es `200` con `{"status":404}`: significa "recibí el aviso, fui a buscar ese pago y no existe". Un 400 o un 500 ahí sí serían un problema
 
-**`lib/entrega.js`** — No es un endpoint. Arma el link de descarga de los productos digitales
+**`api/_lib/entrega.js`** — No es un endpoint. Arma el link de descarga de los productos digitales
 - El PDF vive en un **store privado de Vercel Blob** y cada compra genera su propio link firmado, que **vence a las 24hs**. Antes se mandaba un link de Drive permanente: quien compraba podía reenviarlo y el que lo recibía tenía el Recetario completo sin pagar
 - **Si algo de Blob falla, se cae al `driveUrl` de siempre.** Una venta cobrada entrega el producto igual, aunque sea con el link viejo. Por eso se puede deployar antes de que exista el store
 - Antes de firmar, confirma con un pedido `head` que el archivo esté realmente en el store. Sin ese chequeo, un store creado con el PDF todavía sin subir daría un link impecable que del otro lado es un 404, que es peor que el link viejo: el comprador no recibe nada y nosotros creemos que sí
 - El mail avisa que el link vence y ofrece responder para pedir uno nuevo. **Es la contra de este cambio:** quien compra y no descarga en 24hs tiene que escribir
 
-**`lib/verificar-firma-mp.js`** — No es un endpoint. Verifica la firma de las notificaciones de MercadoPago
+**`api/_lib/verificar-firma-mp.js`** — No es un endpoint. Verifica la firma de las notificaciones de MercadoPago
 - MP manda el header `x-signature` con `ts` y `v1`. Se arma el manifest `id:<data.id>;request-id:<x-request-id>;ts:<ts>;` y se le calcula HMAC-SHA256 con `MP_WEBHOOK_SECRET`. Si da igual a `v1`, la notificación es auténtica
 - El `data.id` sale del **query param**, no del cuerpo, y va en minúsculas cuando es alfanumérico
 - 🔴 **Las notificaciones IPN (las del formato viejo, con `topic`) NO traen firma y son legítimas igual.** Por eso se distingue `sin-firma` de `invalida`: rechazar las dos por igual rompería ventas que hoy funcionan
@@ -220,9 +221,11 @@ Todas las credenciales viven en el panel de Vercel, nunca en el código.
 
 **Vercel convierte en función serverless a cada archivo `.js` que esté adentro de `api/`, sea un endpoint o no.** El plan Hobby permite 12 por deploy, y el proyecto había llegado a 11 con archivos que no eran endpoints: `products.js`, `notificar-venta.js` y `registrar-compra.js` contaban aunque nadie los llame por HTTP.
 
-El 03/09/2026 un cambio que sumaba dos archivos hizo 13 y **el build falló entero** con `exceeded_serverless_functions_per_deployment`. Se resolvió moviendo el código compartido a `lib/`, que Vercel empaqueta dentro de la función que lo importa sin contarlo aparte. Quedaron 8 funciones.
+El 03/09/2026 un cambio que sumaba dos archivos hizo 13 y **el build falló entero** con `exceeded_serverless_functions_per_deployment`. Quedaron 8 funciones después de mover el código compartido a **`api/_lib/`**: Vercel no convierte en función a nada que empiece con guion bajo, y lo empaqueta dentro de la función que lo importa.
 
-**La regla, de acá en adelante: en `api/` va solo lo que se llama por HTTP.** Todo lo demás va a `lib/` y se importa con `../lib/`. Es lo que evita volver a chocar contra el techo.
+🔴 **Por qué `api/_lib/` y no una carpeta `lib/` en la raíz, que fue el primer intento y falló dos veces:** este proyecto instala las dependencias **adentro de `api/`**, no en la raíz. El `api/package.json` es el que declara `"type": "module"` y las dependencias. Un archivo fuera de `api/` queda sin ese manifiesto: las funciones construyen bien pero **explotan al invocarlas** con `Cannot find module 'resend'`, y borrar ese `package.json` rompe el build entero con `ENOENT`. El guion bajo resuelve el conteo sin tocar nada de eso.
+
+**La regla, de acá en adelante: en `api/` va solo lo que se llama por HTTP.** Todo lo demás va a `api/_lib/` y se importa con `./_lib/`.
 
 ---
 

@@ -1,7 +1,7 @@
 import crypto from 'crypto';
-import { PRODUCTS } from '../lib/products.js';
-import { notificarVenta, notificarBaja } from '../lib/notificar-venta.js';
-import { registrarCompra } from '../lib/registrar-compra.js';
+import { PRODUCTS } from './_lib/products.js';
+import { notificarVenta, notificarBaja } from './_lib/notificar-venta.js';
+import { registrarCompra } from './_lib/registrar-compra.js';
 
 // Tolerancia del timestamp, para que no sirva reenviar un webhook viejo.
 const TOLERANCIA_SEGUNDOS = 5 * 60;

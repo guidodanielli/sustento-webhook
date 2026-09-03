@@ -1,8 +1,8 @@
 import { Resend } from 'resend';
-import { PRODUCTS } from '../lib/products.js';
-import { notificarVenta } from '../lib/notificar-venta.js';
-import { registrarCompra } from '../lib/registrar-compra.js';
-import { linkDeDescarga, HORAS_DE_VIDA } from '../lib/entrega.js';
+import { PRODUCTS } from './_lib/products.js';
+import { notificarVenta } from './_lib/notificar-venta.js';
+import { registrarCompra } from './_lib/registrar-compra.js';
+import { linkDeDescarga, HORAS_DE_VIDA } from './_lib/entrega.js';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
