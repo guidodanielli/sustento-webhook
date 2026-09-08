@@ -5,10 +5,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Guido Sustento | Nutricionista y Cocinero Sustentable</title>
   <!-- SEO Básico -->
-  <meta name="description" content="Guido Sustento, nutricionista y cocinero sustentable. Método de 90 días para transformar tu relación con la comida, sin dietas ni restricciones.">
+  <meta name="description" content="Guido Sustento, nutricionista y cocinero sustentable. Método de 90 días, en línea, para transformar tu relación con la comida, sin dietas ni restricciones.">
   <meta name="robots" content="index, follow">
   <meta name="author" content="Guido Sustento">
   <link rel="canonical" href="https://haceloconsustento.com/">
+  <!-- Favicon -->
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <meta name="theme-color" content="#1e6f1d">
 
   <!-- Open Graph -->
   <meta property="og:type" content="website">
@@ -189,6 +194,11 @@
           },
           {
             "@type": "Question",
+            "name": "¿Atendés si no vivo en Argentina?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Sí. Todo el acompañamiento es en línea, por videollamada, desde cualquier país. Se puede pagar en dólares: el Club por Whop y el Recetario por PayPal. Nutriólogo y nutricionista son la misma profesión: cambia el nombre según el país, no el trabajo." }
+          },
+          {
+            "@type": "Question",
             "name": "¿Qué diferencia hay entre el Recetario, el Club y el Método?",
             "acceptedAnswer": { "@type": "Answer", "text": "Son tres niveles de acompañamiento. El Recetario es un producto digital con +60 recetas para empezar hoy a tu ritmo. El Club Sustento es una suscripción mensual con recetas nuevas, seminarios y comunidad. El Método Sustento es un proceso personalizado 1:1 de 90 días." }
           },
@@ -210,7 +220,7 @@
           {
             "@type": "Question",
             "name": "¿Cómo recibo el Recetario después de comprarlo?",
-            "acceptedAnswer": { "@type": "Answer", "text": "Automáticamente por mail. Apenas se confirma el pago te llega un email con el PDF adjunto, sin esperas ni pasos extra." }
+            "acceptedAnswer": { "@type": "Answer", "text": "Automáticamente por mail. Apenas se confirma el pago te llega un email con un link de descarga propio, que vence a las 24 horas. Si se vence, respondiendo ese mismo mail se envía uno nuevo." }
           }
         ]
       }
@@ -386,8 +396,8 @@
   }
   .hero-image img {
     position: absolute;
-    bottom: 0; left: 50%; transform: translateX(-50%);
-    height: 100%; width: auto;
+    inset: 0;
+    width: 100%; height: 100%;
     object-fit: cover; object-position: top center;
     opacity: 1;
   }
@@ -625,6 +635,7 @@
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 28px;
+    align-items: start;
     max-width: 900px;
     margin: 0 auto;
   }
@@ -659,6 +670,37 @@
   }
   .producto-badge-proceso { background: #5a8f3c; }
   .producto-icon { font-size: 2rem; line-height: 1; }
+  /* Tapa y muestra de paginas del Recetario (tarjeta de la Tienda) */
+  .producto-tapa {
+    width: 136px;
+    height: auto;
+    display: block;
+    border-radius: 8px;
+    border: 1px solid rgba(30,111,29,0.15);
+    box-shadow: 0 6px 20px rgba(17,17,17,0.12);
+  }
+  .recetario-muestra { margin: 0; }
+  .recetario-muestra figcaption {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: #999;
+    margin-bottom: 8px;
+  }
+  .recetario-muestra-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+  .recetario-muestra-grid img {
+    width: 100%;
+    height: auto;
+    display: block;
+    border-radius: 6px;
+    border: 1px solid rgba(30,111,29,0.12);
+  }
   .producto-card h3 {
     font-family: 'Playfair Display', serif;
     font-size: 1.3rem;
@@ -1082,7 +1124,7 @@
     <li><a href="#tienda">Tienda</a></li>
     <li><a href="/blog/">Blog</a></li>
     <li><a href="#contacto">Contacto</a></li>
-    <li><a href="https://wa.me/541171417177" target="_blank" class="nav-cta" style="background:var(--tierra-claro);">WhatsApp 💬</a></li>
+    <li><a href="https://wa.me/541171417177" target="_blank" rel="noopener" class="nav-cta" style="background:var(--tierra-claro);">WhatsApp 💬</a></li>
   </ul>
 </nav>
 
@@ -1111,7 +1153,7 @@
     <a href="#quiz" class="hero-quiz-link">🧭 ¿No sabés por dónde empezar? Hacé el test de 30 segundos →</a>
   </div>
   <div class="hero-image">
-    <img src="img/guido-sustento.webp" alt="Guido Sustento" width="1080" height="1350" fetchpriority="high">
+    <img src="img/guido-sustento.webp" alt="Guido Sustento, nutricionista y cocinero sustentable, sentado y sonriendo sobre fondo claro" width="1080" height="1350" fetchpriority="high">
   </div>
 </section>
 
@@ -1328,7 +1370,7 @@
           '<a href="' + r.target + '" class="btn-primary" id="quizCta">' + r.cta + '</a>' +
           '<div style="margin:28px 0 0 0;padding:22px 0 0 0;border-top:1px solid rgba(0,0,0,.12);text-align:left;">' +
             '<p class="quiz-sub" style="margin:0 0 12px 0;"><strong>Te dejo el Mini Recetario</strong><br>9 recetas con plantas para empezar hoy, sin ingredientes raros ni pasos imposibles. Dejame tu mail y te lo mando ahora. Sin spam, y te podés borrar de un clic.</p>' +
-            '<input type="email" class="quiz-email-field" id="quizEmail" placeholder="tu@email.com" autocomplete="email">' +
+            '<input type="email" class="quiz-email-field" id="quizEmail" placeholder="tu@email.com" aria-label="Tu dirección de email" autocomplete="email">' +
             '<textarea id="quizMotivo" rows="2" placeholder="Opcional: ¿qué te trajo hasta acá?" style="width:100%;margin-top:10px;padding:14px 16px;border:1px solid rgba(0,0,0,.18);border-radius:12px;font-family:inherit;font-size:.95rem;resize:vertical;background:#fff;color:#111;"></textarea>' +
             '<p class="quiz-error" id="quizEmailError"></p>' +
             '<button class="btn-primary" style="width:100%;justify-content:center;margin-top:10px;" id="quizSendBtn">Mandámelo</button>' +
@@ -1464,7 +1506,7 @@
       <h3>Método Sustento · 90 días</h3>
       <p>Un proceso 1:1 para transformar tu relación con la comida, a tu ritmo y sin dietas.</p>
       <div class="precio-cta">
-        <a href="https://calendly.com/guidosustento-nutri/30min" target="_blank" class="btn-blanco">Reservar llamada gratuita</a>
+        <a href="https://calendly.com/guidosustento-nutri/30min" target="_blank" rel="noopener" class="btn-blanco">Reservar llamada gratuita</a>
       </div>
       <p class="precio-microcopy">Sin cargo · 30 minutos · Sin compromiso</p>
     </div>
@@ -1645,9 +1687,25 @@
 
       <div class="producto-card reveal">
         <span class="producto-badge">Digital</span>
-        <div class="producto-icon">📖</div>
+        <img class="producto-tapa" src="img/recetario-portada.webp"
+             alt="Tapa del Recetario Curado por Guido Sustento: +60 recetas basadas en plantas, simples y sabrosas"
+             width="600" height="849" loading="lazy" decoding="async">
         <h3>Recetario Digital Sustento</h3>
         <p class="producto-desc">+60 recetas plant-based para el día a día. Simples, nutritivas, con ingredientes reales. Para que la cocina casera vuelva a ser parte de tu vida.</p>
+        <figure class="recetario-muestra">
+          <figcaption>Algunas páginas de adentro</figcaption>
+          <div class="recetario-muestra-grid">
+            <img src="img/recetario-crepe-garbanzos.webp"
+                 alt="Página del Recetario: crepe de harina de garbanzos, con ingredientes y pasos"
+                 width="600" height="849" loading="lazy" decoding="async">
+            <img src="img/recetario-linguine-zucchini-tofu.webp"
+                 alt="Página del Recetario: linguine con zucchini y tofu, con ingredientes y pasos"
+                 width="600" height="849" loading="lazy" decoding="async">
+            <img src="img/recetario-muffins-chocolate.webp"
+                 alt="Página del Recetario: muffins de chocolate, con ingredientes y pasos"
+                 width="600" height="849" loading="lazy" decoding="async">
+          </div>
+        </figure>
         <div class="producto-precio">
           <span class="precio-ars">$40.000 ARS</span>
           <span class="precio-sep">·</span>
@@ -1669,7 +1727,7 @@
           <span class="precio-ars">Admisión gratuita</span>
         </div>
         <div class="producto-btns">
-          <a href="https://calendly.com/guidosustento-nutri/30min" target="_blank" class="btn-primary" style="text-align:center; display:block;">Reservar llamada 📅</a>
+          <a href="https://calendly.com/guidosustento-nutri/30min" target="_blank" rel="noopener" class="btn-primary" style="text-align:center; display:block;">Reservar llamada 📅</a>
         </div>
       </div>
 
@@ -1894,6 +1952,15 @@
   </div>
   <div class="faq-item reveal">
     <button class="faq-question" onclick="toggleFaq(this)">
+      ¿Atendés si no vivo en Argentina?
+      <span class="faq-icon">+</span>
+    </button>
+    <div class="faq-answer">
+      <p>Sí. Todo es en línea, así que no importa desde qué país me escribas. Las consultas son por videollamada y podés pagar en dólares: el Club por Whop y el Recetario por PayPal. Si llegaste buscando un nutriólogo plant-based, es la misma profesión que acá llamamos nutricionista — cambia la palabra según el país, no el trabajo.</p>
+    </div>
+  </div>
+  <div class="faq-item reveal">
+    <button class="faq-question" onclick="toggleFaq(this)">
       ¿Qué diferencia hay entre el Recetario, el Club y el Método?
       <span class="faq-icon">+</span>
     </button>
@@ -1935,7 +2002,7 @@
       <span class="faq-icon">+</span>
     </button>
     <div class="faq-answer">
-      <p>Automáticamente por mail. Apenas se confirma el pago te llega un email con el PDF adjunto. Sin esperas, sin pasos extra.</p>
+      <p>Automáticamente por mail. Apenas se confirma el pago te llega un email con tu link de descarga. El link es tuyo y <strong>vence a las 24 horas</strong>, así que descargá el PDF apenas te llegue. Si se te pasa, respondé ese mismo mail y te mando uno nuevo.</p>
     </div>
   </div>
 </section>
@@ -1945,7 +2012,7 @@
   <h2>Quedate en el<br><em>ecosistema.</em></h2>
   <p>Dejame tu mail y te mando el Mini Recetario: 9 recetas con plantas para empezar hoy. Después te escribo solo cuando tengo algo que de verdad suma, sin envíos de relleno.</p>
   <form class="email-form" onsubmit="handleSubmit(event)">
-    <input type="email" class="email-input" placeholder="tu@email.com" required>
+    <input type="email" id="email-ecosistema" name="email" class="email-input" placeholder="tu@email.com" aria-label="Tu dirección de email" autocomplete="email" required>
     <button type="submit" class="btn-email">Suscribirme</button>
   </form>
   <p id="form-msg" style="margin-top:16px;font-size:0.85rem;opacity:0.8;display:none;">Listo, el Mini Recetario va en camino. 🌱</p>
@@ -1963,14 +2030,15 @@
       <li><a href="#tienda">Recetario Digital</a></li>
       <li><a href="#club">Club Sustento</a></li>
       <li><a href="#red">Red Sustento</a></li>
+      <li><a href="/blog/">Blog</a></li>
     </ul>
   </div>
   <div class="footer-links">
     <h4>Contacto</h4>
     <ul>
-      <li><a href="https://www.instagram.com/guido.sustento/" target="_blank">@guido.sustento</a></li>
+      <li><a href="https://www.instagram.com/guido.sustento/" target="_blank" rel="noopener">@guido.sustento</a></li>
       <li><a href="mailto:guidosustento.nutri@gmail.com">guidosustento.nutri@gmail.com</a></li>
-      <li><a href="https://www.haceloconsustento.com">haceloconsustento.com</a></li>
+      <li><a href="https://haceloconsustento.com">haceloconsustento.com</a></li>
     </ul>
   </div>
 </footer>
@@ -1986,7 +2054,7 @@
 
 
 <!-- WhatsApp flotante -->
-<a href="https://wa.me/541171417177" target="_blank" id="whatsapp-btn" style="
+<a href="https://wa.me/541171417177" target="_blank" rel="noopener" id="whatsapp-btn" style="
   position: fixed; bottom: 80px; right: 24px; z-index: 300;
   background: #25D366; color: #fff;
   width: 52px; height: 52px; border-radius: 50%;
