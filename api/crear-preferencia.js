@@ -1,4 +1,5 @@
 import { PRODUCTS } from './_lib/products.js';
+import { construirReferencia } from './_lib/referencia-externa.js';
 
 const ALLOWED_ORIGINS = [
   'https://www.haceloconsustento.com',
@@ -19,6 +20,10 @@ export default async function handler(req, res) {
   const { productId = 'recetario' } = req.body || {};
   const product = PRODUCTS[productId];
   if (!product) return res.status(400).json({ error: 'Producto inválido' });
+
+  // Se arma antes del pedido para poder dejarla en el log: es el hilo que ata
+  // este checkout con el pago que MercadoPago notifica después.
+  const referencia = construirReferencia(product.id);
 
   try {
     const response = await fetch('https://api.mercadopago.com/checkout/preferences', {
@@ -44,12 +49,11 @@ export default async function handler(req, res) {
           pending: 'https://www.haceloconsustento.com?pago=pendiente'
         },
         auto_return: 'approved',
-        // ⚠️ Va el id del producto y tiene que seguir siendo el id del producto.
-        // `webhook.js` lee este campo para saber qué se compró. MercadoPago
-        // sugiere mandar acá "un código único" por transacción: si alguien le
-        // hace caso sin tocar el webhook, toda compra pasa a registrarse como
-        // "recetario", incluidas las del Club. Son dos archivos que cambian juntos.
-        external_reference: product.id,
+        // Único por transacción, como pide MercadoPago, pero arrancando con el
+        // id del producto, que es lo que `webhook.js` lee para saber qué se
+        // compró. El formato y su lectura viven juntos en referencia-externa.js:
+        // no cambiar uno solo de los dos.
+        external_reference: referencia,
         notification_url: 'https://sustento-webhook.vercel.app/api/webhook'
       })
     });
@@ -57,6 +61,7 @@ export default async function handler(req, res) {
     const data = await response.json();
 
     if (data.init_point) {
+      console.log(`MP preferencia creada: ${referencia}`);
       return res.status(200).json({ init_point: data.init_point });
     } else {
       console.error('MP error:', data);

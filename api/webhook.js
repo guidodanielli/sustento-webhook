@@ -4,6 +4,7 @@ import { notificarVenta } from './_lib/notificar-venta.js';
 import { registrarCompra, yaCompro } from './_lib/registrar-compra.js';
 import { linkDeDescarga, HORAS_DE_VIDA } from './_lib/entrega.js';
 import { verificarFirmaMP, ESTADOS } from './_lib/verificar-firma-mp.js';
+import { productoDeReferencia } from './_lib/referencia-externa.js';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -224,7 +225,7 @@ export default async function handler(req, res) {
     // que una factura de suscripción es siempre el Club.
     const productId = esSuscripcion
       ? 'club'
-      : (payment.external_reference || 'recetario');
+      : (productoDeReferencia(payment.external_reference) || 'recetario');
     const product = PRODUCTS[productId] || PRODUCTS['recetario'];
 
     if (!buyerEmail) {
