@@ -150,7 +150,9 @@ La entrada `club` de `products.js` sigue existiendo porque el webhook la necesit
 - MP manda el header `x-signature` con `ts` y `v1`. Se arma el manifest `id:<data.id>;request-id:<x-request-id>;ts:<ts>;` y se le calcula HMAC-SHA256 con `MP_WEBHOOK_SECRET`. Si da igual a `v1`, la notificación es auténtica
 - El `data.id` sale del **query param**, no del cuerpo, y va en minúsculas cuando es alfanumérico
 - 🔴 **Las notificaciones IPN (las del formato viejo, con `topic`) NO traen firma y son legítimas igual.** Por eso se distingue `sin-firma` de `invalida`: rechazar las dos por igual rompería ventas que hoy funcionan
-- **Arranca en modo observación:** con `MP_FIRMA_ESTRICTA` apagada solo deja el resultado en el log y las ventas siguen su curso. Recién cuando el log muestre `MP firma: ok` en un cobro real conviene prenderla, y ahí una firma inválida corta con 401
+- 🟢 **Modo estricto prendido el 08/09/2026.** `MP_FIRMA_ESTRICTA=true` está cargada en Vercel y una firma inválida se corta con 401. Verificado por los dos lados sobre el mismo deploy: el simulador de MercadoPago (evento Pago, Data ID `123456`) devuelve `MP firma: ok` y 200, y un POST con un `v1` inventado devuelve `MP firma INVÁLIDA` y 401
+- 🔴 **El modo estricto solo rechaza lo que trae firma y no coincide.** Una notificación sin firma sigue pasando, esté prendido o no. Si alguna vez tumbara una venta real, se revierte borrando la variable en Vercel y **deployando de nuevo**: sin deploy nuevo la variable no cambia nada
+- 🔴 **Los logs de Vercel duran 1 hora** en el plan Hobby. Cualquier verificación contra el log hay que hacerla dentro de esa hora
 
 **`/api/baja`** — Baja de la lista de mails
 - `GET` con `?email=` cuando la persona hace clic en el pie del mail (devuelve una página de confirmación); `POST` para el botón nativo de Gmail
@@ -214,7 +216,7 @@ Todas las credenciales viven en el panel de Vercel, nunca en el código.
 | `PAYPAL_CLIENT_SECRET` | API de PayPal |
 | `WHOP_WEBHOOK_SECRET` | Firma del webhook de Whop — ✅ cargada (confirmado con la renovación real del 26/08/2026) |
 | `MP_WEBHOOK_SECRET` | Firma del webhook de MercadoPago — ✅ cargada el 07/08/2026 |
-| `MP_FIRMA_ESTRICTA` | `true` hace que una firma inválida de MP se rechace con 401. **Sin cargar a propósito:** hasta que un cobro real muestre `MP firma: ok` en los logs, conviene dejarla apagada |
+| `MP_FIRMA_ESTRICTA` | `true` hace que una firma inválida de MP se rechace con 401. ✅ **Cargada el 08/09/2026** y verificada con el simulador de MercadoPago. Borrarla vuelve al modo observación, pero hay que deployar de nuevo |
 | `BLOB_STORE_ID` + `VERCEL_OIDC_TOKEN` | Las pone Vercel solo al conectar el store de Blob al proyecto. No se cargan a mano |
 
 ---
