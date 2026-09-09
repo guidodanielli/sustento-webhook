@@ -788,9 +788,12 @@
   .testimonios-slider-track {
     display: flex;
     gap: 24px;
-    transition: transform 0.55s cubic-bezier(0.4,0,0.2,1);
+    transition: transform 0.42s cubic-bezier(0.4,0,0.2,1);
     padding: 8px 80px 8px;
     will-change: transform;
+    /* el navegador se queda con el scroll vertical; lo horizontal es nuestro */
+    touch-action: pan-y;
+    user-select: none; -webkit-user-select: none;
   }
   .testimonio-card {
     background: rgba(255,255,255,0.05);
@@ -1022,13 +1025,13 @@
     from { opacity: 0; transform: translateY(28px); }
     to { opacity: 1; transform: translateY(0); }
   }
-  .hero-eyebrow { opacity: 0; animation: fadeUp 0.6s ease 0.2s forwards; }
-  .hero-title { opacity: 0; animation: fadeUp 0.6s ease 0.4s forwards; }
-  .hero-subtitle { opacity: 0; animation: fadeUp 0.6s ease 0.55s forwards; }
-  .hero-ctas { opacity: 0; animation: fadeUp 0.6s ease 0.7s forwards; }
-  .hero-trust { opacity: 0; animation: fadeUp 0.6s ease 0.82s forwards; }
-  .hero-chips { opacity: 0; animation: fadeUp 0.6s ease 0.92s forwards; }
-  .hero-quiz-link { opacity: 0; animation: fadeUp 0.6s ease 1.02s forwards; }
+  .hero-eyebrow { opacity: 0; animation: fadeUp 0.45s ease 0.04s forwards; }
+  .hero-title { opacity: 0; animation: fadeUp 0.45s ease 0.1s forwards; }
+  .hero-subtitle { opacity: 0; animation: fadeUp 0.45s ease 0.18s forwards; }
+  .hero-ctas { opacity: 0; animation: fadeUp 0.45s ease 0.26s forwards; }
+  .hero-trust { opacity: 0; animation: fadeUp 0.45s ease 0.33s forwards; }
+  .hero-chips { opacity: 0; animation: fadeUp 0.45s ease 0.39s forwards; }
+  .hero-quiz-link { opacity: 0; animation: fadeUp 0.45s ease 0.45s forwards; }
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {
       animation-duration: 0.01ms !important;
@@ -2260,13 +2263,89 @@
     prevBtn.addEventListener('click', () => { prev(); resetAuto(); });
     nextBtn.addEventListener('click', () => { next(); resetAuto(); });
 
-    // Touch / swipe
-    let touchStartX = 0;
-    track.addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; }, { passive: true });
-    track.addEventListener('touchend', e => {
-      const diff = touchStartX - e.changedTouches[0].clientX;
-      if (Math.abs(diff) > 40) { diff > 0 ? next() : prev(); resetAuto(); }
-    }, { passive: true });
+    // Arrastre: la tarjeta sigue al dedo y al soltar continua con el envion
+    let dragging = false, decided = false, locked = false;
+    let startX = 0, startY = 0, baseOffset = 0, dx = 0, hist = [];
+
+    // Resistencia progresiva en los extremos: frena, no choca contra una pared
+    function rubberband(over, dim) {
+      const c = 0.55;
+      return (over * dim * c) / (dim + c * Math.abs(over));
+    }
+
+    // Adonde llegaria el envion si lo dejaramos desacelerar solo
+    function project(v) {
+      const d = 0.995;
+      return (v / 1000) * d / (1 - d);
+    }
+
+    // Donde esta el carrusel AHORA en pantalla, no donde deberia estar:
+    // si lo agarran a mitad de un movimiento, se sigue desde ahi y no salta
+    function posicionActual() {
+      const tr = getComputedStyle(track).transform;
+      if (!tr || tr === 'none') return 0;
+      try { return new DOMMatrixReadOnly(tr).m41; }
+      catch (_) { return -getCardWidth() * current; }
+    }
+
+    track.addEventListener('pointerdown', e => {
+      if (e.pointerType === 'mouse' && e.button !== 0) return;
+      dragging = true; decided = false; locked = false;
+      startX = e.clientX; startY = e.clientY; dx = 0;
+      hist = [{ x: e.clientX, t: performance.now() }];
+      clearInterval(autoTimer);
+    });
+
+    track.addEventListener('pointermove', e => {
+      if (!dragging) return;
+      const mx = e.clientX - startX, my = e.clientY - startY;
+      if (!decided) {
+        // Margen de 10px antes de decidir: un toque no es un arrastre
+        if (Math.abs(mx) < 10 && Math.abs(my) < 10) return;
+        decided = true;
+        locked = Math.abs(mx) > Math.abs(my);
+        if (!locked) { dragging = false; startAuto(); return; }
+        try { track.setPointerCapture(e.pointerId); } catch (_) {}
+        // Congelamos el movimiento en el punto exacto en que lo agarraron
+        baseOffset = posicionActual();
+        track.style.transition = 'none';
+        track.style.transform = 'translateX(' + baseOffset + 'px)';
+        startX = e.clientX;
+        dx = 0;
+        hist = [{ x: e.clientX, t: performance.now() }];
+        return; // desde aca en adelante sigue al dedo 1:1, sin ponerse al dia de golpe
+      }
+      dx = mx;
+      hist.push({ x: e.clientX, t: performance.now() });
+      if (hist.length > 5) hist.shift();
+
+      const cw = getCardWidth();
+      const limMin = -cw * maxIndex(), limMax = 0;
+      const w = track.offsetWidth || 1;
+      let pos = baseOffset + dx;
+      if (pos > limMax) pos = limMax + rubberband(pos - limMax, w);
+      else if (pos < limMin) pos = limMin - rubberband(limMin - pos, w);
+      track.style.transform = 'translateX(' + pos + 'px)';
+    });
+
+    function endDrag() {
+      if (!dragging) return;
+      dragging = false;
+      if (!locked) { startAuto(); return; }
+      // Velocidad de los ultimos milisegundos, no del gesto entero
+      const a = hist[0], b = hist[hist.length - 1];
+      const dt = Math.max(1, b.t - a.t);
+      const v = (b.x - a.x) / dt * 1000; // px/s
+      const cw = getCardWidth() || 1;
+      const landing = baseOffset + dx + project(v);
+      track.style.transition = '';
+      void track.offsetWidth; // que el navegador tome la posicion actual como punto de partida
+      goTo(Math.round(-landing / cw));
+      startAuto();
+    }
+    track.addEventListener('pointerup', endDrag);
+    track.addEventListener('pointercancel', endDrag);
+    track.addEventListener('dragstart', e => e.preventDefault());
 
     // Re-init on resize
     let resizeTimer;
