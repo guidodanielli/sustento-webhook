@@ -1255,6 +1255,22 @@
     } catch (e) { return 'desconocido'; }
   }
 
+  // Arma el link a Calendly con los UTMs puestos: de donde vino la persona y
+  // desde que boton reservo. Lo usan los cuatro botones fijos y tambien el
+  // resultado del quiz, que se dibuja despues de que carga la pagina.
+  function calendlyConUtm(donde) {
+    function limpiar(v) {
+      return String(v || '').toLowerCase()
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60);
+    }
+    var origen = limpiar(origenVisita()) || 'directo';
+    return 'https://calendly.com/guidosustento-nutri/30min'
+      + '?utm_source=' + encodeURIComponent(origen)
+      + '&utm_medium=landing&utm_campaign=metodo'
+      + '&utm_content=' + encodeURIComponent(limpiar(donde) || 'sin-ubicar');
+  }
+
   // ===== QUIZ DE DIAGNÓSTICO / VENTAS =====
   (function () {
     const QUIZ_API = 'https://sustento-webhook.vercel.app/api/suscribir';
@@ -1279,8 +1295,8 @@
       },
       metodo: {
         emoji: '🌱', title: 'Te recomiendo el Método Sustento 1:1',
-        text: 'Buscás una transformación profunda con apoyo personalizado. El acompañamiento 1:1 es el camino para construir hábitos a tu medida, con seguimiento real.',
-        cta: 'Ver el Método', target: '#metodo', source: 'quiz-metodo'
+        text: 'La información no es el problema, sostenerlo sí. El Método es un proceso 1:1 de 90 días para construir hábitos a tu medida, con seguimiento real entre consulta y consulta. Empieza con una llamada de 30 minutos, gratis y sin compromiso.',
+        cta: 'Reservar mi llamada gratuita', target: 'CALENDLY', source: 'quiz-metodo'
       },
       recetario: {
         emoji: '📖', title: 'Empezá por el Recetario Digital',
@@ -1343,9 +1359,9 @@
         '<p class="quiz-sub">No hay respuesta incorrecta — esto me ayuda a recomendarte mejor.</p>' +
         '<div class="quiz-options">' +
           '<button class="quiz-card" data-go="club" data-et="no-se-por-donde"><strong>No sé por dónde empezar</strong></button>' +
-          '<button class="quiz-card" data-go="club" data-et="no-sostengo"><strong>Empiezo pero no sostengo los cambios</strong></button>' +
+          '<button class="quiz-card" data-go="metodo" data-et="no-sostengo"><strong>Empiezo pero no sostengo los cambios</strong></button>' +
           '<button class="quiz-card" data-go="metodo" data-et="transformacion"><strong>Quiero una transformación profunda y apoyo personalizado</strong></button>' +
-          '<button class="quiz-card" data-go="recetario" data-et="algo-concreto"><strong>Quiero algo concreto para empezar ya</strong></button>' +
+          '<button class="quiz-card" data-go="metodo" data-et="algo-concreto"><strong>Quiero algo concreto para empezar ya</strong></button>' +
         '</div>',
         55
       );
@@ -1362,6 +1378,16 @@
 
     // Paso 3 — resultado en pantalla + captura de email. El resultado se ve
     // sin dejar el mail: el mail se pide para mandar el material, no como peaje.
+    // El resultado "metodo" manda directo a reservar y no a seguir leyendo: la
+    // llamada es lo que cierra, y cierra alto. Los otros siguen scrolleando a
+    // su seccion como antes.
+    function destinoDe(r) {
+      return r.target === 'CALENDLY' ? calendlyConUtm('quiz-metodo') : r.target;
+    }
+    function attrsDe(r) {
+      return r.target === 'CALENDLY' ? ' target="_blank" rel="noopener"' : '';
+    }
+
     function renderResult(key) {
       const r = RESULTS[key];
       elegido.resultado = key;
@@ -1372,7 +1398,7 @@
           '<div class="quiz-result-badge">' + r.emoji + '</div>' +
           '<h3>' + r.title + '</h3>' +
           '<p class="quiz-sub">' + r.text + '</p>' +
-          '<a href="' + r.target + '" class="btn-primary" id="quizCta">' + r.cta + '</a>' +
+          '<a href="' + destinoDe(r) + '"' + attrsDe(r) + ' class="btn-primary" id="quizCta">' + r.cta + '</a>' +
           '<div style="margin:28px 0 0 0;padding:22px 0 0 0;border-top:1px solid rgba(0,0,0,.12);text-align:left;">' +
             '<p class="quiz-sub" style="margin:0 0 12px 0;"><strong>Te dejo el Mini Recetario</strong><br>9 recetas con plantas para empezar hoy, sin ingredientes raros ni pasos imposibles. Dejame tu mail y te lo mando ahora. Sin spam, y te podés borrar de un clic.</p>' +
             '<input type="email" class="quiz-email-field" id="quizEmail" placeholder="tu@email.com" aria-label="Tu dirección de email" autocomplete="email">' +
@@ -1439,7 +1465,7 @@
           '<div class="quiz-result-badge">✅</div>' +
           '<h3>Listo, el Mini Recetario va en camino</h3>' +
           '<p class="quiz-sub">Te llega por mail en un minuto. Si no lo ves, mirá en Promociones o spam. Respondelo si querés: lo leo yo.</p>' +
-          '<a href="' + r.target + '" class="btn-primary" id="quizCtaFinal">' + r.cta + '</a>' +
+          '<a href="' + destinoDe(r) + '"' + attrsDe(r) + ' class="btn-primary" id="quizCtaFinal">' + r.cta + '</a>' +
           '<button class="quiz-restart" id="quizRestart2">Volver a empezar</button>' +
         '</div>',
         100
@@ -2501,27 +2527,14 @@
   window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
 </script>
 <script defer src="/_vercel/insights/script.js"></script>
-<!-- Calendly vive en otro dominio, asi que sin UTMs no hay forma de saber de
-     donde salio una reunion de claridad. Se arman aca y no a mano en cada href
-     para que viaje tambien el origen de la visita (origenVisita), y no solo
-     que boton se toco. Calendly guarda estos parametros en cada reserva. -->
+<!-- Los cuatro botones fijos que van a Calendly. El link se arma en runtime
+     con calendlyConUtm() para que arrastre el origen de la visita. -->
 <script>
   (function () {
-    function limpiar(v) {
-      return String(v || '').toLowerCase()
-        .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-        .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60);
-    }
     try {
-      var origen = limpiar(typeof origenVisita === 'function' ? origenVisita() : '') || 'directo';
       var links = document.querySelectorAll('a[href*="calendly.com"]');
       Array.prototype.forEach.call(links, function (a) {
-        var donde = a.getAttribute('data-cta') || 'sin-ubicar';
-        a.href = a.href + (a.href.indexOf('?') === -1 ? '?' : '&')
-          + 'utm_source=' + encodeURIComponent(origen)
-          + '&utm_medium=landing'
-          + '&utm_campaign=metodo'
-          + '&utm_content=' + encodeURIComponent(donde);
+        a.href = calendlyConUtm(a.getAttribute('data-cta'));
       });
     } catch (e) { /* si esto falla, el boton sigue llevando a Calendly igual */ }
   })();
