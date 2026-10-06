@@ -57,3 +57,20 @@ drop policy if exists "Solo service key puede insertar subs" on subscribers;
 create policy "Solo service key puede insertar subs"
   on subscribers for insert
   with check (false);
+
+
+-- ============================================================
+-- Botones del DM a seguidores nuevos (ManyChat, desde el 06/10/2026)
+-- /api/dm-boton guarda qué contestó cada seguidor a "qué te trajo a mi
+-- cuenta?". Un registro por contacto de ManyChat: vale el primer botón.
+-- ============================================================
+create table if not exists dm_botones (
+  id          uuid        default gen_random_uuid() primary key,
+  created_at  timestamptz default now(),
+  boton       text        not null,       -- recetas | pasarme | ordenar | nutri
+  contacto    text        not null unique -- Contact Id de ManyChat, no el usuario de Instagram
+);
+
+create index if not exists dm_botones_created_at_idx on dm_botones (created_at desc);
+
+alter table dm_botones enable row level security;
