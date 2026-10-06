@@ -165,11 +165,11 @@ const VARIANTES = {
   regalo: {
     subject: 'Tu Mini Recetario 🌱',
     parrafos: [
-      'Holaa! Soy Guido. Gracias por sumarte por Instagram 💚',
-      'Son las recetas que en casa salen siempre. Elegí la que más te tiente y arrancá por ahí.'
+      'Holaa! Soy Guido. Gracias por sumarte a esta comunidad hermosa 💚',
+      'Son recetas que están en mi repertorio siempre. Elegí la que más te tiente y no te vas a arrepentir.'
     ],
     ctas: [],
-    cierre: ['Y contame: qué te gustaría aprender a cocinar con plantas? Respondé este mail, lo leo yo.']
+    cierre: ['Y contame: qué te gustaría aprender, o cuál es tu mayor barrera para comer más plantas? Respondé este mail que yo lo voy a leer.']
   },
   general: {
     subject: 'Bienvenido/a al ecosistema 🌱',
