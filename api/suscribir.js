@@ -160,6 +160,17 @@ const VARIANTES = {
     ctas: [{ texto: 'Escribirme por WhatsApp 💬', url: WHATSAPP }],
     cierre: [RESPONDEME]
   },
+  // Modo regalo: llega desde el DM automático a seguidores nuevos. Recién te
+  // siguió, así que no hay venta: el Mini Recetario y una pregunta, nada más.
+  regalo: {
+    subject: 'Tu Mini Recetario 🌱',
+    parrafos: [
+      'Holaa! Soy Guido. Gracias por sumarte por Instagram 💚',
+      'Son las recetas que en casa salen siempre. Elegí la que más te tiente y arrancá por ahí.'
+    ],
+    ctas: [],
+    cierre: ['Y contame: qué te gustaría aprender a cocinar con plantas? Respondé este mail, lo leo yo.']
+  },
   general: {
     subject: 'Bienvenido/a al ecosistema 🌱',
     parrafos: [
@@ -176,6 +187,7 @@ const VARIANTES = {
 
 function varianteDeSource(source) {
   const s = String(source || '');
+  if (s === 'regalo') return 'regalo';
   if (s.includes('club')) return 'club';
   if (s.includes('metodo')) return 'metodo';
   if (s.includes('recetario')) return 'recetario';
@@ -259,9 +271,7 @@ function armarHtml({ variante, bajaUrl }) {
       </div>
       <div style="padding: 48px 40px; background: #f5eee0;">
         ${parrafos}
-        <div style="margin: 32px 0 28px 0;">
-          ${botones}
-        </div>
+        ${botones ? `<div style="margin: 32px 0 28px 0;">${botones}</div>` : ''}
         ${nota}
         ${cierre}
         <p style="font-size: 1rem; line-height: 1.8; color: #444; margin: 0 0 4px 0;">Nos vemos,</p>

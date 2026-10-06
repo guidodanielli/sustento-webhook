@@ -1232,8 +1232,11 @@
 </style>
 
 <section class="quiz" id="quiz">
+  <!-- Ancla del modo regalo: el link de ManyChat termina en #regalo y el
+       navegador baja solo hasta acá, igual que con #quiz. -->
+  <span id="regalo"></span>
   <div class="quiz-box reveal">
-    <p class="quiz-eyebrow">Test · 30 segundos</p>
+    <p class="quiz-eyebrow" id="quizEyebrow">Test · 30 segundos</p>
     <div class="quiz-progress"><div class="quiz-progress-bar" id="quizProgressBar"></div></div>
     <div class="quiz-stage" id="quizStage"></div>
   </div>
@@ -1247,7 +1250,9 @@
   function origenVisita() {
     try {
       const p = new URLSearchParams(location.search);
-      const utm = ['utm_source', 'utm_medium', 'utm_campaign']
+      // utm_content distingue variantes de un mismo link: en el modo regalo,
+      // qué botón tocó la persona en el DM de ManyChat.
+      const utm = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content']
         .map(function (k) { return p.get(k); }).filter(Boolean).join(' / ');
       if (utm) return utm.slice(0, 120);
       if (!document.referrer) return 'directo';
@@ -1478,7 +1483,85 @@
       }, 200);
     }
 
-    renderQ1();
+    // ===== MODO REGALO =====
+    // Para quien llega desde el DM a seguidores nuevos (link que termina en
+    // #regalo). Recién te siguió: acá no se recomienda ni se vende nada, solo
+    // se entrega el Mini Recetario. El quiz normal no cambia.
+    function renderRegalo() {
+      track('regalo_vista');
+      const eyebrow = document.getElementById('quizEyebrow');
+      if (eyebrow) eyebrow.textContent = 'Un regalo 🌱';
+      bar.parentNode.style.display = 'none';
+
+      // La barra fija de abajo invita a reservar la llamada del Método. En el
+      // modo regalo no va: esta persona recién te siguió.
+      const ocultar = document.createElement('style');
+      ocultar.textContent = '#sticky-bar { display: none !important; }';
+      document.head.appendChild(ocultar);
+
+      // El ancla #regalo baja antes de que carguen las imágenes de arriba, y
+      // cuando cargan el recuadro se corre y queda tapado por el menú. Se
+      // vuelve a acomodar con la página ya cargada, dejando lugar para el menú.
+      function acomodar() {
+        const nav = document.querySelector('nav');
+        const alto = nav ? nav.getBoundingClientRect().height : 0;
+        const caja = document.querySelector('.quiz-box');
+        window.scrollTo(0, caja.getBoundingClientRect().top + window.scrollY - alto - 16);
+      }
+      if (document.readyState === 'complete') setTimeout(acomodar, 250);
+      else window.addEventListener('load', function () { setTimeout(acomodar, 250); });
+
+      setStage(
+        '<div class="quiz-result" style="text-align:left;">' +
+          '<h3>Te dejo el Mini Recetario</h3>' +
+          '<p class="quiz-sub">9 recetas con plantas que en casa salen siempre. Dejame tu mail y te lo mando ahora. Sin spam, y te borrás de un clic.</p>' +
+          '<input type="email" class="quiz-email-field" id="regaloEmail" placeholder="tu@email.com" aria-label="Tu dirección de email" autocomplete="email">' +
+          '<p class="quiz-error" id="regaloError"></p>' +
+          '<button class="btn-primary" style="width:100%;justify-content:center;margin-top:10px;" id="regaloBtn">Mandámelo</button>' +
+        '</div>',
+        100
+      );
+
+      setTimeout(function () {
+        const input = document.getElementById('regaloEmail');
+        const btn = document.getElementById('regaloBtn');
+        const err = document.getElementById('regaloError');
+
+        function enviar() {
+          const val = (input.value || '').trim();
+          if (!esEmailValido(val)) {
+            err.textContent = 'Ingresá un email válido.';
+            input.focus();
+            return;
+          }
+          err.textContent = '';
+          btn.disabled = true;
+          btn.textContent = 'Enviando...';
+          track('regalo_email_ok');
+
+          fetch(QUIZ_API, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: val, source: 'regalo', origen: origenVisita() })
+          }).catch(function () {});
+
+          // Sin botón de venta: el cierre es solo la confirmación.
+          setStage(
+            '<div class="quiz-result">' +
+              '<div class="quiz-result-badge">✅</div>' +
+              '<h3>Listo, va en camino 💚</h3>' +
+              '<p class="quiz-sub">Te llega por mail en un minuto. Si no lo ves, fijate en Promociones o spam.</p>' +
+            '</div>',
+            100
+          );
+        }
+
+        btn.addEventListener('click', enviar);
+        input.addEventListener('keydown', function (e) { if (e.key === 'Enter') enviar(); });
+      }, 200);
+    }
+
+    if (location.hash === '#regalo') renderRegalo(); else renderQ1();
   })();
 </script>
 
