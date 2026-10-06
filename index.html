@@ -1229,6 +1229,14 @@
     font-size: 0.85rem; cursor: pointer; text-decoration: underline; font-family: inherit;
   }
   @media (max-width: 600px) { .quiz-box { padding: 28px 22px; } }
+  .regalo-barreras { display: flex; flex-direction: column; gap: 8px; margin: 0 0 14px; }
+  .regalo-chip {
+    text-align: left; padding: 12px 16px; border: 1px solid rgba(0,0,0,.18); border-radius: 12px;
+    background: #fff; color: #111; font-family: inherit; font-size: .95rem; cursor: pointer;
+    transition: border-color .15s ease, background .15s ease;
+  }
+  .regalo-chip:hover { border-color: var(--verde); }
+  .regalo-chip[aria-checked="true"] { border-color: var(--verde); background: #eef5ec; color: var(--verde-oscuro); font-weight: 600; }
 </style>
 
 <section class="quiz" id="quiz">
@@ -1487,6 +1495,18 @@
     // Para quien llega desde el DM a seguidores nuevos (link que termina en
     // #regalo). Recién te siguió: acá no se recomienda ni se vende nada, solo
     // se entrega el Mini Recetario. El quiz normal no cambia.
+    // Las opciones de "qué es lo que más te cuesta hoy?". La clave es lo que se
+    // guarda en Supabase (columna barrera) y la que usa el mail de bienvenida
+    // para elegir su párrafo: si se cambia una clave acá, cambiarla también en
+    // BARRERAS de api/suscribir.js.
+    const BARRERAS = [
+      ['ideas', 'No sé qué cocinar, me quedo sin ideas'],
+      ['tiempo', 'Tengo poco tiempo para cocinar'],
+      ['proteina', 'Me preocupa cubrir proteína y nutrientes'],
+      ['sostener', 'Arranco pero no lo sostengo'],
+      ['otra', 'Otra cosa']
+    ];
+
     function renderRegalo() {
       track('regalo_vista');
       const eyebrow = document.getElementById('quizEyebrow');
@@ -1514,7 +1534,14 @@
       setStage(
         '<div class="quiz-result" style="text-align:left;">' +
           '<h3>Te dejo el Mini Recetario</h3>' +
-          '<p class="quiz-sub">9 recetas con plantas que la rompen. Dejame un mail para mandártelo (no vas a recibir spam).</p>' +
+          '<p class="quiz-sub">9 recetas con plantas que la rompen. Antes de mandártelo: <strong>qué es lo que más te cuesta hoy?</strong></p>' +
+          '<div class="regalo-barreras" role="radiogroup" aria-label="Qué es lo que más te cuesta hoy">' +
+            BARRERAS.map(function (b) {
+              return '<button type="button" class="regalo-chip" role="radio" aria-checked="false" data-barrera="' + b[0] + '">' + b[1] + '</button>';
+            }).join('') +
+          '</div>' +
+          '<textarea id="regaloOtra" rows="2" maxlength="500" placeholder="Contame con tus palabras" style="display:none;width:100%;margin:0 0 14px;padding:14px 16px;border:1px solid rgba(0,0,0,.18);border-radius:12px;font-family:inherit;font-size:.95rem;resize:vertical;background:#fff;color:#111;"></textarea>' +
+          '<p class="quiz-sub" style="margin:0 0 10px;">Dejame un mail para mandártelo (no vas a recibir spam).</p>' +
           '<input type="email" class="quiz-email-field" id="regaloEmail" placeholder="tu@email.com" aria-label="Tu dirección de email" autocomplete="email">' +
           '<p class="quiz-error" id="regaloError"></p>' +
           '<button class="btn-primary" style="width:100%;justify-content:center;margin-top:10px;" id="regaloBtn">Mandámelo</button>' +
@@ -1526,6 +1553,22 @@
         const input = document.getElementById('regaloEmail');
         const btn = document.getElementById('regaloBtn');
         const err = document.getElementById('regaloError');
+        const otra = document.getElementById('regaloOtra');
+        let barrera = '';
+
+        // Una sola opción, y es opcional: quien no toca ninguna recibe el Mini
+        // igual. "Otra cosa" abre el campo para que lo cuente con sus palabras.
+        stage.querySelectorAll('.regalo-chip').forEach(function (chip) {
+          chip.addEventListener('click', function () {
+            barrera = chip.getAttribute('data-barrera');
+            stage.querySelectorAll('.regalo-chip').forEach(function (c) {
+              c.setAttribute('aria-checked', c === chip ? 'true' : 'false');
+            });
+            otra.style.display = barrera === 'otra' ? 'block' : 'none';
+            if (barrera === 'otra') otra.focus();
+            track('regalo_barrera', { barrera: barrera });
+          });
+        });
 
         function enviar() {
           const val = (input.value || '').trim();
@@ -1537,12 +1580,18 @@
           err.textContent = '';
           btn.disabled = true;
           btn.textContent = 'Enviando...';
-          track('regalo_email_ok');
+          track('regalo_email_ok', { barrera: barrera || 'ninguna' });
 
           fetch(QUIZ_API, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email: val, source: 'regalo', origen: origenVisita() })
+            body: JSON.stringify({
+              email: val,
+              source: 'regalo',
+              origen: origenVisita(),
+              barrera: barrera,
+              motivo: barrera === 'otra' ? (otra.value || '').trim().slice(0, 500) : ''
+            })
           }).catch(function () {});
 
           // Sin botón de venta: el cierre es solo la confirmación.

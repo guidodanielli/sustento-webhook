@@ -199,7 +199,8 @@ const ETIQUETA_SOURCE = {
   'quiz-metodo': 'Quiz · Método',
   'quiz-recetario': 'Quiz · Recetario',
   'quiz-red': 'Quiz · Red',
-  'formulario-web': 'Formulario del pie'
+  'formulario-web': 'Formulario del pie',
+  'regalo': 'Regalo · seguidores nuevos'
 };
 
 /**
@@ -213,7 +214,7 @@ const ETIQUETA_SOURCE = {
  * Igual que notificarVenta, nunca tira error hacia afuera: si el aviso falla,
  * la persona igual quedó suscripta y su mail de bienvenida ya salió.
  */
-export async function notificarSuscriptor({ email, name, source, motivo = '', origen = '', total = null }) {
+export async function notificarSuscriptor({ email, name, source, motivo = '', origen = '', barrera = '', total = null }) {
   try {
     const etiqueta = ETIQUETA_SOURCE[source] || source || 'sin origen';
 
@@ -231,6 +232,7 @@ export async function notificarSuscriptor({ email, name, source, motivo = '', or
           ['Persona', name ? `${name} (${email})` : email],
           ['Por dónde entró', etiqueta],
           ['De dónde vino', origen],
+          ['Qué le cuesta', barrera],
           ['Fecha', fechaArgentina()],
           ['Total en la lista', total ? `${total} suscriptores` : '']
         ]),
@@ -247,6 +249,7 @@ export async function notificarSuscriptor({ email, name, source, motivo = '', or
               ${fila('Persona', name ? `${name} (${email})` : email)}
               ${fila('Por dónde entró', etiqueta)}
               ${origen ? fila('De dónde vino', origen) : ''}
+              ${barrera ? fila('Qué le cuesta', barrera) : ''}
               ${fila('Fecha', fechaArgentina())}
               ${total ? fila('Total en la lista', `${total} suscriptores`) : ''}
             </table>

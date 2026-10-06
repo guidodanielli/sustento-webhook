@@ -48,6 +48,12 @@ create table if not exists subscribers (
 alter table subscribers add column if not exists motivo text;
 alter table subscribers add column if not exists origen text;
 
+-- Desde el 06/10/2026: lo que eligió en el modo regalo ante "qué es lo que más
+-- te cuesta hoy?" (ideas | tiempo | proteina | sostener | otra). Si es "otra",
+-- lo que escribió va a motivo.
+alter table subscribers add column if not exists barrera text;
+create index if not exists subscribers_barrera_idx on subscribers (barrera);
+
 create index if not exists subscribers_created_at_idx on subscribers (created_at desc);
 create index if not exists subscribers_source_idx on subscribers (source);
 

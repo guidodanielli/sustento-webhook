@@ -21,7 +21,7 @@ async function insertarFila(fila) {
   });
 }
 
-async function agregarASupabase({ email, name, source, tags, motivo, origen }) {
+async function agregarASupabase({ email, name, source, tags, motivo, origen, barrera }) {
   const base = {
     email,
     name: name || '',
@@ -29,13 +29,14 @@ async function agregarASupabase({ email, name, source, tags, motivo, origen }) {
     tags: tags || []
   };
 
-  // motivo y origen viven en columnas que se agregaron después. Si el SQL de la
+  // motivo, origen y barrera viven en columnas que se agregaron después. Si el SQL de la
   // migración todavía no corrió, Supabase rechaza la fila entera por columna
   // desconocida. Antes que perder el alta, reintentamos sin esos dos campos:
   // el alta importa, el dato extra no. Cuando la migración esté, no reintenta.
   const extras = {};
   if (motivo) extras.motivo = String(motivo).slice(0, 500);
   if (origen) extras.origen = String(origen).slice(0, 120);
+  if (barrera) extras.barrera = barrera;
 
   let response = await insertarFila({ ...base, ...extras });
 
@@ -107,6 +108,36 @@ const REGALO = {
 // que cerrarlo, volver a la casilla y buscar el mail. Acá ya lo tiene abierto.
 // Además, que respondan le dice a Gmail que estos mails son deseados.
 const RESPONDEME = 'Y si probás alguna de las recetas, contame cómo te fue: respondé este mail, lo leo yo.';
+
+// Lo que la persona eligió en el modo regalo ante "qué es lo que más te cuesta
+// hoy?". La clave se guarda en la columna barrera; el párrafo va en el mail,
+// para que no reciba solo el recetario sino una primera salida a eso que le
+// cuesta. "otra" no tiene párrafo: lo que escribió va a motivo y se lee a mano.
+// Si se cambia una clave acá, cambiarla también en BARRERAS de index.html.
+const BARRERAS = {
+  ideas: {
+    etiqueta: 'No sé qué cocinar, me quedo sin ideas',
+    parrafo: 'Y para eso de quedarte sin ideas: lo que más me sirve es tener dos o tres bases resueltas (unas legumbres cocidas, un grano, una salsa) y combinarlas distinto cada día. Elegí una receta del Mini, hacela un par de veces hasta que te salga sin mirar, y ya tenés una base más.'
+  },
+  tiempo: {
+    etiqueta: 'Tengo poco tiempo para cocinar',
+    parrafo: 'Y para lo del poco tiempo: cociná una vez y comé varias. Si un día hacés doble cantidad de legumbres o de algún grano, tenés la base lista para tres o cuatro comidas de la semana, y cocinar pasa a ser armar.'
+  },
+  proteina: {
+    etiqueta: 'Me preocupa cubrir proteína y nutrientes',
+    parrafo: 'Y sobre la proteína: para arrancar no hace falta contar gramos. Si en dos comidas del día sumás legumbres, tofu, tempeh o seitán, ya estás mucho más cerca de lo que creés. Varias recetas del Mini van por ahí.'
+  },
+  sostener: {
+    etiqueta: 'Arranco pero no lo sostengo',
+    parrafo: 'Y sobre lo de arrancar y no sostenerlo: casi nunca es falta de voluntad, es empezar con algo demasiado grande. Elegí una sola receta del Mini, hacela esta semana y repetila la que viene. Un cambio chico que se repite le gana a uno grande que dura tres días.'
+  },
+  otra: { etiqueta: 'Otra cosa' }
+};
+
+function barreraValida(b) {
+  const clave = String(b || '').trim().toLowerCase();
+  return Object.prototype.hasOwnProperty.call(BARRERAS, clave) ? clave : '';
+}
 
 // El mail de bienvenida cambia según lo que la persona pidió. El quiz manda
 // source = quiz-club | quiz-metodo | quiz-recetario | quiz-red; el formulario
@@ -287,8 +318,22 @@ function armarHtml({ variante, bajaUrl }) {
   `;
 }
 
-async function enviarBienvenida(email, source) {
-  const variante = VARIANTES[varianteDeSource(source)];
+// En el modo regalo, si la persona eligió una barrera, el mail suma el párrafo
+// de esa barrera antes del cierre. Y como ya contó qué le cuesta, el cierre deja
+// de preguntárselo y la invita a contar más.
+function conBarrera(variante, barrera) {
+  if (!barrera) return variante;
+  const extra = BARRERAS[barrera].parrafo;
+  return {
+    ...variante,
+    parrafos: extra ? [...variante.parrafos, extra] : variante.parrafos,
+    cierre: ['Y si querés contarme un poco más de eso que te cuesta, respondé este mail que yo lo voy a leer.']
+  };
+}
+
+async function enviarBienvenida(email, source, barrera) {
+  const base = VARIANTES[varianteDeSource(source)];
+  const variante = base === VARIANTES.regalo ? conBarrera(base, barrera) : base;
   const bajaUrl = `${BAJA_URL}?email=${encodeURIComponent(email)}`;
 
   await resend.emails.send({
@@ -320,16 +365,21 @@ if (allowedOrigins.includes(origin)) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   const { email, name, source, tags, motivo, origen } = req.body;
+  const barrera = barreraValida(req.body.barrera);
   if (!email) return res.status(400).json({ error: 'Email requerido' });
 
   try {
-    const { ok, isNew } = await agregarASupabase({ email, name, source, tags, motivo, origen });
+    const { ok, isNew } = await agregarASupabase({ email, name, source, tags, motivo, origen, barrera });
     // Solo mandamos el welcome email a suscriptores nuevos (no a duplicados).
     if (ok && isNew) {
-      await enviarBienvenida(email, source);
+      await enviarBienvenida(email, source, barrera);
       // Y le avisamos a Guido. Va después de la bienvenida y se traga sus
       // propios errores, así que no puede romper el alta ni la respuesta.
-      await notificarSuscriptor({ email, name, source, motivo, origen, total: await contarSuscriptores() });
+      await notificarSuscriptor({
+        email, name, source, motivo, origen,
+        barrera: barrera ? BARRERAS[barrera].etiqueta : '',
+        total: await contarSuscriptores()
+      });
     }
     return res.status(200).json({ success: true });
   } catch (error) {
