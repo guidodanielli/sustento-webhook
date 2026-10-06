@@ -121,7 +121,7 @@ const BARRERAS = {
   },
   tiempo: {
     etiqueta: 'Tengo poco tiempo para cocinar',
-    parrafo: 'Y para lo del poco tiempo: cociná una vez y comé varias. Si un día hacés doble cantidad de legumbres o de algún grano, tenés la base lista para tres o cuatro comidas de la semana, y cocinar pasa a ser armar.'
+    parrafo: 'Y para lo del poco tiempo: cociná una vez y comé varias. Si un día hacés doble cantidad de legumbres o de algún grano, tenés la base lista para tres o cuatro comidas de la semana, y cocinar pasa a ser ensamblar.'
   },
   proteina: {
     etiqueta: 'Me preocupa cubrir proteína y nutrientes',
@@ -200,7 +200,7 @@ const VARIANTES = {
       'Son recetas que están en mi repertorio siempre. Elegí la que más te tiente y no te vas a arrepentir.'
     ],
     ctas: [],
-    cierre: ['Y contame: qué te gustaría aprender, o cuál es tu mayor barrera para comer más plantas? Respondé este mail que yo lo voy a leer.']
+    cierre: ['Y contame: qué te gustaría aprender, o cuál es tu mayor barrera para comer más plantas? Respondé este mail que te voy a estar leyendo.']
   },
   general: {
     subject: 'Bienvenido/a al ecosistema 🌱',
@@ -327,7 +327,7 @@ function conBarrera(variante, barrera) {
   return {
     ...variante,
     parrafos: extra ? [...variante.parrafos, extra] : variante.parrafos,
-    cierre: ['Y si querés contarme un poco más de eso que te cuesta, respondé este mail que yo lo voy a leer.']
+    cierre: ['Y si querés contarme un poco más de eso que te cuesta, respondé este mail que te voy a estar leyendo.']
   };
 }
 
