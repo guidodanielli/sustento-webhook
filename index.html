@@ -1413,7 +1413,7 @@
           '<p class="quiz-sub">' + r.text + '</p>' +
           '<a href="' + destinoDe(r) + '"' + attrsDe(r) + ' class="btn-primary" id="quizCta">' + r.cta + '</a>' +
           '<div style="margin:28px 0 0 0;padding:22px 0 0 0;border-top:1px solid rgba(0,0,0,.12);text-align:left;">' +
-            '<p class="quiz-sub" style="margin:0 0 12px 0;"><strong>Te dejo el Mini Recetario</strong><br>9 recetas con plantas para empezar hoy, sin ingredientes raros ni pasos imposibles. Dejame tu mail y te lo mando ahora. Sin spam, y te podés borrar de un clic.</p>' +
+            '<p class="quiz-sub" style="margin:0 0 12px 0;"><strong>Te dejo el Mini Recetario</strong><br>9 recetas con plantas para empezar hoy, sin ingredientes raros ni pasos imposibles. Dejame tu mail y te lo mando ahora. Cada tanto te escribo con alguna idea más, y te podés borrar de un clic. <a href="/privacidad/" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Cómo cuido tus datos</a></p>' +
             '<input type="email" class="quiz-email-field" id="quizEmail" placeholder="tu@email.com" aria-label="Tu dirección de email" autocomplete="email">' +
             '<textarea id="quizMotivo" rows="2" placeholder="Opcional: ¿qué te trajo hasta acá?" style="width:100%;margin-top:10px;padding:14px 16px;border:1px solid rgba(0,0,0,.18);border-radius:12px;font-family:inherit;font-size:.95rem;resize:vertical;background:#fff;color:#111;"></textarea>' +
             '<p class="quiz-error" id="quizEmailError"></p>' +
@@ -1541,7 +1541,7 @@
             }).join('') +
           '</div>' +
           '<textarea id="regaloOtra" rows="2" maxlength="500" placeholder="Contame con tus palabras" style="display:none;width:100%;margin:0 0 14px;padding:14px 16px;border:1px solid rgba(0,0,0,.18);border-radius:12px;font-family:inherit;font-size:.95rem;resize:vertical;background:#fff;color:#111;"></textarea>' +
-          '<p class="quiz-sub" style="margin:0 0 10px;">Dejame un mail para mandártelo (no vas a recibir spam).</p>' +
+          '<p class="quiz-sub" style="margin:0 0 10px;">Dejame un mail para mandártelo. Cada tanto te escribo con alguna idea más, y te borrás de un clic cuando quieras. <a href="/privacidad/" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Cómo cuido tus datos</a></p>' +
           '<input type="email" class="quiz-email-field" id="regaloEmail" placeholder="tu@email.com" aria-label="Tu dirección de email" autocomplete="email">' +
           '<p class="quiz-error" id="regaloError"></p>' +
           '<button class="btn-primary" style="width:100%;justify-content:center;margin-top:10px;" id="regaloBtn">Mandámelo</button>' +
@@ -2268,6 +2268,7 @@
     <input type="email" id="email-ecosistema" name="email" class="email-input" placeholder="tu@email.com" aria-label="Tu dirección de email" autocomplete="email" required>
     <button type="submit" class="btn-email">Suscribirme</button>
   </form>
+  <p style="margin-top:12px;font-size:0.8rem;opacity:0.7;">Te borrás de un clic cuando quieras. <a href="/privacidad/" style="color:inherit;text-decoration:underline;">Cómo cuido tus datos</a></p>
   <p id="form-msg" style="margin-top:16px;font-size:0.85rem;opacity:0.8;display:none;">Listo, el Mini Recetario va en camino. 🌱</p>
 </section>
 
@@ -2297,7 +2298,7 @@
 </footer>
 <div class="footer-bottom">
   <span>© 2026 Guido Sustento. Todos los derechos reservados.</span>
-  <span>Hecho con sustento 🌱</span>
+  <span><a href="/privacidad/" style="color:inherit;">Privacidad</a> · Hecho con sustento 🌱</span>
 </div>
 
 <div class="sticky-bar" id="sticky-bar">
