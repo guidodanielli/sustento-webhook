@@ -1,5 +1,5 @@
 {
   "redirects": [
-    { "source": "/productos/:path*", "destination": "/#tienda", "permanent": true }
+    { "source": "/productos/(.*)", "destination": "/#tienda", "permanent": true }
   ]
 }
