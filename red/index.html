@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Red Sustento: comunidad para profesionales de la salud | Guido Sustento</title>
+<meta name="description" content="Red Sustento: encuentros quincenales entre profesionales de la salud, especialmente nutricionistas recién recibidos, para compartir recorridos y crecer en comunidad.">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://haceloconsustento.com/red/">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="theme-color" content="#1e6f1d">
+<link rel="preload" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=DM+Sans:wght@400;500;600;700&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=DM+Sans:wght@400;500;600;700&display=swap"></noscript>
+<link rel="stylesheet" href="/blog/style.css">
+<style>
+  .red h2 { font-family: 'Playfair Display', serif; font-weight: 700; line-height: 1.15; }
+  .btn-primary {
+    display: inline-flex; align-items: center; background: var(--verde); color: var(--blanco);
+    padding: 16px 32px; border-radius: 100px; text-decoration: none;
+    font-family: 'DM Sans', sans-serif; font-weight: 500; font-size: 0.9rem;
+  }
+  .btn-primary:hover { background: var(--verde-claro); }
+</style>
+<style>
+  /* ===== RED SUSTENTO (profesionales) ===== */
+  .red { padding: 110px 6vw; background: var(--crema-oscuro); }
+  .red-header { max-width: 720px; margin: 0 auto 40px; text-align: center; }
+  .red-header .eyebrow { color: var(--verde); }
+  .red-solo-pros {
+    display: inline-block; font-size: 0.72rem;
+    letter-spacing: 0.12em; text-transform: uppercase; color: #fff;
+    background: var(--verde); padding: 5px 14px; border-radius: 20px; margin-bottom: 18px; font-weight: 700;
+  }
+  .red-header h2 { font-size: clamp(2rem, 4vw, 2.8rem); color: var(--verde-oscuro); margin-bottom: 16px; }
+  .red-header h2 em { font-style: italic; color: var(--verde); }
+  .red-header p { font-size: 1.05rem; line-height: 1.7; color: #555; }
+  .red-card {
+    max-width: 620px; margin: 0 auto; background: #fff;
+    border: 1px solid var(--verde); border-radius: 18px; padding: 40px;
+  }
+  .red-precios { display: grid; gap: 10px; margin-bottom: 28px; }
+  .red-precio-row {
+    display: flex; justify-content: space-between; align-items: center; gap: 12px;
+    padding: 12px 16px; border-radius: 10px; background: var(--crema); font-size: 0.95rem;
+  }
+  .red-precio-row.destacado { background: var(--verde); color: #fff; }
+  .red-precio-row .label { color: inherit; }
+  .red-precio-row .valor { font-weight: 700; white-space: nowrap; }
+  .red-precio-row small { display: block; font-size: 0.75rem; opacity: 0.7; font-weight: 400; }
+  .red-lista { list-style: none; padding: 0; margin: 0 0 28px; display: grid; gap: 12px; }
+  .red-lista li {
+    display: flex; align-items: flex-start; gap: 11px;
+    font-size: 0.95rem; color: #333; line-height: 1.4;
+  }
+  .red-lista li::before {
+    content: '✓'; flex-shrink: 0;
+    width: 21px; height: 21px; border-radius: 50%;
+    background: var(--verde); color: #fff;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 0.72rem; font-weight: 700; margin-top: 1px;
+  }
+  .red-card .btn-primary { width: 100%; justify-content: center; margin-bottom: 16px; }
+  .red-nota { font-size: 0.85rem; color: #777; text-align: center; line-height: 1.5; }
+  @media (max-width: 600px) { .red-card { padding: 28px 22px; } }
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="https://haceloconsustento.com/" class="nav-logo">Guido Sustento</a>
+  <ul class="nav-links">
+    <li><a href="/blog/">Blog</a></li>
+    <li><a href="https://haceloconsustento.com/#metodo">Método</a></li>
+    <li class="nav-cta-li"><a href="https://haceloconsustento.com/" class="nav-cta">Ir al sitio →</a></li>
+  </ul>
+</nav>
+
+
+<section class="red" id="red">
+  <div class="red-header">
+    <p class="eyebrow">Comunidad profesional</p>
+    <span class="red-solo-pros">👩‍⚕️ Solo profesionales de la salud</span>
+    <h2><em>Red</em> Sustento</h2>
+    <p>Un espacio de encuentro quincenal entre profesionales de la salud —especialmente nutris recién recibidos— para compartir caminos, recorridos profesionales y crecer en comunidad.</p>
+  </div>
+  <div class="red-card">
+    <div class="red-precios">
+      <div class="red-precio-row destacado">
+        <span class="label">👩‍⚕️ Profesionales de la salud<small>Valor fijo mensual</small></span>
+        <span class="valor" id="red-precio-valor">$10.000 ARS/mes</span>
+      </div>
+    </div>
+    <ul class="red-lista">
+      <li>Encuentros quincenales entre profesionales de la salud</li>
+      <li>Compartir caminos, recorridos y experiencias profesionales</li>
+      <li>Una comunidad para crecer, pensada para nutris recién recibidos</li>
+    </ul>
+    <a href="https://wa.me/541171417177?text=Hola%20Guido%2C%20quiero%20unirme%20a%20Red%20Sustento" target="_blank" rel="noopener" class="btn-primary">Quiero unirme 💬</a>
+    <p class="red-nota">El ingreso es manual: una vez que mandes el comprobante por WhatsApp, Guido te confirma y te suma a la comunidad.</p>
+  </div>
+</section>
+
+<footer class="blog-footer">
+  <h3>Guido Sustento</h3>
+  <p>Nutricionista de hábitos · Alimentación a base de plantas · M.N. 12964</p>
+  <div class="foot-links">
+    <a href="https://haceloconsustento.com/#metodo">Método</a>
+    <a href="https://haceloconsustento.com/#club">Club</a>
+    <a href="https://www.instagram.com/guido.sustento/" target="_blank" rel="noopener">Instagram</a>
+  </div>
+  <div class="foot-bottom">© 2026 Guido Sustento · Hecho con sustento 🌱</div>
+</footer>
+
+<script>
+  window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+</body>
+</html>
