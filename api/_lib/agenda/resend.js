@@ -6,9 +6,14 @@ import { resumenError } from './google.js';
 
 const API = 'https://api.resend.com';
 
+// La agenda usa su propia clave porque cancelar un mail programado necesita
+// "Full access": la RESEND_API_KEY del resto del sitio es de "Sending access"
+// y Resend le contesta 401 al cancelar (visto en la prueba del 15/10/2026).
+// Así la clave amplia queda solo en esta función. Sin ella, cae a la de siempre:
+// manda bien, pero no puede cancelar recordatorios.
 function clave() {
-  const k = process.env.RESEND_API_KEY;
-  if (!k) throw new Error('Falta la variable de entorno RESEND_API_KEY');
+  const k = process.env.RESEND_AGENDA_KEY || process.env.RESEND_API_KEY;
+  if (!k) throw new Error('Falta la variable de entorno RESEND_AGENDA_KEY');
   return k;
 }
 
