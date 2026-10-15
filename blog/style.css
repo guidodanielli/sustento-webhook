@@ -52,6 +52,8 @@ nav {
 
 /* BREADCRUMB */
 .breadcrumb { font-size: 0.82rem; color: var(--gris); margin: 40px 0 8px; }
+/* neutraliza las reglas del menú (nav) que se filtran al breadcrumb, también en el @media 640 */
+nav.breadcrumb { display: block; padding: 0; background: none; border: 0; position: static; }
 .breadcrumb a { color: var(--gris); }
 .breadcrumb a:hover { color: var(--verde); }
 
@@ -152,5 +154,6 @@ footer.blog-footer .foot-bottom { margin-top: 24px; font-size: 0.8rem; color: rg
   nav { padding: 16px 20px; }
   .nav-links { gap: 16px; }
   .nav-links li:not(.nav-cta-li) { display: none; }
+  .nav-cta { white-space: nowrap; }
   .breadcrumb { margin-top: 28px; }
 }
