@@ -1110,6 +1110,12 @@
   }
 </style>
 
+  <!-- Cola de Vercel Web Analytics. Va en el <head> porque el quiz manda
+       quiz_inicio durante el parseo, antes de que cargue el script del final
+       del body; lo encolado se envia cuando ese script llega. -->
+  <script>
+    window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+  </script>
   <!-- Schema Markup JSON-LD -->
 </head>
 <body>
@@ -1888,7 +1894,7 @@
     // Lo que la persona fue eligiendo. El email se pide al final, no al principio.
     let elegido = { q1: '', q2: '', resultado: '' };
 
-    // Eventos a Vercel Web Analytics. window.va lo define el snippet del <head>;
+    // Eventos a Vercel Web Analytics. window.va lo define el stub del <head>;
     // si un bloqueador lo frena, esto no puede romper el quiz.
     function track(name, data) {
       try { if (window.va) window.va('event', data ? { name: name, data: data } : { name: name }); }
@@ -3144,10 +3150,8 @@
 </script>
 <!-- Vercel Web Analytics. Sitio HTML estatico: no lleva paquete npm,
      el script lo sirve el propio deploy desde /_vercel/insights/.
-     Ademas hay que activar Analytics en el panel del proyecto. -->
-<script>
-  window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
-</script>
+     Ademas hay que activar Analytics en el panel del proyecto.
+     La cola window.va se define en el <head>. -->
 <script defer src="/_vercel/insights/script.js"></script>
 <!-- Los cuatro botones fijos que van a Calendly. El link se arma en runtime
      con calendlyConUtm() para que arrastre el origen de la visita. -->
