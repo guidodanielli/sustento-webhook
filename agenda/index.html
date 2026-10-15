@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reservá tu llamada gratuita | Guido Sustento</title>
+<meta name="description" content="Reservá tu llamada gratuita de 30 minutos con Guido Sustento, nutricionista de hábitos. Por videollamada, desde cualquier país.">
+<meta name="robots" content="noindex">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="theme-color" content="#1e6f1d">
+
+<!-- Analytics: el stub va ANTES de cualquier evento (en la landing está al final del body y se pierden los primeros). -->
+<script>
+  window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+
+<link rel="preload" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=DM+Sans:opsz,wght@9..40,300..700&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=DM+Sans:opsz,wght@9..40,300..700&display=swap"></noscript>
+<link rel="stylesheet" href="/agenda/agenda.css">
+</head>
+<body>
+
+<header class="ag-header">
+  <div class="ag-header-in">
+    <a href="/" class="ag-logo">Guido Sustento</a>
+    <a href="/" class="ag-volver">Volver al sitio</a>
+  </div>
+</header>
+
+<main id="main">
+  <h1 class="seccion-titulo">Reservá tu <em>llamada gratuita.</em></h1>
+  <p class="ag-sub">30 minutos · por videollamada · desde cualquier país</p>
+
+  <!-- Paso 1: elegir horario -->
+  <section id="paso1" class="ag-card" aria-labelledby="paso1-titulo">
+    <h2 class="ag-paso-titulo" id="paso1-titulo">1. Elegí tu horario</h2>
+    <div id="selector"></div>
+  </section>
+
+  <!-- Paso 2: formulario -->
+  <section id="paso2" class="ag-card" aria-labelledby="paso2-titulo" hidden>
+    <h2 class="ag-paso-titulo" id="paso2-titulo">2. Contame un poco de vos</h2>
+    <div class="ag-turno">
+      <div><strong>Tu horario</strong><span id="turnoElegido"></span></div>
+      <button type="button" class="btn-link" id="cambiarTurno">Cambiar</button>
+    </div>
+
+    <form id="form" novalidate autocomplete="on">
+      <div class="ag-campo">
+        <label for="nombre">Nombre</label>
+        <input class="ag-input" type="text" id="nombre" name="nombre" autocomplete="name" maxlength="120" required aria-describedby="err-nombre">
+        <p class="ag-error" id="err-nombre" hidden></p>
+      </div>
+
+      <div class="ag-campo">
+        <label for="email">Mail</label>
+        <input class="ag-input" type="email" id="email" name="email" autocomplete="email" maxlength="254" required aria-describedby="err-email">
+        <p class="ag-error" id="err-email" hidden></p>
+      </div>
+
+      <fieldset class="ag-campo" id="grupo-alimentacion" aria-describedby="err-alimentacion">
+        <legend>¿Cómo es tu alimentación hoy?</legend>
+        <div class="ag-chips" data-grupo="alimentacion"></div>
+        <p class="ag-error" id="err-alimentacion" hidden></p>
+      </fieldset>
+
+      <div class="ag-campo">
+        <label for="motivo">¿Qué te trajo hasta acá?</label>
+        <textarea class="ag-textarea" id="motivo" name="motivo" maxlength="2000" required aria-describedby="ayuda-motivo err-motivo"></textarea>
+        <p class="ag-ayuda" id="ayuda-motivo">Puede ser un diagnóstico, algo que te pasó, una decisión que tomaste, o simplemente que llegaste a un punto de quiebre. No hay respuesta correcta — cuanto más me contás, mejor puedo preparar el encuentro.</p>
+        <p class="ag-error" id="err-motivo" hidden></p>
+      </div>
+
+      <div class="ag-campo">
+        <label for="objetivo">¿Qué querés lograr en los próximos 90 días?</label>
+        <textarea class="ag-textarea" id="objetivo" name="objetivo" maxlength="2000" required aria-describedby="err-objetivo"></textarea>
+        <p class="ag-error" id="err-objetivo" hidden></p>
+      </div>
+
+      <fieldset class="ag-campo" id="grupo-fueANutri" aria-describedby="err-fueANutri">
+        <legend>¿Ya tuviste consultas con nutricionista antes?</legend>
+        <div class="ag-chips" data-grupo="fueANutri"></div>
+        <p class="ag-error" id="err-fueANutri" hidden></p>
+      </fieldset>
+
+      <fieldset class="ag-campo" id="grupo-compromiso" aria-describedby="err-compromiso">
+        <legend>¿Estás dispuesto/a a comprometerte con un proceso de 3 meses?</legend>
+        <div class="ag-chips" data-grupo="compromiso"></div>
+        <p class="ag-error" id="err-compromiso" hidden></p>
+      </fieldset>
+
+      <div class="ag-campo">
+        <label for="whatsapp">Dejame tu número de WhatsApp</label>
+        <input class="ag-input" type="tel" id="whatsapp" name="whatsapp" autocomplete="tel" maxlength="40" required aria-describedby="ayuda-whatsapp err-whatsapp">
+        <p class="ag-ayuda" id="ayuda-whatsapp">Con código de país, ej. +54 11 …</p>
+        <p class="ag-error" id="err-whatsapp" hidden></p>
+      </div>
+
+      <fieldset class="ag-campo" id="grupo-origen" aria-describedby="err-origen">
+        <legend>¿Cómo llegaste hasta acá?</legend>
+        <div class="ag-chips" data-grupo="origen"></div>
+        <p class="ag-error" id="err-origen" hidden></p>
+      </fieldset>
+
+      <div class="ag-campo">
+        <label for="recomendo">Si te lo recomendó alguien, ¿quién? <span class="ag-opc">(opcional)</span></label>
+        <input class="ag-input" type="text" id="recomendo" name="recomendo" maxlength="120">
+      </div>
+
+      <!-- Honeypot: un humano no lo ve; un bot lo rellena y el servidor lo descarta. -->
+      <div class="ag-trampa" aria-hidden="true">
+        <label for="sitio">Sitio web</label>
+        <input type="text" id="sitio" name="sitio" tabindex="-1" autocomplete="off">
+      </div>
+      <input type="hidden" id="utm_source" name="utm_source">
+      <input type="hidden" id="utm_content" name="utm_content">
+      <input type="hidden" id="zona" name="zona">
+
+      <button type="submit" class="btn-primary" id="enviar">Reservar llamada</button>
+      <p class="ag-form-error" id="formError" role="alert" hidden></p>
+    </form>
+  </section>
+
+  <!-- Éxito -->
+  <section id="exito" class="ag-card ag-ok" aria-live="polite" hidden>
+    <div class="ag-ok-icono" aria-hidden="true">🌱</div>
+    <h2 id="exitoTitulo" tabindex="-1"></h2>
+    <p class="ag-fecha" id="exitoFecha"></p>
+    <p id="exitoMail"></p>
+  </section>
+</main>
+
+<footer class="ag-footer">
+  <div>© 2026 Guido Sustento · <a href="/">haceloconsustento.com</a></div>
+  <div><a href="/privacidad/">Privacidad</a> · Hecho con sustento 🌱</div>
+</footer>
+
+<script src="/agenda/agenda.js"></script>
+<script>
+(function () {
+  'use strict';
+  var A = window.Agenda;
+
+  var OPCIONES = {
+    alimentacion: [
+      ['carne', 'Incluyo carne y otros productos animales'],
+      ['reduciendo', 'Estoy reduciendo los productos animales'],
+      ['vegetariana', 'Vegetariana'],
+      ['vegana', 'Vegana'],
+      ['quiere-empezar', 'Quiero empezar a comer a base de plantas']
+    ],
+    fueANutri: [['si', 'Sí'], ['no', 'No']],
+    compromiso: [['si', 'Sí'], ['no', 'No'], ['entender-mas', 'Quiero entender más']],
+    origen: ['Club Sustento', 'VBalance', 'La Cucha', 'Instagram', 'TikTok', 'Newsletter', 'Nutrición Sin Humo', 'Me lo recomendó alguien'].map(function (o) { return [o, o]; })
+  };
+  var TEXTOS = ['nombre', 'email', 'motivo', 'objetivo', 'whatsapp'];
+  var GRUPOS = ['alimentacion', 'fueANutri', 'compromiso', 'origen'];
+  var MENSAJES = {
+    nombre: 'Escribí tu nombre.',
+    email: 'Escribí un mail válido.',
+    motivo: 'Contame qué te trajo hasta acá.',
+    objetivo: 'Contame qué querés lograr.',
+    whatsapp: 'Escribí tu número de WhatsApp, con código de país.',
+    alimentacion: 'Elegí una opción.',
+    fueANutri: 'Elegí una opción.',
+    compromiso: 'Elegí una opción.',
+    origen: 'Elegí una opción.'
+  };
+
+  function $(id) { return document.getElementById(id); }
+  var turno = null;
+  var enviando = false;
+
+  // Chips: radios reales con <label> estilado (funciona con teclado y lectores).
+  GRUPOS.forEach(function (g) {
+    var cont = document.querySelector('[data-grupo="' + g + '"]');
+    OPCIONES[g].forEach(function (op, i) {
+      var id = g + '-' + i;
+      var r = A.h('input', { type: 'radio', id: id, name: g, value: op[0], required: '' });
+      cont.appendChild(r);
+      cont.appendChild(A.h('label', { for: id, texto: op[1] }));
+    });
+  });
+
+  // Campos ocultos: utm del link, si no del referrer, si no "directo".
+  function recortar(s) { return String(s || '').slice(0, 120); }
+  (function () {
+    var q = new URLSearchParams(location.search);
+    var fuente = q.get('utm_source');
+    if (!fuente && document.referrer) {
+      try { fuente = new URL(document.referrer).hostname.replace(/^www\./, ''); } catch (e) {}
+    }
+    $('utm_source').value = recortar(fuente || 'directo');
+    $('utm_content').value = recortar(q.get('utm_content'));
+    $('zona').value = A.zona();
+  })();
+
+  // ---------- Pasos ----------
+  function ver(cual) {
+    ['paso1', 'paso2', 'exito'].forEach(function (id) { $(id).hidden = id !== cual; });
+    window.scrollTo(0, 0);
+  }
+
+  var sel = A.selector({
+    root: $('selector'),
+    alElegir: function (t) {
+      turno = t;
+      $('turnoElegido').textContent = A.describir(t.inicio, t.fin, true);
+      ver('paso2');
+      $('nombre').focus({ preventScroll: true });
+    }
+  });
+  sel.cargar();
+
+  $('cambiarTurno').addEventListener('click', function () {
+    sel.aviso('');
+    ver('paso1');
+    sel.cargar();
+  });
+
+  // ---------- Validación ----------
+  function marcar(campo, mensaje) {
+    var err = $('err-' + campo);
+    err.textContent = mensaje || '';
+    err.hidden = !mensaje;
+    var inp = $(campo) || $('grupo-' + campo);
+    if (inp) {
+      if (mensaje) inp.classList.add('ag-invalido'); else inp.classList.remove('ag-invalido');
+      if (mensaje) inp.setAttribute('aria-invalid', 'true'); else inp.removeAttribute('aria-invalid');
+    }
+  }
+  function primerFoco(campo) {
+    var e = $(campo) || document.querySelector('[name="' + campo + '"]');
+    if (e) e.focus();
+  }
+
+  // Devuelve el primer campo inválido (o null). El servidor igual vuelve a validar.
+  function validar() {
+    var primero = null;
+    TEXTOS.forEach(function (c) {
+      var el = $(c);
+      var ok = el.value.trim() !== '' && el.checkValidity();
+      if (c === 'whatsapp') ok = ok && (el.value.match(/\d/g) || []).length >= 6;
+      marcar(c, ok ? '' : MENSAJES[c]);
+      if (!ok && !primero) primero = c;
+    });
+    GRUPOS.forEach(function (g) {
+      var ok = !!document.querySelector('input[name="' + g + '"]:checked');
+      marcar(g, ok ? '' : MENSAJES[g]);
+      if (!ok && !primero) primero = g;
+    });
+    return primero;
+  }
+
+  function valorGrupo(g) {
+    var c = document.querySelector('input[name="' + g + '"]:checked');
+    return c ? c.value : '';
+  }
+
+  function errorGeneral(texto, conWa) {
+    var p = $('formError');
+    A.vaciar(p);
+    p.appendChild(document.createTextNode(texto));
+    if (conWa) { p.appendChild(document.createTextNode(' ')); p.appendChild(A.linkWa(conWa)); p.appendChild(document.createTextNode('.')); }
+    p.hidden = false;
+  }
+
+  function soltar() {
+    enviando = false;
+    $('enviar').disabled = false;
+    $('enviar').textContent = 'Reservar llamada';
+    $('cambiarTurno').disabled = false;
+  }
+
+  // ---------- Envío ----------
+  $('form').addEventListener('submit', function (ev) {
+    ev.preventDefault();
+    if (enviando) return;
+    $('formError').hidden = true;
+    var malo = validar();
+    if (malo) { primerFoco(malo); return; }
+
+    enviando = true;
+    $('enviar').disabled = true;
+    $('enviar').textContent = 'Reservando…';
+    $('cambiarTurno').disabled = true;
+
+    var cuerpo = {
+      inicio: turno.inicio,
+      nombre: $('nombre').value.trim(),
+      email: $('email').value.trim(),
+      alimentacion: valorGrupo('alimentacion'),
+      motivo: $('motivo').value.trim(),
+      objetivo: $('objetivo').value.trim(),
+      fueANutri: valorGrupo('fueANutri'),
+      compromiso: valorGrupo('compromiso'),
+      whatsapp: $('whatsapp').value.trim(),
+      origen: valorGrupo('origen'),
+      recomendo: $('recomendo').value.trim(),
+      sitio: $('sitio').value,
+      utm_source: $('utm_source').value,
+      utm_content: $('utm_content').value,
+      zona: $('zona').value
+    };
+
+    A.post('/api/agenda/reservar', cuerpo).then(function (r) {
+      var j = r.json || {};
+      if (r.status === 200 && j.ok) {
+        A.track('agenda_reserva_ok', { alimentacion: cuerpo.alimentacion, origen: cuerpo.origen });
+        $('exitoTitulo').textContent = 'Listo, ' + cuerpo.nombre + '. Tu llamada quedó agendada.';
+        $('exitoFecha').textContent = A.describir(j.inicio || turno.inicio, j.fin || turno.fin, true);
+        $('exitoMail').textContent = 'Te mandamos la confirmación a ' + cuerpo.email + ' con el link de Meet. Si no la ves en unos minutos, revisá Spam o Promociones.';
+        ver('exito');
+        $('exitoTitulo').focus({ preventScroll: true });
+        enviando = false;
+        return;
+      }
+      A.track('agenda_reserva_error', { error: r.timeout ? 'timeout' : String(j.error || ('http-' + r.status)) });
+      soltar();
+
+      if (r.timeout) {
+        // No se sabe si el servidor llegó a reservar: se le pide revisar el mail.
+        errorGeneral('No pudimos confirmar la reserva. Revisá tu mail: si te llegó la confirmación, ya está agendada. Si no, probá de nuevo.');
+        return;
+      }
+
+      if (r.status === 409 && (j.error === 'turno-ocupado' || j.error === 'turno-invalido')) {
+        // Se conserva lo escrito: solo se vuelve a elegir horario.
+        ver('paso1');
+        sel.aviso('Ese horario se acaba de ocupar. Elegí otro.');
+        sel.cargar();
+      } else if (r.status === 400 && j.error === 'datos') {
+        if (j.campo === 'inicio') {
+          ver('paso1');
+          sel.aviso('Ese horario ya no está disponible. Elegí otro.');
+          sel.cargar();
+        } else if (MENSAJES[j.campo]) {
+          marcar(j.campo, MENSAJES[j.campo]);
+          primerFoco(j.campo);
+        } else {
+          errorGeneral('Revisá los datos e intentá de nuevo.');
+        }
+      } else if (r.status === 503) {
+        errorGeneral('La agenda no está disponible en este momento.', 'Escribime por WhatsApp');
+      } else {
+        errorGeneral('No pudimos reservar. Probá de nuevo o', 'escribime por WhatsApp');
+      }
+    }).catch(function () {
+      // Que un error inesperado no deje el botón trabado.
+      soltar();
+      errorGeneral('No pudimos reservar. Probá de nuevo o', 'escribime por WhatsApp');
+    });
+  });
+
+  // Al corregir un campo se limpia su error.
+  TEXTOS.forEach(function (c) { $(c).addEventListener('input', function () { marcar(c, ''); }); });
+  GRUPOS.forEach(function (g) {
+    Array.prototype.forEach.call(document.querySelectorAll('input[name="' + g + '"]'), function (r) {
+      r.addEventListener('change', function () { marcar(g, ''); });
+    });
+  });
+})();
+</script>
+</body>
+</html>
