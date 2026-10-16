@@ -85,7 +85,7 @@ async function contarSuscriptores() {
 
 const SITIO = 'https://www.haceloconsustento.com';
 const BAJA_URL = 'https://sustento-webhook.vercel.app/api/baja';
-const CALENDLY = 'https://calendly.com/guidosustento-nutri/30min';
+const AGENDA = 'https://haceloconsustento.com/agenda/?utm_source=mail&utm_medium=email&utm_campaign=metodo&utm_content=bienvenida-metodo';
 const WHATSAPP = 'https://wa.me/541171417177?text=Hola%20Guido%2C%20quiero%20unirme%20a%20Red%20Sustento';
 
 // Las dos formas de suscribirse al Club. Son suscripciones mensuales reales.
@@ -166,7 +166,7 @@ const VARIANTES = {
       'Son 90 días de acompañamiento para cambiar tu relación con la comida. Sin dietas, sin listas de alimentos prohibidos y sin contar calorías. Desde la expansión, no desde la restricción.',
       'Antes de cualquier cosa hay una llamada de 30 minutos sin cargo, para ver si tiene sentido en tu caso. Si no tiene sentido, te lo digo.'
     ],
-    ctas: [{ texto: 'Reservar la llamada gratuita', url: CALENDLY }],
+    ctas: [{ texto: 'Reservar la llamada gratuita', url: AGENDA }],
     cierre: [RESPONDEME]
   },
   recetario: {

@@ -1138,7 +1138,7 @@
     <li><a href="#club">Club</a></li>
     <li><a href="/blog/">Blog</a></li>
     <li class="nav-wa"><a href="https://wa.me/541171417177" target="_blank" rel="noopener">WhatsApp</a></li>
-    <li><a href="https://calendly.com/guidosustento-nutri/30min" data-cta="menu" target="_blank" rel="noopener" class="nav-cta">Reservar llamada</a></li>
+    <li><a href="/agenda/" data-cta="menu" class="nav-cta">Reservar llamada</a></li>
   </ul>
 </nav>
 
@@ -1153,7 +1153,7 @@
     </p>
     <p class="hero-contraste">No es una dieta ni una lista de prohibidos. Es aprender a armar tu plato y tu semana para que funcionen solos.</p>
     <div class="hero-ctas">
-      <a href="https://calendly.com/guidosustento-nutri/30min" data-cta="hero" target="_blank" rel="noopener" class="btn-primary">Reservar llamada gratuita</a>
+      <a href="/agenda/" data-cta="hero" class="btn-primary">Reservar llamada gratuita</a>
       <a href="#metodo" class="btn-secondary">Cómo es el Método</a>
     </div>
     <p class="hero-micro">30 minutos · por videollamada · desde cualquier país</p>
@@ -1322,7 +1322,7 @@
     <li><span class="dolores-num">07</span>Querés dejar la carne y hacerlo bien, aunque en tu casa coman distinto.</li>
   </ol>
   <div class="dolores-cierre reveal">
-    <a href="https://calendly.com/guidosustento-nutri/30min" data-cta="dolores" target="_blank" rel="noopener" class="btn-primary">Reservar llamada gratuita</a>
+    <a href="/agenda/" data-cta="dolores" class="btn-primary">Reservar llamada gratuita</a>
     <p>30 minutos para ver si el Método es para vos.</p>
   </div>
 </section>
@@ -1363,7 +1363,7 @@
       <h3>Qué incluye el Método</h3>
       <p>Un proceso 1:1 para comer a base de plantas sin dudar, a tu ritmo y sin dietas.</p>
       <div class="precio-cta">
-        <a href="https://calendly.com/guidosustento-nutri/30min" data-cta="metodo" target="_blank" rel="noopener" class="btn-blanco">Reservar llamada gratuita</a>
+        <a href="/agenda/" data-cta="metodo" class="btn-blanco">Reservar llamada gratuita</a>
       </div>
       <p class="precio-microcopy">Sin cargo · 30 minutos · Sin compromiso</p>
       <p class="precio-pago">Pago único o tres cuotas. El valor lo charlamos en la llamada, con todo sobre la mesa.</p>
@@ -1778,7 +1778,7 @@
       <li><span class="llamada-paso-num">2</span><span><strong>Te llega el link</strong> de Google Meet por mail.</span></li>
       <li><span class="llamada-paso-num">3</span><span><strong>Charlamos 30 minutos:</strong> me contás tu situación, te cuento cómo funciona el Método y cómo trabajo, vemos si es para vos, y te paso el valor y las formas de pago.</span></li>
     </ol>
-    <a href="https://calendly.com/guidosustento-nutri/30min" data-cta="reservar" target="_blank" rel="noopener" class="btn-blanco">Reservar llamada gratuita</a>
+    <a href="/agenda/" data-cta="reservar" class="btn-blanco">Reservar llamada gratuita</a>
     <small>Sin cargo · 30 minutos · Sin compromiso</small>
   </div>
 </section>
@@ -1869,17 +1869,17 @@
     } catch (e) { return 'desconocido'; }
   }
 
-  // Arma el link a Calendly con los UTMs puestos: de donde vino la persona y
+  // Arma el link a la agenda con los UTMs puestos: de donde vino la persona y
   // desde que boton reservo. Lo usan los cuatro botones fijos y tambien el
   // resultado del quiz, que se dibuja despues de que carga la pagina.
-  function calendlyConUtm(donde) {
+  function agendaConUtm(donde) {
     function limpiar(v) {
       return String(v || '').toLowerCase()
         .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
         .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60);
     }
     var origen = limpiar(origenVisita()) || 'directo';
-    return 'https://calendly.com/guidosustento-nutri/30min'
+    return '/agenda/'
       + '?utm_source=' + encodeURIComponent(origen)
       + '&utm_medium=landing&utm_campaign=metodo'
       + '&utm_content=' + encodeURIComponent(limpiar(donde) || 'sin-ubicar');
@@ -1910,7 +1910,7 @@
       metodo: {
         emoji: '🌱', title: 'Te recomiendo el Método Sustento 1:1',
         text: 'El Método es un proceso 1:1 de 90 días para construir hábitos a tu medida, con seguimiento real entre consulta y consulta. Empieza con una llamada de 30 minutos, gratis y sin compromiso.',
-        cta: 'Reservar mi llamada gratuita', target: 'CALENDLY', source: 'quiz-metodo'
+        cta: 'Reservar mi llamada gratuita', target: 'AGENDA', source: 'quiz-metodo'
       },
       recetario: {
         emoji: '📖', title: 'Empezá por el Recetario Digital',
@@ -2011,10 +2011,10 @@
     // llamada es lo que cierra, y cierra alto. Los otros siguen scrolleando a
     // su seccion como antes.
     function destinoDe(r) {
-      return r.target === 'CALENDLY' ? calendlyConUtm('quiz-metodo') : r.target;
+      return r.target === 'AGENDA' ? agendaConUtm('quiz-metodo') : r.target;
     }
     function attrsDe(r) {
-      return r.target === 'CALENDLY' ? ' target="_blank" rel="noopener"' : '';
+      return '';
     }
 
     function renderResult(key) {
@@ -2879,7 +2879,7 @@
 
 <div class="sticky-bar" id="sticky-bar">
   <span class="sticky-text"><span class="sticky-extra">Método Sustento · </span><strong>90 días para comer a base de plantas<span class="sticky-extra"> sin dudar</span></strong><span class="sticky-extra"> · Llamada gratuita</span></span>
-  <a class="sticky-btn" href="https://calendly.com/guidosustento-nutri/30min" data-cta="sticky" target="_blank" rel="noopener">Reservar llamada</a>
+  <a class="sticky-btn" href="/agenda/" data-cta="sticky">Reservar llamada</a>
 </div>
 
 
@@ -3153,16 +3153,16 @@
      Ademas hay que activar Analytics en el panel del proyecto.
      La cola window.va se define en el <head>. -->
 <script defer src="/_vercel/insights/script.js"></script>
-<!-- Los cuatro botones fijos que van a Calendly. El link se arma en runtime
-     con calendlyConUtm() para que arrastre el origen de la visita. -->
+<!-- Los botones fijos que van a la agenda. El link se arma en runtime
+     con agendaConUtm() para que arrastre el origen de la visita. -->
 <script>
   (function () {
     try {
-      var links = document.querySelectorAll('a[href*="calendly.com"]');
+      var links = document.querySelectorAll('a[href="/agenda/"]');
       Array.prototype.forEach.call(links, function (a) {
-        a.href = calendlyConUtm(a.getAttribute('data-cta'));
+        a.href = agendaConUtm(a.getAttribute('data-cta'));
       });
-    } catch (e) { /* si esto falla, el boton sigue llevando a Calendly igual */ }
+    } catch (e) { /* si esto falla, el boton sigue llevando a la agenda igual */ }
   })();
 </script>
 </body>
