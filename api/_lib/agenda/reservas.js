@@ -171,6 +171,11 @@ const DE_PERSONA = () => `Guido Sustento <${process.env.RESEND_FROM_EMAIL}>`;
 const DE_AVISO = () => `Agenda Sustento <${process.env.RESEND_FROM_EMAIL}>`;
 const MAIL_GUIDO = CUENTA_GUIDO;
 
+/** Cuentas de Google por dominio. Una de Workspace con dominio propio no se detecta. */
+export function usaGmail(email) {
+  return /@(gmail|googlemail)\.com$/i.test(String(email || '').trim());
+}
+
 function paraPersona(ctx, m, extra = {}) {
   return { from: DE_PERSONA(), to: ctx.email, reply_to: MAIL_GUIDO, subject: m.subject, html: m.html, text: m.text, ...extra };
 }
@@ -312,10 +317,15 @@ export async function reservar(entrada, { base, ahora = new Date() }) {
   const recordatorios = elegirRecordatorios(inicio, ahora.getTime());
 
   try {
-    const ics = mails.armarIcs({ uid: ev.iCalUID, eventId: ev.id, inicio, fin, meet: ctx.meet });
-    await enviar(paraPersona(ctx, mails.confirmacion(ctx, recordatorios.map(r => r.tipo)), {
-      attachments: [{ filename: 'llamada-sustento.ics', content: Buffer.from(ics, 'utf8').toString('base64') }]
-    }));
+    // Con Gmail la persona ya tiene el evento de Google (es invitada) y el
+    // .ics se suma como un segundo evento aunque lleve el mismo UID: probado
+    // el 16/10/2026. El adjunto queda para Outlook, iCloud y el resto.
+    const extra = {};
+    if (!usaGmail(ctx.email)) {
+      const ics = mails.armarIcs({ uid: ev.iCalUID, eventId: ev.id, inicio, fin, meet: ctx.meet });
+      extra.attachments = [{ filename: 'llamada-sustento.ics', content: Buffer.from(ics, 'utf8').toString('base64') }];
+    }
+    await enviar(paraPersona(ctx, mails.confirmacion(ctx, recordatorios.map(r => r.tipo)), extra));
   } catch (e) {
     console.error('Agenda: no se pudo mandar la confirmación:', e.message);
   }
