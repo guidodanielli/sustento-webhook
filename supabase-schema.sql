@@ -80,3 +80,43 @@ create table if not exists dm_botones (
 create index if not exists dm_botones_created_at_idx on dm_botones (created_at desc);
 
 alter table dm_botones enable row level security;
+
+-- ============================================================
+-- Agenda propia (reemplaza a Calendly en la llamada de diagnóstico)
+--
+-- `reservas` es el registro anónimo de la agenda: sin nombre, mail ni
+-- teléfono. El vínculo con la persona vive en el evento de Google Calendar,
+-- no acá. Sirve para medir qué reservas entran y de dónde vienen.
+-- Ya creada en la base: este bloque es documentación.
+-- ============================================================
+create table if not exists reservas (
+  id             uuid        default gen_random_uuid() primary key,
+  creada_en      timestamptz not null default now(),
+  fecha_turno    date        not null,
+  motivo         text,
+  objetivo       text,
+  fue_a_nutri    boolean,
+  compromiso     text        check (compromiso in ('si','no','entender-mas')),
+  alimentacion   text        not null check (alimentacion in ('carne','reduciendo','vegetariana','vegana','quiere-empezar')),
+  origen         text,
+  utm_source     text,
+  utm_content    text,
+  estado         text        not null default 'reservada' check (estado in ('reservada','reprogramada','cancelada')),
+  etiquetas      text[]      not null default '{}' check (cardinality(etiquetas) <= 2),
+  etiqueta_nota  text
+);
+
+create index if not exists reservas_creada_en_idx on reservas (creada_en desc);
+create index if not exists reservas_fecha_turno_idx on reservas (fecha_turno);
+
+alter table reservas enable row level security;
+
+-- `agenda_config` guarda el refresh token de Google (fila clave = 'google_refresh_token').
+-- RLS prendida sin políticas: solo la service key puede leerla.
+create table if not exists agenda_config (
+  clave          text        primary key,
+  valor          text        not null,
+  actualizado_en timestamptz not null default now()
+);
+
+alter table agenda_config enable row level security;

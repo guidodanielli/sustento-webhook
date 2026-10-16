@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tu llamada | Guido Sustento</title>
+<meta name="description" content="Reprogramá o cancelá tu llamada con Guido Sustento.">
+<meta name="robots" content="noindex">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="theme-color" content="#1e6f1d">
+
+<!-- Privacidad del token: el link del mail trae ?t=<token>. Antes de que Analytics
+     vea la URL, se guarda en sessionStorage y se saca de la barra de direcciones.
+     Si el navegador no deja guardarlo, la URL no se toca (si no, F5 lo perdería). -->
+<script>
+(function () {
+  try {
+    var q = new URLSearchParams(location.search);
+    var t = q.get('t');
+    if (!t) return;
+    var accion = q.get('accion');
+    try {
+      sessionStorage.setItem('agenda_t', t);
+      // Un link nuevo pisa también la acción: no arrastrar la de un link anterior.
+      if (accion) sessionStorage.setItem('agenda_accion', accion); else sessionStorage.removeItem('agenda_accion');
+    } catch (e) { return; }
+    history.replaceState(null, '', '/agenda/gestionar/' + (accion ? '?accion=' + encodeURIComponent(accion) : ''));
+  } catch (e) {}
+})();
+</script>
+
+<!-- Analytics: el stub va ANTES de cualquier evento. -->
+<script>
+  window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+
+<link rel="preload" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=DM+Sans:opsz,wght@9..40,300..700&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=DM+Sans:opsz,wght@9..40,300..700&display=swap"></noscript>
+<link rel="stylesheet" href="/agenda/agenda.css">
+</head>
+<body>
+
+<header class="ag-header">
+  <div class="ag-header-in">
+    <a href="/" class="ag-logo">Guido Sustento</a>
+    <a href="/" class="ag-volver">Volver al sitio</a>
+  </div>
+</header>
+
+<main id="main">
+  <h1 class="seccion-titulo">Tu <em>llamada.</em></h1>
+  <p class="ag-sub" id="sub" aria-live="polite">Un momento…</p>
+
+  <!-- Cargando -->
+  <section id="v-cargando" class="ag-card" aria-live="polite">
+    <p class="ag-msg">Buscando tu llamada…</p>
+  </section>
+
+  <!-- Link inválido -->
+  <section id="v-invalido" class="ag-card ag-ok" hidden>
+    <h2 id="invalidoTitulo">Este link no es válido.</h2>
+    <p id="invalidoTexto">Usá el del último mail que te llegó.</p>
+  </section>
+
+  <!-- Ya cancelada -->
+  <section id="v-cancelada" class="ag-card ag-ok" hidden>
+    <h2 id="canceladaTitulo" tabindex="-1">Esta llamada ya está cancelada.</h2>
+    <p>Si querés, elegí otro horario.</p>
+    <div class="ag-acciones"><a class="btn-primary" href="/agenda/">Agendar de nuevo</a></div>
+  </section>
+
+  <!-- Fuera de plazo -->
+  <section id="v-plazo" class="ag-card ag-ok" hidden>
+    <h2>Tu llamada es el <span id="plazoFecha"></span>.</h2>
+    <p>Faltan menos de 12 horas, así que ya no se puede cambiar desde acá. <span id="plazoWa"></span></p>
+  </section>
+
+  <!-- No disponible / error -->
+  <section id="v-error" class="ag-card ag-ok" hidden>
+    <h2 id="errorTitulo">No pudimos cargar tu llamada.</h2>
+    <p id="errorTexto"></p>
+    <div class="ag-acciones"><button type="button" class="btn-primary" id="reintentar">Reintentar</button></div>
+  </section>
+
+  <!-- Menú -->
+  <section id="v-menu" class="ag-card ag-ok" hidden>
+    <h2 id="menuTitulo" tabindex="-1"></h2>
+    <p class="ag-fecha" id="menuFecha"></p>
+    <div class="ag-acciones">
+      <button type="button" class="btn-primary" id="irReprogramar">Reprogramar</button>
+      <button type="button" class="btn-secondary" id="irCancelar">Cancelar</button>
+    </div>
+  </section>
+
+  <!-- Cancelar -->
+  <section id="v-cancelar" class="ag-card ag-ok" hidden>
+    <h2 id="cancelarTitulo" tabindex="-1"></h2>
+    <div class="ag-acciones">
+      <button type="button" class="btn-primary" id="confirmarCancelar">Sí, cancelar la llamada</button>
+      <button type="button" class="btn-secondary" id="volverDeCancelar">Volver</button>
+    </div>
+    <p class="ag-form-error" id="cancelarError" role="alert" hidden></p>
+  </section>
+
+  <!-- Reprogramar -->
+  <section id="v-reprogramar" class="ag-card" hidden>
+    <h2 class="ag-paso-titulo" id="reprogTitulo" tabindex="-1">Elegí tu nuevo horario</h2>
+    <p class="ag-actual" id="reprogActual"></p>
+    <div id="selector"></div>
+    <div id="confirmaCambio" hidden>
+      <p class="ag-fecha" id="cambioTexto"></p>
+      <div class="ag-acciones">
+        <button type="button" class="btn-primary" id="confirmarCambio">Confirmar el cambio</button>
+        <button type="button" class="btn-secondary" id="otroHorario">Elegir otro horario</button>
+      </div>
+    </div>
+    <p class="ag-form-error" id="cambioError" role="alert" hidden></p>
+    <div class="ag-acciones"><button type="button" class="btn-link" id="volverDeReprog">Volver</button></div>
+  </section>
+
+  <!-- Resultados -->
+  <section id="v-cancelo" class="ag-card ag-ok" hidden>
+    <div class="ag-ok-icono" aria-hidden="true">🌱</div>
+    <h2 id="canceloTitulo" tabindex="-1">Listo, la llamada quedó cancelada.</h2>
+    <p>Te mandamos un mail con la confirmación.</p>
+    <div class="ag-acciones"><a class="btn-primary" href="/agenda/">Agendar de nuevo</a></div>
+  </section>
+
+  <section id="v-movida" class="ag-card ag-ok" hidden>
+    <div class="ag-ok-icono" aria-hidden="true">🌱</div>
+    <h2 id="movidaTitulo" tabindex="-1"></h2>
+    <p>El link de Meet es el mismo.</p>
+  </section>
+</main>
+
+<footer class="ag-footer">
+  <div>© 2026 Guido Sustento · <a href="/">haceloconsustento.com</a></div>
+  <div><a href="/privacidad/">Privacidad</a> · Hecho con sustento 🌱</div>
+</footer>
+
+<script src="/agenda/agenda.js"></script>
+<script>
+(function () {
+  'use strict';
+  var A = window.Agenda;
+  function $(id) { return document.getElementById(id); }
+
+  var VISTAS = ['cargando', 'invalido', 'cancelada', 'plazo', 'error', 'menu', 'cancelar', 'reprogramar', 'cancelo', 'movida'];
+  function vista(cual, foco) {
+    VISTAS.forEach(function (v) { $('v-' + v).hidden = v !== cual; });
+    window.scrollTo(0, 0);
+    if (foco && $(foco)) $(foco).focus({ preventScroll: true });
+  }
+
+  // El token llega por la URL la primera vez; el script del <head> lo pasó a
+  // sessionStorage y limpió la barra. En una recarga (F5) ya no está en la URL.
+  function guardado(k) { try { return sessionStorage.getItem(k); } catch (e) { return null; } }
+  var q = new URLSearchParams(location.search);
+  var t = q.get('t') || guardado('agenda_t');
+  var accionInicial = q.get('accion') || guardado('agenda_accion');
+  var turnoActual = null;   // { inicio, fin, nombre }
+  var nuevo = null;         // turno elegido para reprogramar
+  var ocupado = false;
+
+  function enlaceWa() {
+    var s = $('plazoWa');
+    A.vaciar(s);
+    s.appendChild(A.linkWa('Escribime por WhatsApp'));
+    s.appendChild(document.createTextNode('.'));
+  }
+
+  function mostrarError(titulo, texto, conReintento) {
+    $('errorTitulo').textContent = titulo;
+    var p = $('errorTexto');
+    A.vaciar(p);
+    p.appendChild(document.createTextNode(texto + ' '));
+    // Si viene texto, el link sigue la frase ("... o escribime"); si no, la abre.
+    p.appendChild(A.linkWa(texto ? 'escribime por WhatsApp' : 'Escribime por WhatsApp'));
+    p.appendChild(document.createTextNode('.'));
+    $('reintentar').hidden = !conReintento;
+    $('sub').textContent = '';
+    vista('error');
+  }
+
+  // ---------- Carga inicial ----------
+  function cargar() {
+    if (!t) { $('sub').textContent = ''; vista('invalido'); return; }
+    vista('cargando');
+    A.api('/api/agenda/gestionar?t=' + encodeURIComponent(t), { cache: 'no-store' }).then(function (r) {
+      var j = r.json || {};
+      if (r.status === 403) {
+        $('invalidoTitulo').textContent = 'Este link no es válido.';
+        $('invalidoTexto').textContent = 'Usá el del último mail que te llegó.';
+        $('sub').textContent = '';
+        vista('invalido');
+      } else if (r.status === 200 && j.estado === 'cancelada') {
+        $('sub').textContent = '';
+        vista('cancelada', 'canceladaTitulo');
+      } else if (r.status === 200 && j.estado === 'activa') {
+        turnoActual = { inicio: j.inicio, fin: j.fin, nombre: j.nombre };
+        $('sub').textContent = '';
+        if (!j.puedeCambiar) {
+          $('plazoFecha').textContent = A.describir(j.inicio, j.fin);
+          enlaceWa();
+          vista('plazo');
+        } else if (accionInicial === 'cancelar') {
+          irCancelar();
+        } else if (accionInicial === 'reprogramar') {
+          irReprogramar();
+        } else {
+          irMenu();
+        }
+      } else if (r.status === 503) {
+        mostrarError('La agenda no está disponible en este momento.', '', true);
+      } else {
+        mostrarError('No pudimos cargar tu llamada.', 'Probá de nuevo en un rato o', true);
+      }
+    }).catch(function () {
+      mostrarError('No pudimos cargar tu llamada.', 'Probá de nuevo en un rato o', true);
+    });
+  }
+  $('reintentar').addEventListener('click', cargar);
+
+  // ---------- Vistas ----------
+  function irMenu() {
+    $('menuTitulo').textContent = 'Hola ' + turnoActual.nombre + '.';
+    $('menuFecha').textContent = 'Tu llamada es el ' + A.describir(turnoActual.inicio, turnoActual.fin) + '.';
+    vista('menu', 'menuTitulo');
+  }
+  function irCancelar() {
+    $('cancelarTitulo').textContent = '¿Cancelamos tu llamada del ' + A.describir(turnoActual.inicio, turnoActual.fin) + '?';
+    $('cancelarError').hidden = true;
+    vista('cancelar', 'cancelarTitulo');
+  }
+  var sel = null;
+  function irReprogramar() {
+    nuevo = null;
+    $('confirmaCambio').hidden = true;
+    $('cambioError').hidden = true;
+    $('reprogActual').textContent = 'Tu llamada actual: ' + A.describir(turnoActual.inicio, turnoActual.fin) + '.';
+    if (!sel) {
+      sel = A.selector({
+        root: $('selector'),
+        alElegir: function (turno) {
+          nuevo = turno;
+          $('cambioTexto').textContent = 'Pasar tu llamada al ' + A.describir(turno.inicio, turno.fin);
+          $('confirmaCambio').hidden = false;
+          // El horario elegido y su confirmación pueden quedar fuera de pantalla en el celular.
+          $('confirmaCambio').scrollIntoView({ block: 'center', behavior: 'smooth' });
+          $('confirmarCambio').focus({ preventScroll: true });
+        }
+      });
+    }
+    sel.aviso('');
+    sel.cargar();
+    vista('reprogramar', 'reprogTitulo');
+  }
+
+  $('irReprogramar').addEventListener('click', irReprogramar);
+  $('irCancelar').addEventListener('click', irCancelar);
+  $('volverDeCancelar').addEventListener('click', irMenu);
+  $('volverDeReprog').addEventListener('click', irMenu);
+  $('otroHorario').addEventListener('click', function () { nuevo = null; $('confirmaCambio').hidden = true; });
+
+  // Vistas a las que lleva un 409 que ya no tiene arreglo desde esta página.
+  function conflicto(j) {
+    if (j.error === 'cancelada') { vista('cancelada', 'canceladaTitulo'); return true; }
+    if (j.error === 'fuera-de-plazo') {
+      $('plazoFecha').textContent = A.describir(turnoActual.inicio, turnoActual.fin);
+      enlaceWa();
+      vista('plazo');
+      return true;
+    }
+    return false;
+  }
+
+  // Error genérico en un bloque de error (si la API falla o se corta el pedido).
+  function errorEn(id, texto) {
+    var p = $(id);
+    A.vaciar(p);
+    p.appendChild(document.createTextNode(texto));
+    p.appendChild(A.linkWa('escribime por WhatsApp'));
+    p.appendChild(document.createTextNode('.'));
+    p.hidden = false;
+  }
+
+  // ---------- Cancelar ----------
+  $('confirmarCancelar').addEventListener('click', function () {
+    if (ocupado) return;
+    ocupado = true;
+    var b = $('confirmarCancelar');
+    b.disabled = true; b.textContent = 'Cancelando…';
+    $('cancelarError').hidden = true;
+    A.post('/api/agenda/gestionar', { t: t, accion: 'cancelar' }).then(function (r) {
+      var j = r.json || {};
+      ocupado = false; b.disabled = false; b.textContent = 'Sí, cancelar la llamada';
+      if (r.status === 200 && j.ok) {
+        A.track('agenda_cancelar_ok');
+        vista('cancelo', 'canceloTitulo');
+      } else if (r.status === 409 && conflicto(j)) {
+        // la vista ya cambió
+      } else if (r.status === 403) {
+        vista('invalido');
+      } else {
+        var p = $('cancelarError');
+        A.vaciar(p);
+        p.appendChild(document.createTextNode(r.status === 503 ? 'La agenda no está disponible en este momento. ' : 'No pudimos cancelar. Probá de nuevo o '));
+        p.appendChild(A.linkWa(r.status === 503 ? 'Escribime por WhatsApp' : 'escribime por WhatsApp'));
+        p.appendChild(document.createTextNode('.'));
+        p.hidden = false;
+      }
+    }).catch(function () {
+      ocupado = false; b.disabled = false; b.textContent = 'Sí, cancelar la llamada';
+      errorEn('cancelarError', 'No pudimos cancelar. Probá de nuevo o ');
+    });
+  });
+
+  // ---------- Reprogramar ----------
+  $('confirmarCambio').addEventListener('click', function () {
+    if (ocupado || !nuevo) return;
+    ocupado = true;
+    var b = $('confirmarCambio');
+    b.disabled = true; b.textContent = 'Cambiando…';
+    $('cambioError').hidden = true;
+    A.post('/api/agenda/gestionar', { t: t, accion: 'reprogramar', inicio: nuevo.inicio }).then(function (r) {
+      var j = r.json || {};
+      ocupado = false; b.disabled = false; b.textContent = 'Confirmar el cambio';
+      if (r.status === 200 && j.ok) {
+        A.track('agenda_reprogramar_ok');
+        $('movidaTitulo').textContent = 'Listo, tu llamada ahora es el ' + A.describir(j.inicio || nuevo.inicio, j.fin || nuevo.fin) + '.';
+        vista('movida', 'movidaTitulo');
+      } else if (r.status === 409 && conflicto(j)) {
+        // la vista ya cambió
+      } else if (r.status === 409 && (j.error === 'turno-ocupado' || j.error === 'turno-invalido' || j.error === 'mismo-turno')) {
+        nuevo = null;
+        $('confirmaCambio').hidden = true;
+        sel.aviso(j.error === 'mismo-turno' ? 'Ese ya es tu horario actual. Elegí otro.' : 'Ese horario se acaba de ocupar. Elegí otro.');
+        sel.cargar();
+      } else if (r.status === 403) {
+        vista('invalido');
+      } else {
+        var p = $('cambioError');
+        A.vaciar(p);
+        p.appendChild(document.createTextNode(r.status === 503 ? 'La agenda no está disponible en este momento. ' : 'No pudimos cambiar el horario. Probá de nuevo o '));
+        p.appendChild(A.linkWa(r.status === 503 ? 'Escribime por WhatsApp' : 'escribime por WhatsApp'));
+        p.appendChild(document.createTextNode('.'));
+        p.hidden = false;
+      }
+    }).catch(function () {
+      ocupado = false; b.disabled = false; b.textContent = 'Confirmar el cambio';
+      errorEn('cambioError', 'No pudimos cambiar el horario. Probá de nuevo o ');
+    });
+  });
+
+  cargar();
+})();
+</script>
+</body>
+</html>
