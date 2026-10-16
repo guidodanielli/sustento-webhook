@@ -312,7 +312,7 @@ export async function reservar(entrada, { base, ahora = new Date() }) {
   const recordatorios = elegirRecordatorios(inicio, ahora.getTime());
 
   try {
-    const ics = mails.armarIcs({ eventId: ev.id, inicio, fin, meet: ctx.meet });
+    const ics = mails.armarIcs({ uid: ev.iCalUID, eventId: ev.id, inicio, fin, meet: ctx.meet });
     await enviar(paraPersona(ctx, mails.confirmacion(ctx, recordatorios.map(r => r.tipo)), {
       attachments: [{ filename: 'llamada-sustento.ics', content: Buffer.from(ics, 'utf8').toString('base64') }]
     }));

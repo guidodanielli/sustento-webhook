@@ -384,8 +384,13 @@ function icsTexto(s) {
   return String(s).replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\r?\n/g, '\\n');
 }
 
-/** VCALENDAR de un evento; el estándar pide CRLF entre líneas. */
-export function armarIcs({ eventId, inicio, fin, meet, ahora = new Date() }) {
+/**
+ * VCALENDAR de un evento; el estándar pide CRLF entre líneas.
+ * El UID tiene que ser el iCalUID del evento de Google: la persona ya figura
+ * como invitada en ese evento, y con otro UID Gmail suma el adjunto como un
+ * evento aparte (el 16/10/2026 a una reserva le aparecieron tres).
+ */
+export function armarIcs({ uid, eventId, inicio, fin, meet, ahora = new Date() }) {
   const lineas = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
@@ -393,7 +398,7 @@ export function armarIcs({ eventId, inicio, fin, meet, ahora = new Date() }) {
     'CALSCALE:GREGORIAN',
     'METHOD:PUBLISH',
     'BEGIN:VEVENT',
-    `UID:${eventId}@haceloconsustento.com`,
+    `UID:${uid || `${eventId}@haceloconsustento.com`}`,
     `DTSTAMP:${icsFecha(ahora)}`,
     `DTSTART:${icsFecha(inicio)}`,
     `DTEND:${icsFecha(fin)}`,
