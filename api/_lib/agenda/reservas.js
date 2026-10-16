@@ -167,7 +167,11 @@ function urlsDe(base, eventId, reservaId, wa, calendar) {
 // Mails
 // ---------------------------------------------------------------------------
 
-const DE_PERSONA = () => `Guido Sustento <${process.env.RESEND_FROM_EMAIL}>`;
+// Los mails a la persona salen de agenda@, no de la dirección general (hola@),
+// que también manda el Mini Recetario y los mails de la lista: Gmail juzga
+// cada remitente por su historial, y el de hola@ lo empuja a Promociones.
+// Mismo dominio verificado en Resend, no hace falta tocar el DNS.
+const DE_PERSONA = () => `Guido Sustento <${String(process.env.RESEND_FROM_EMAIL).replace(/^[^@]*/, 'agenda')}>`;
 const DE_AVISO = () => `Agenda Sustento <${process.env.RESEND_FROM_EMAIL}>`;
 const MAIL_GUIDO = CUENTA_GUIDO;
 

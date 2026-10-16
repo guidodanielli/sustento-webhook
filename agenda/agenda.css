@@ -189,6 +189,7 @@ main { flex: 1; width: 100%; max-width: 680px; margin: 0 auto; padding: 40px 16p
 .ag-ok p { margin-bottom: 12px; text-wrap: pretty; }
 .ag-fecha { font-weight: 700; color: var(--verde-oscuro); font-size: 1.125rem; }
 .ag-nota { font-size: 0.9375rem; color: var(--gris); }
+.ag-ok .ag-bandeja { margin: 20px 0 0; color: var(--negro); text-align: left; }
 
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }

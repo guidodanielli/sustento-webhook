@@ -130,6 +130,7 @@
     <h2 id="exitoTitulo" tabindex="-1"></h2>
     <p class="ag-fecha" id="exitoFecha"></p>
     <p id="exitoMail"></p>
+    <p class="ag-zona ag-bandeja"><strong>¿No ves el mail?</strong> Buscalo en Promociones o Spam y movelo a Principal. Así los recordatorios te llegan ahí.</p>
   </section>
 </main>
 
@@ -312,7 +313,10 @@
         A.track('agenda_reserva_ok', { alimentacion: cuerpo.alimentacion, origen: cuerpo.origen });
         $('exitoTitulo').textContent = 'Listo, ' + cuerpo.nombre + '. Tu llamada quedó agendada.';
         $('exitoFecha').textContent = A.describir(j.inicio || turno.inicio, j.fin || turno.fin, true);
-        $('exitoMail').textContent = 'Te mandamos la confirmación a ' + cuerpo.email + ' con el link de Meet. Si no la ves en unos minutos, revisá Spam o Promociones.';
+        // Con Gmail la persona ya figura en el evento de Google (ver usaGmail en reservas.js).
+        var esGmail = /@(gmail|googlemail)\.com$/i.test(String(cuerpo.email).trim());
+        $('exitoMail').textContent = 'Te mandamos la confirmación a ' + cuerpo.email + ' con el link de Meet.'
+          + (esGmail ? ' La llamada ya está en tu Google Calendar.' : '');
         ver('exito');
         $('exitoTitulo').focus({ preventScroll: true });
         enviando = false;
