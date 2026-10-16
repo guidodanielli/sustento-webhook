@@ -279,7 +279,10 @@ export async function crearEvento({ summary, description, inicio, fin, email, re
       description,
       start: { dateTime: inicio, timeZone: ZONA },
       end: { dateTime: fin, timeZone: ZONA },
-      attendees: [{ email }],
+      // Reservar ya es confirmar. Sin invitación de Google (sendUpdates=none)
+      // la persona no tiene botón para aceptar, y sin esto el evento le queda
+      // "sin responder" en su calendario.
+      attendees: [{ email, responseStatus: 'accepted' }],
       conferenceData: { createRequest: { requestId, conferenceSolutionKey: { type: 'hangoutsMeet' } } },
       extendedProperties: { private: privado }
     }
