@@ -13,6 +13,8 @@
  * futuro tiene que filtrar por este tag.
  */
 
+import { darDeBajaEnResend } from './_lib/lista.js';
+
 const BAJA_TAG = 'baja';
 
 async function marcarBaja(email) {
@@ -76,6 +78,9 @@ export default async function handler(req, res) {
   }
 
   const ok = await marcarBaja(email);
+  // La secuencia sale de Resend, que no mira Supabase: sin esto, quien se da de
+  // baja desde el mail de bienvenida seguiría recibiendo los mails 2, 3 y 4.
+  await darDeBajaEnResend(email);
 
   // El botón nativo del cliente de mail no muestra nada: solo espera un 200.
   if (req.method === 'POST') {

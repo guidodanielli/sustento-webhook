@@ -1,5 +1,6 @@
 import { Resend } from 'resend';
 import { notificarSuscriptor } from './_lib/notificar-venta.js';
+import { sumarASecuencia } from './_lib/lista.js';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -109,6 +110,13 @@ const REGALO = {
 // Además, que respondan le dice a Gmail que estos mails son deseados.
 const RESPONDEME = 'Y si probás alguna de las recetas, contame cómo te fue: respondé este mail, lo leo yo.';
 
+// En el modo regalo se pide primero una respuesta de una palabra, que cuesta
+// cero. Una pregunta abierta casi nadie la contesta (la serie tuvo 1 respuesta
+// en 4 mails), y que respondan es lo que le enseña a Gmail que los mails
+// siguientes van a Principal y no a Promociones. Abajo de este pedido, en cada
+// variante, sigue la pregunta abierta para quien quiera contar más.
+const RESPONDE_LLEGO = 'Una cosa más: respondé este mail con un "llegó" 🌱 Así sé que te llegó bien, y tu casilla aprende que mis mails no son publicidad y no los manda a Promociones.';
+
 // Lo que la persona eligió en el modo regalo ante "qué es lo que más te cuesta
 // hoy?". La clave se guarda en la columna barrera; el párrafo va en el mail,
 // para que no reciba solo el recetario sino una primera salida a eso que le
@@ -200,7 +208,7 @@ const VARIANTES = {
       'Son recetas que están en mi repertorio siempre. Elegí la que más te tiente y no te vas a arrepentir.'
     ],
     ctas: [],
-    cierre: ['Y contame: qué te gustaría aprender, o cuál es tu mayor barrera para comer más plantas? Respondé este mail que te voy a estar leyendo.']
+    cierre: [RESPONDE_LLEGO, 'Y si querés, contame qué te gustaría aprender o cuál es tu mayor barrera para comer más plantas. Te voy a estar leyendo.']
   },
   general: {
     subject: 'Bienvenido/a al ecosistema 🌱',
@@ -327,7 +335,7 @@ function conBarrera(variante, barrera) {
   return {
     ...variante,
     parrafos: extra ? [...variante.parrafos, extra] : variante.parrafos,
-    cierre: ['Y si querés contarme un poco más de eso que te cuesta, respondé este mail que te voy a estar leyendo.']
+    cierre: [RESPONDE_LLEGO, 'Y si querés contarme un poco más de eso que te cuesta, también te voy a estar leyendo.']
   };
 }
 
@@ -373,6 +381,9 @@ if (allowedOrigins.includes(origin)) {
     // Solo mandamos el welcome email a suscriptores nuevos (no a duplicados).
     if (ok && isNew) {
       await enviarBienvenida(email, source, barrera);
+      // La secuencia (mails 2, 3 y 4) es para quien pidió el regalo: el mail 4
+      // ofrece el Método y no le habla a quien vino del quiz por la Red o el Club.
+      if (source === 'regalo') await sumarASecuencia({ email, source, barrera });
       // Y le avisamos a Guido. Va después de la bienvenida y se traga sus
       // propios errores, así que no puede romper el alta ni la respuesta.
       await notificarSuscriptor({
