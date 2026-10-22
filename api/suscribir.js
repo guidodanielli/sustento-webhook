@@ -115,7 +115,7 @@ const RESPONDEME = 'Y si probás alguna de las recetas, contame cómo te fue: re
 // en 4 mails), y que respondan es lo que le enseña a Gmail que los mails
 // siguientes van a Principal y no a Promociones. Abajo de este pedido, en cada
 // variante, sigue la pregunta abierta para quien quiera contar más.
-const RESPONDE_LLEGO = 'Una cosa más: respondé este mail con un "llegó" 🌱 Así sé que te llegó bien, y tu casilla aprende que mis mails no son publicidad y no los manda a Promociones.';
+const RESPONDE_LLEGO = 'Una cosa más: <strong>respondé este mail con un "llegó"</strong> 🌱 Así sé que te llegó bien, y tu casilla aprende que mis mails no son publicidad y no los manda a Promociones.';
 
 // Lo que la persona eligió en el modo regalo ante "qué es lo que más te cuesta
 // hoy?". La clave se guarda en la columna barrera; el párrafo va en el mail,
@@ -271,15 +271,23 @@ function armarTexto({ variante, bajaUrl }) {
   return partes.join('\n\n');
 }
 
+// Mismo formato que los mails 2, 3 y 4 de la secuencia (plantillas de Resend):
+// fondo blanco, solo texto, sin franjas ni fondos de color. Hasta el 22/10/2026
+// este mail tenía el diseño de marca (franja verde, fondo crema, pie negro), y
+// la persona pasaba de un mail "de marca" a tres que parecen una carta. Que se
+// vea como una carta también le juega a favor para caer en Principal y no en
+// Promociones. El único botón que queda es el de lo que la persona vino a buscar.
+const TEXTO = "font-family: Georgia, 'Times New Roman', serif; font-size: 17px; line-height: 27px; color: #222222;";
+
 function parrafo(texto) {
-  return `<p style="font-size: 1rem; line-height: 1.8; color: #444; margin: 0 0 20px 0;">${texto}</p>`;
+  return `<p style="margin: 0 0 18px 0; ${TEXTO}">${texto}</p>`;
 }
 
 function boton(cta, principal) {
   const estilo = principal
-    ? 'background: #1e6f1d; color: #ffffff; border: 2px solid #1e6f1d;'
-    : 'background: transparent; color: #1e6f1d; border: 2px solid #1e6f1d;';
-  return `<a href="${cta.url}" style="${estilo} padding: 14px 30px; border-radius: 100px; text-decoration: none; font-family: Arial, sans-serif; font-weight: 600; font-size: 0.95rem; display: inline-block; margin: 0 0 10px 0;">${cta.texto}</a>`;
+    ? 'background-color: #1e6f1d; color: #ffffff; border: 2px solid #1e6f1d;'
+    : 'background-color: #ffffff; color: #1e6f1d; border: 2px solid #1e6f1d;';
+  return `<a href="${cta.url}" style="${estilo} padding: 12px 24px; border-radius: 100px; text-decoration: none; font-family: Arial, Helvetica, sans-serif; font-weight: bold; font-size: 16px; line-height: 20px; display: inline-block; margin: 0 0 10px 0;">${cta.texto}</a>`;
 }
 
 function armarHtml({ variante, bajaUrl }) {
@@ -288,7 +296,7 @@ function armarHtml({ variante, bajaUrl }) {
   const [saludo, ...resto] = variante.parrafos;
   const parrafos = parrafo(saludo)
     + parrafo(REGALO.parrafo)
-    + `<div style="margin: 0 0 28px 0;">${boton(REGALO.cta, true)}</div>`
+    + `<div style="margin: 0 0 26px 0;">${boton(REGALO.cta, true)}</div>`
     + resto.map(parrafo).join('');
 
   // El primer botón va lleno; los siguientes con borde, para que se vea cuál es
@@ -298,32 +306,44 @@ function armarHtml({ variante, bajaUrl }) {
     .join('<br>');
 
   const nota = variante.nota
-    ? `<p style="font-size: 0.9rem; line-height: 1.7; color: #555; background: #fff; border-left: 3px solid #1e6f1d; padding: 14px 18px; margin: 0 0 24px 0;">${variante.nota}</p>`
+    ? `<p style="margin: 0 0 24px 0; padding: 4px 0 4px 16px; border-left: 3px solid #1e6f1d; font-family: Georgia, 'Times New Roman', serif; font-size: 16px; line-height: 25px; color: #444444;">${variante.nota}</p>`
     : '';
 
   const cierre = (variante.cierre || []).map(parrafo).join('');
 
-  return `
-    <div style="font-family: Georgia, serif; max-width: 600px; margin: 0 auto; color: #111; background: #f5eee0;">
-      <div style="background: #1e6f1d; padding: 28px 40px;">
-        <p style="color: #fff; font-family: Arial, sans-serif; font-size: 0.8rem; letter-spacing: 0.15em; text-transform: uppercase; margin: 0; opacity: 0.8;">Hacelo con Sustento</p>
-      </div>
-      <div style="padding: 48px 40px; background: #f5eee0;">
-        ${parrafos}
-        ${botones ? `<div style="margin: 32px 0 28px 0;">${botones}</div>` : ''}
-        ${nota}
-        ${cierre}
-        <p style="font-size: 1rem; line-height: 1.8; color: #444; margin: 0 0 4px 0;">Nos vemos,</p>
-        <p style="font-size: 1rem; font-weight: bold; color: #1e6f1d; margin: 0;">Guido 🌱</p>
-      </div>
-      <div style="background: #111; padding: 20px 40px;">
-        <p style="font-size: 0.75rem; color: rgba(255,255,255,0.3); margin: 0; text-align: center; line-height: 1.7;">
-          © 2026 Guido Sustento · <a href="${SITIO}" style="color: rgba(255,255,255,0.4);">haceloconsustento.com</a><br>
-          Si no querés recibir más mails míos, <a href="${bajaUrl}" style="color: rgba(255,255,255,0.4);">darte de baja acá</a>.
-        </p>
-      </div>
-    </div>
-  `;
+  return `<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; background-color: #ffffff;">
+<table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#ffffff" style="background-color: #ffffff;">
+<tr>
+<td align="center" style="padding: 24px 16px;">
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width: 560px;">
+<tr>
+<td style="${TEXTO}">
+${parrafos}
+${botones ? `<div style="margin: 8px 0 26px 0;">${botones}</div>` : ''}
+${nota}
+${cierre}
+<p style="margin: 0 0 4px 0; ${TEXTO}">Nos vemos,</p>
+<p style="margin: 0 0 32px 0; ${TEXTO}">Guido 🌱</p>
+</td>
+</tr>
+<tr>
+<td style="border-top: 1px solid #e5e5e5; padding-top: 16px; font-family: Arial, Helvetica, sans-serif; font-size: 13px; line-height: 20px; color: #777777;">
+<p style="margin: 0; font-family: Arial, Helvetica, sans-serif; font-size: 13px; line-height: 20px; color: #777777;"><em>Guido Sustento · <a href="${SITIO}" style="color: #777777; text-decoration: underline;">haceloconsustento.com</a><br>
+Si no querés recibir más mails míos, <a href="${bajaUrl}" style="color: #777777; text-decoration: underline;">darte de baja acá</a>.</em></p>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</body>
+</html>`;
 }
 
 // En el modo regalo, si la persona eligió una barrera, el mail suma el párrafo
