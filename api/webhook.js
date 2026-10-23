@@ -1,6 +1,6 @@
 import { Resend } from 'resend';
 import { PRODUCTS } from './_lib/products.js';
-import { notificarVenta } from './_lib/notificar-venta.js';
+import { notificarVenta, notificarCobroSinProducto } from './_lib/notificar-venta.js';
 import { registrarCompra, yaCompro } from './_lib/registrar-compra.js';
 import { linkDeDescarga, HORAS_DE_VIDA } from './_lib/entrega.js';
 import { verificarFirmaMP, ESTADOS } from './_lib/verificar-firma-mp.js';
@@ -134,17 +134,22 @@ function extraerTipo(req) {
   return req.body?.type || req.body?.topic || req.query?.type || req.query?.topic;
 }
 
+// Los ids de pago y de factura de MercadoPago son solo números. Se exige eso
+// porque el id va pegado a la URL de la API de MP con el token de Guido: un id
+// inventado como "../otra-cosa" haría que el webhook consulte otro endpoint.
+const SOLO_NUMEROS = /^\d+$/;
+
 function extraerEventId(req) {
   const query = req.query || {};
   const directo = req.body?.data?.id || query['data.id'] || query.id;
-  if (directo) return String(directo);
+  if (directo) return SOLO_NUMEROS.test(String(directo)) ? String(directo) : null;
 
   const resource = req.body?.resource;
   if (!resource) return null;
 
   // "https://api.mercadopago.com/v1/payments/123" y "123" tienen que dar 123.
   const ultimo = String(resource).split('?')[0].split('/').filter(Boolean).pop();
-  return /^[\w-]+$/.test(ultimo || '') ? ultimo : null;
+  return SOLO_NUMEROS.test(ultimo || '') ? ultimo : null;
 }
 
 export default async function handler(req, res) {
@@ -207,7 +212,7 @@ export default async function handler(req, res) {
       facturaSuscripcion = await getAuthorizedPayment(eventId);
       paymentId = facturaSuscripcion?.payment?.id;
 
-      if (!paymentId) {
+      if (!paymentId || !SOLO_NUMEROS.test(String(paymentId))) {
         console.error('Suscripción MP sin payment.id:', JSON.stringify(facturaSuscripcion));
         return res.status(200).json({ received: true, warning: 'sin payment id' });
       }
@@ -221,17 +226,52 @@ export default async function handler(req, res) {
 
     const buyerEmail = payment.payer?.email;
     const buyerName = payment.payer?.first_name;
+
     // El único plan de suscripción que tiene Guido en MP es el del Club, así
-    // que una factura de suscripción es siempre el Club.
-    const productId = esSuscripcion
-      ? 'club'
-      : (productoDeReferencia(payment.external_reference) || 'recetario');
-    const product = PRODUCTS[productId] || PRODUCTS['recetario'];
+    // que todo cobro recurrente es el Club. Se mira el pago además del tipo de
+    // evento porque MP también manda las cuotas como un `payment` común, y esas
+    // cuotas (link mpago.la) no traen nuestro external_reference.
+    const esCobroRecurrente = esSuscripcion
+      || payment.operation_type === 'recurring_payment'
+      || Boolean(payment.metadata?.preapproval_id);
+    const productId = esCobroRecurrente ? 'club' : productoDeReferencia(payment.external_reference);
 
     if (!buyerEmail) {
       console.error('MP sin payer.email. paymentId:', paymentId, 'pago:', JSON.stringify(payment));
       return res.status(400).json({ error: 'No buyer email' });
     }
+
+    // Un cobro sin referencia reconocible no salió del checkout de la web: es
+    // un link de pago, una transferencia o un cobro del Método. Hasta el
+    // 23/10/2026 caía en "recetario" y la persona recibía un Recetario que no
+    // compró. Se registra igual (así un reenvío de MP no vuelve a avisar) y
+    // se le avisa a Guido, sin mandarle nada a quien pagó.
+    if (!productId || !PRODUCTS[productId]) {
+      const { esNueva } = await registrarCompra({
+        productId: 'mercadopago-otro',
+        productName: payment.description || 'Cobro por MercadoPago fuera de la web',
+        buyerEmail,
+        buyerName,
+        amount: payment.transaction_amount,
+        currency: payment.currency_id,
+        paymentMethod: 'mercadopago',
+        paymentId: String(paymentId)
+      });
+
+      if (esNueva) {
+        await notificarCobroSinProducto({
+          buyerEmail,
+          buyerName,
+          amount: payment.transaction_amount,
+          currency: payment.currency_id,
+          descripcion: payment.description,
+          paymentId: String(paymentId)
+        });
+      }
+      return res.status(200).json({ received: true, sinProducto: true });
+    }
+
+    const product = PRODUCTS[productId];
 
     // El Club es una suscripción (sin archivo para descargar): mail de bienvenida.
     // El resto son productos digitales descargables: mail con el link.
@@ -276,30 +316,43 @@ export default async function handler(req, res) {
       return res.status(200).json({ received: true, duplicado: true });
     }
 
-    await Promise.all([
-      // En una renovación el comprador no recibe nada: ya está adentro.
-      esRenovacion
-        ? Promise.resolve()
-        : resend.emails.send({
-            from: `Guido Sustento <${process.env.RESEND_FROM_EMAIL}>`,
-            reply_to: 'guidosustento.nutri@gmail.com',
-            to: buyerEmail,
-            subject: emailContent.subject,
-            html: emailContent.html,
-            text: emailContent.text
-          }),
-      notificarVenta({
-        product,
-        buyerEmail,
-        buyerName,
-        amount: payment.transaction_amount,
-        currency: payment.currency_id,
-        paymentMethod: 'MercadoPago',
-        paymentId: String(paymentId),
-        recurrente: esRecurrente,
-        renovacion: esRenovacion
-      })
-    ]);
+    // El mail al comprador sale primero y el aviso a Guido después, porque el
+    // aviso tiene que decir si la entrega salió. La compra ya quedó registrada,
+    // así que si Resend falla MercadoPago no va a reintentar: sin esto, la
+    // persona pagó, no recibió nada y nadie se enteraba.
+    // Resend no tira error: lo devuelve en `error`. Por eso se miran las dos cosas.
+    let entregaFallida = false;
+    // En una renovación el comprador no recibe nada: ya está adentro.
+    if (!esRenovacion) {
+      try {
+        const { error } = await resend.emails.send({
+          from: `Guido Sustento <${process.env.RESEND_FROM_EMAIL}>`,
+          reply_to: 'guidosustento.nutri@gmail.com',
+          to: buyerEmail,
+          subject: emailContent.subject,
+          html: emailContent.html,
+          text: emailContent.text
+        });
+        if (error) throw new Error(JSON.stringify(error));
+      } catch (err) {
+        entregaFallida = true;
+        console.error('No salió el mail al comprador. paymentId:', paymentId, err);
+      }
+    }
+
+    await notificarVenta({
+      product,
+      buyerEmail,
+      buyerName,
+      amount: payment.transaction_amount,
+      currency: payment.currency_id,
+      paymentMethod: 'MercadoPago',
+      paymentId: String(paymentId),
+      recurrente: esRecurrente,
+      renovacion: esRenovacion,
+      entregaFallida,
+      linkEntrega: link?.url || null
+    });
 
     return res.status(200).json({ success: true });
 
