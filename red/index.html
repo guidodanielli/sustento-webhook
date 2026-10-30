@@ -3,10 +3,16 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Red Sustento: comunidad para profesionales de la salud | Guido Sustento</title>
-<meta name="description" content="Red Sustento: encuentros quincenales entre profesionales de la salud, especialmente nutricionistas recién recibidos, para compartir recorridos y crecer en comunidad.">
+<title>Red Sustento: comunidad para nutricionistas y profesionales de la salud | Guido Sustento</title>
+<meta name="description" content="Red Sustento: encuentros virtuales cada 15 días y grupo de WhatsApp para nutricionistas, profesionales de la salud y estudiantes. Casos, consultorio, derivación y red de apoyo real. $10.000 ARS o USD 10 por mes.">
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="https://haceloconsustento.com/red/">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://haceloconsustento.com/red/">
+<meta property="og:title" content="Red Sustento: ejercer no tiene por qué ser solitario">
+<meta property="og:description" content="Encuentros virtuales cada 15 días entre nutris, profesionales de la salud y estudiantes. Casos, consultorio, derivación y red de apoyo real.">
+<meta property="og:image" content="https://haceloconsustento.com/og-image.jpg">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
@@ -15,55 +21,142 @@
 <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=DM+Sans:wght@400;500;600;700&display=swap"></noscript>
 <link rel="stylesheet" href="/blog/style.css">
 <style>
-  .red h2 { font-family: 'Playfair Display', serif; font-weight: 700; line-height: 1.15; }
+  /* ===== RED SUSTENTO (página para profesionales, 30/10/2026) ===== */
+  .red-sec { padding: 88px 6vw; scroll-margin-top: 64px; }
+  .red-sec.oscuro { background: var(--crema-oscuro); }
+  .red-sec.verde { background: var(--verde-oscuro); color: var(--crema); }
+  .red-in { max-width: 1040px; margin: 0 auto; }
+  .red-angosto { max-width: 720px; margin: 0 auto; }
+  .red-sec h2 {
+    font-family: 'Playfair Display', serif; font-weight: 700; line-height: 1.15;
+    font-size: clamp(1.8rem, 3.6vw, 2.5rem); color: var(--verde-oscuro); margin-bottom: 16px;
+  }
+  .red-sec h2 em { font-style: italic; font-weight: 400; color: var(--verde); }
+  .red-sec.verde h2 { color: var(--crema); }
+  .red-sec.verde h2 em { color: #9fd49e; }
+  .red-bajada { font-size: 1.05rem; line-height: 1.7; color: #555; margin-bottom: 40px; max-width: 640px; }
+  .red-sec.verde .red-bajada { color: rgba(245, 238, 224, 0.8); }
+  .centrado { text-align: center; }
+  .centrado .red-bajada { margin-left: auto; margin-right: auto; }
+
   .btn-primary {
-    display: inline-flex; align-items: center; background: var(--verde); color: var(--blanco);
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    background: var(--verde); color: var(--blanco); border: 0; cursor: pointer;
     padding: 16px 32px; border-radius: 100px; text-decoration: none;
-    font-family: 'DM Sans', sans-serif; font-weight: 500; font-size: 0.9rem;
+    font-family: 'DM Sans', sans-serif; font-weight: 600; font-size: 0.95rem;
   }
-  .btn-primary:hover { background: var(--verde-claro); }
-</style>
-<style>
-  /* ===== RED SUSTENTO (profesionales) ===== */
-  .red { padding: 110px 6vw; background: var(--crema-oscuro); }
-  .red-header { max-width: 720px; margin: 0 auto 40px; text-align: center; }
-  .red-header .eyebrow { color: var(--verde); }
-  .red-solo-pros {
-    display: inline-block; font-size: 0.72rem;
-    letter-spacing: 0.12em; text-transform: uppercase; color: #fff;
-    background: var(--verde); padding: 5px 14px; border-radius: 20px; margin-bottom: 18px; font-weight: 700;
+  .btn-primary:hover { background: var(--verde-claro); text-decoration: none; }
+  .btn-sec {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    background: transparent; color: var(--verde); border: 1.5px solid var(--verde);
+    padding: 14px 28px; border-radius: 100px; text-decoration: none;
+    font-family: 'DM Sans', sans-serif; font-weight: 600; font-size: 0.95rem;
   }
-  .red-header h2 { font-size: clamp(2rem, 4vw, 2.8rem); color: var(--verde-oscuro); margin-bottom: 16px; }
-  .red-header h2 em { font-style: italic; color: var(--verde); }
-  .red-header p { font-size: 1.05rem; line-height: 1.7; color: #555; }
-  .red-card {
-    max-width: 620px; margin: 0 auto; background: #fff;
-    border: 1px solid var(--verde); border-radius: 18px; padding: 40px;
+  .btn-sec:hover { background: var(--verde); color: var(--blanco); text-decoration: none; }
+
+  /* Hero */
+  .red-hero { padding: 96px 6vw 80px; text-align: center; }
+  .red-chip {
+    display: inline-block; font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase;
+    color: #fff; background: var(--verde); padding: 6px 14px; border-radius: 20px;
+    margin-bottom: 22px; font-weight: 700;
   }
-  .red-precios { display: grid; gap: 10px; margin-bottom: 28px; }
-  .red-precio-row {
-    display: flex; justify-content: space-between; align-items: center; gap: 12px;
-    padding: 12px 16px; border-radius: 10px; background: var(--crema); font-size: 0.95rem;
+  .red-hero h1 {
+    font-family: 'Playfair Display', serif; font-weight: 700; line-height: 1.08;
+    font-size: clamp(2.3rem, 6vw, 4rem); color: var(--verde-oscuro);
+    max-width: 820px; margin: 0 auto 22px;
   }
-  .red-precio-row.destacado { background: var(--verde); color: #fff; }
-  .red-precio-row .label { color: inherit; }
-  .red-precio-row .valor { font-weight: 700; white-space: nowrap; }
-  .red-precio-row small { display: block; font-size: 0.75rem; opacity: 0.7; font-weight: 400; }
-  .red-lista { list-style: none; padding: 0; margin: 0 0 28px; display: grid; gap: 12px; }
-  .red-lista li {
-    display: flex; align-items: flex-start; gap: 11px;
-    font-size: 0.95rem; color: #333; line-height: 1.4;
+  .red-hero h1 em { font-style: italic; font-weight: 400; color: var(--verde); }
+  .red-hero .lead { font-size: 1.15rem; line-height: 1.65; color: #444; max-width: 640px; margin: 0 auto 34px; }
+  .red-datos {
+    display: flex; flex-wrap: wrap; justify-content: center; gap: 10px;
+    list-style: none; margin: 40px auto 0; max-width: 760px;
   }
-  .red-lista li::before {
-    content: '✓'; flex-shrink: 0;
-    width: 21px; height: 21px; border-radius: 50%;
-    background: var(--verde); color: #fff;
+  .red-datos li {
+    background: #fff; border: 1px solid var(--crema-oscuro); border-radius: 100px;
+    padding: 9px 18px; font-size: 0.9rem; color: #333;
+  }
+  .red-datos strong { color: var(--verde-oscuro); }
+
+  /* Dolores */
+  .dolores { list-style: none; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; }
+  .dolores li {
+    background: #fff; border-radius: 14px; padding: 22px 22px 22px 54px; position: relative;
+    font-size: 1rem; line-height: 1.55; color: #333;
+  }
+  .dolores li::before {
+    content: '“'; position: absolute; left: 18px; top: 8px;
+    font-family: 'Playfair Display', serif; font-size: 2.6rem; color: var(--tierra-claro); line-height: 1;
+  }
+  .dolores-cierre { margin-top: 32px; font-size: 1.1rem; color: var(--verde-oscuro); font-weight: 500; }
+
+  /* Qué hacemos */
+  .incluye { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 18px; }
+  .incluye div { border-top: 2px solid var(--verde); padding-top: 18px; }
+  .incluye .ico { font-size: 1.6rem; margin-bottom: 8px; }
+  .incluye h3 { font-size: 1.05rem; color: var(--verde-oscuro); margin-bottom: 6px; }
+  .incluye p { font-size: 0.95rem; color: #555; line-height: 1.6; }
+  .temas { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 36px; }
+  .temas span {
+    background: var(--crema-oscuro); color: var(--verde-oscuro); font-size: 0.88rem;
+    padding: 7px 14px; border-radius: 100px; font-weight: 500;
+  }
+  .temas-titulo { margin-top: 44px; font-weight: 600; color: var(--verde-oscuro); }
+
+  /* Valores */
+  .valores { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
+  .valores div { background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(245, 238, 224, 0.18); border-radius: 14px; padding: 24px; }
+  .valores h3 { font-family: 'Playfair Display', serif; font-size: 1.3rem; margin-bottom: 8px; color: var(--crema); }
+  .valores p { font-size: 0.95rem; line-height: 1.6; color: rgba(245, 238, 224, 0.82); }
+
+  /* Fotos: cada foto que no carga se borra sola, y si no queda ninguna se oculta la sección */
+  .galeria { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+  .galeria figure { margin: 0; border-radius: 14px; overflow: hidden; background: var(--crema-oscuro); }
+  .galeria img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; }
+
+  /* Quién la arma */
+  .quien { display: grid; grid-template-columns: 220px 1fr; gap: 40px; align-items: center; }
+  .quien img { border-radius: 18px; aspect-ratio: 4 / 5; object-fit: cover; width: 100%; }
+  .quien p { font-size: 1.02rem; line-height: 1.7; color: #444; margin-bottom: 12px; }
+
+  /* Sumarte */
+  .planes { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 18px; margin-bottom: 40px; }
+  .plan { background: #fff; border-radius: 18px; padding: 32px; border: 1px solid var(--crema-oscuro); display: flex; flex-direction: column; }
+  .plan.destacado { border: 2px solid var(--verde); }
+  .plan .donde { font-size: 0.78rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--tierra-claro); font-weight: 700; margin-bottom: 10px; }
+  .plan .precio { font-family: 'Playfair Display', serif; font-size: 2.2rem; color: var(--verde-oscuro); line-height: 1.1; }
+  .plan .precio small { font-family: 'DM Sans', sans-serif; font-size: 0.95rem; color: var(--gris); font-weight: 400; }
+  .plan .medio { font-size: 0.92rem; color: #555; margin: 10px 0 22px; line-height: 1.55; flex: 1; }
+  .plan .btn-primary, .plan .btn-sec { width: 100%; }
+  .pasos { list-style: none; counter-reset: paso; display: grid; gap: 14px; max-width: 640px; margin: 0 auto; }
+  .pasos li { counter-increment: paso; display: flex; gap: 14px; align-items: flex-start; font-size: 0.98rem; color: #333; line-height: 1.55; }
+  .pasos li::before {
+    content: counter(paso); flex-shrink: 0; width: 28px; height: 28px; border-radius: 50%;
+    background: var(--verde); color: #fff; font-weight: 700; font-size: 0.85rem;
     display: inline-flex; align-items: center; justify-content: center;
-    font-size: 0.72rem; font-weight: 700; margin-top: 1px;
   }
-  .red-card .btn-primary { width: 100%; justify-content: center; margin-bottom: 16px; }
-  .red-nota { font-size: 0.85rem; color: #777; text-align: center; line-height: 1.5; }
-  @media (max-width: 600px) { .red-card { padding: 28px 22px; } }
+  .pasos-titulo { text-align: center; font-weight: 600; color: var(--verde-oscuro); margin-bottom: 18px; }
+
+  /* FAQ */
+  .faq details { border-bottom: 1px solid var(--crema-oscuro); padding: 18px 0; }
+  .faq summary { cursor: pointer; font-weight: 600; font-size: 1.02rem; color: var(--verde-oscuro); list-style: none; display: flex; justify-content: space-between; gap: 16px; }
+  .faq summary::-webkit-details-marker { display: none; }
+  .faq summary::after { content: '+'; color: var(--verde); font-size: 1.3rem; line-height: 1; }
+  .faq details[open] summary::after { content: '–'; }
+  .faq details p { margin-top: 10px; color: #555; line-height: 1.65; font-size: 0.97rem; }
+
+  .final { text-align: center; }
+  .final .acciones { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; }
+
+  @media (max-width: 640px) {
+    .red-sec { padding: 64px 20px; }
+    .red-hero { padding: 64px 20px 56px; }
+    .quien { grid-template-columns: 1fr; gap: 24px; }
+    .quien img { max-width: 220px; }
+    .plan { padding: 26px 22px; }
+    .galeria { grid-template-columns: 1fr 1fr; gap: 8px; }
+    .galeria figure { border-radius: 10px; }
+  }
 </style>
 </head>
 <body>
@@ -71,38 +164,205 @@
 <nav>
   <a href="https://haceloconsustento.com/" class="nav-logo">Guido Sustento</a>
   <ul class="nav-links">
-    <li><a href="/blog/">Blog</a></li>
-    <li><a href="https://haceloconsustento.com/#metodo">Método</a></li>
-    <li><a href="https://haceloconsustento.com/#club">Club</a></li>
-    <li><a href="https://wa.me/541171417177" target="_blank" rel="noopener">WhatsApp</a></li>
-    <li class="nav-cta-li"><a href="/agenda/?utm_source=blog&amp;utm_medium=landing&amp;utm_campaign=metodo&amp;utm_content=red-menu" data-cta="menu" class="nav-cta">Reservar llamada</a></li>
+    <li><a href="#que-hacemos">Qué hacemos</a></li>
+    <li><a href="#sumarte">Precio</a></li>
+    <li><a href="#preguntas">Preguntas</a></li>
+    <li class="nav-cta-li"><a href="#sumarte" data-cta="menu" class="nav-cta">Sumarme</a></li>
   </ul>
 </nav>
 
+<main>
 
-<section class="red" id="red">
-  <div class="red-header">
-    <p class="eyebrow">Comunidad profesional</p>
-    <span class="red-solo-pros">👩‍⚕️ Solo profesionales de la salud</span>
-    <h2><em>Red</em> Sustento</h2>
-    <p>Un espacio de encuentro quincenal entre profesionales de la salud —especialmente nutris recién recibidos— para compartir caminos, recorridos profesionales y crecer en comunidad.</p>
-  </div>
-  <div class="red-card">
-    <div class="red-precios">
-      <div class="red-precio-row destacado">
-        <span class="label">👩‍⚕️ Profesionales de la salud<small>Valor fijo mensual</small></span>
-        <span class="valor" id="red-precio-valor">$10.000 ARS/mes</span>
-      </div>
-    </div>
-    <ul class="red-lista">
-      <li>Encuentros quincenales entre profesionales de la salud</li>
-      <li>Compartir caminos, recorridos y experiencias profesionales</li>
-      <li>Una comunidad para crecer, pensada para nutris recién recibidos</li>
+<header class="red-hero">
+  <span class="red-chip">👩‍⚕️ Para profesionales de la salud y estudiantes</span>
+  <h1>Ejercer no tiene por qué ser <em>solitario</em></h1>
+  <p class="lead">Red Sustento es un espacio de conexión entre nutris, profesionales de la salud y estudiantes. Nos juntamos a hablar sin filtro: casos, consultorio, catarsis, crecimiento y una red de apoyo real.</p>
+  <a href="#sumarte" class="btn-primary" data-cta="hero">Quiero sumarme</a>
+  <ul class="red-datos">
+    <li>🗓️ <strong>Cada 15 días</strong></li>
+    <li>💻 <strong>Virtual</strong>, desde donde estés</li>
+    <li>🕕 Jueves o viernes, <strong>18 h</strong> de Argentina</li>
+    <li>💬 Grupo de <strong>WhatsApp</strong></li>
+    <li>🌱 <strong>$10.000</strong>/mes · <strong>USD 10</strong> desde afuera</li>
+  </ul>
+</header>
+
+<section class="red-sec oscuro">
+  <div class="red-in">
+    <h2>¿Te suena alguna de <em>estas</em>?</h2>
+    <p class="red-bajada">En la facultad te enseñan bioquímica y requerimientos. Nadie te enseña qué hacer el día después de recibirte.</p>
+    <ul class="dolores">
+      <li>Te recibiste y no tenés idea de cómo se arma un consultorio, cuánto cobrar ni por dónde empezar.</li>
+      <li>Tenés un caso que te da vueltas en la cabeza y no tenés a quién preguntarle.</li>
+      <li>Sentís que el resto de los nutris son competencia, cuando en realidad podrían ser tus aliados.</li>
+      <li>Querés derivar bien, pero no conocés a nadie de confianza a quien mandarle a tus pacientes.</li>
+      <li>Subís contenido y no sabés si sirve, o te frena la vergüenza de mostrarte.</li>
+      <li>No sabés qué opciones de trabajo existen más allá del consultorio.</li>
     </ul>
-    <a href="https://wa.me/541171417177?text=Hola%20Guido%2C%20quiero%20unirme%20a%20Red%20Sustento" target="_blank" rel="noopener" class="btn-primary">Quiero unirme 💬</a>
-    <p class="red-nota">El ingreso es manual: una vez que mandes el comprobante por WhatsApp, Guido te confirma y te suma a la comunidad.</p>
+    <p class="dolores-cierre">No es que estés haciendo algo mal. Es que lo estás haciendo sola o solo.</p>
   </div>
 </section>
+
+<section class="red-sec" id="que-hacemos">
+  <div class="red-in">
+    <h2>Qué hacemos en <em>la Red</em></h2>
+    <p class="red-bajada">Un espacio chico y cercano, pensado para que salgas de cada encuentro con algo concreto y con colegas a quienes escribirles.</p>
+    <div class="incluye">
+      <div>
+        <div class="ico">💻</div>
+        <h3>Encuentros cada 15 días</h3>
+        <p>Virtuales, a las 18 h de Argentina, alternando jueves y viernes. Cada uno gira alrededor de un tema, con lugar para traer lo que te esté pasando.</p>
+      </div>
+      <div>
+        <div class="ico">💬</div>
+        <h3>Grupo de WhatsApp</h3>
+        <p>Para las dudas de todos los días, compartir oportunidades de trabajo y derivarnos entre colegas.</p>
+      </div>
+      <div>
+        <div class="ico">📚</div>
+        <h3>Grupos de estudio</h3>
+        <p>Recomendamos cursos y, si a alguien le sirve, armamos grupos para estudiar juntos y compartir lo aprendido.</p>
+      </div>
+      <div>
+        <div class="ico">🎤</div>
+        <h3>Eventos especiales</h3>
+        <p>Invitamos oradores externos para profundizar en temas que el grupo pide.</p>
+      </div>
+    </div>
+    <p class="temas-titulo">Algunos temas que ya charlamos:</p>
+    <div class="temas">
+      <span>Derivación</span>
+      <span>Cómo mejorar el consultorio</span>
+      <span>Cuánto cobrar</span>
+      <span>Opciones de trabajo</span>
+      <span>Creación de contenido</span>
+      <span>Casos difíciles</span>
+      <span>Catarsis</span>
+    </div>
+  </div>
+</section>
+
+<section class="red-sec verde">
+  <div class="red-in">
+    <h2>Lo que <em>sostenemos</em></h2>
+    <p class="red-bajada">Los mismos tres ejes de todo lo que hago con Sustento: inclusividad, salud y sustentabilidad. Llevados a cómo nos tratamos entre colegas.</p>
+    <div class="valores">
+      <div>
+        <h3>Sin filtro</h3>
+        <p>Acá se habla de lo que no se dice en la facu ni en Instagram: los miedos, los errores y la plata.</p>
+      </div>
+      <div>
+        <h3>Colegas, no competencia</h3>
+        <p>Hay pacientes para todos. Nos derivamos, nos recomendamos y crecemos juntos.</p>
+      </div>
+      <div>
+        <h3>Para todos</h3>
+        <p>Recién recibidos, con años de consultorio o todavía estudiando. Cada recorrido le suma algo al resto.</p>
+      </div>
+      <div>
+        <h3>Teoría que se aplica</h3>
+        <p>No es otro curso. Es llevar lo que sabés a la práctica real, con gente que pasa por lo mismo.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="red-sec" id="fotos">
+  <div class="red-in">
+    <h2>Así son <em>los encuentros</em></h2>
+    <p class="red-bajada">Algunos de los encuentros de este año.</p>
+    <!-- Para sumar una foto: guardarla en /img/red/ como encuentro-9.jpg (recortada a 4:3) y agregar su <figure>. Las que no existen se ocultan solas. -->
+    <div class="galeria">
+      <figure><img src="/img/red/encuentro-1.jpg" alt="Encuentro virtual de Red Sustento"></figure>
+      <figure><img src="/img/red/encuentro-2.jpg" alt="Encuentro virtual de Red Sustento"></figure>
+      <figure><img src="/img/red/encuentro-3.jpg" alt="Encuentro virtual de Red Sustento"></figure>
+      <figure><img src="/img/red/encuentro-4.jpg" alt="Encuentro virtual de Red Sustento"></figure>
+      <figure><img src="/img/red/encuentro-5.jpg" alt="Encuentro virtual de Red Sustento"></figure>
+      <figure><img src="/img/red/encuentro-6.jpg" alt="Encuentro virtual de Red Sustento"></figure>
+      <figure><img src="/img/red/encuentro-7.jpg" alt="Encuentro virtual de Red Sustento"></figure>
+      <figure><img src="/img/red/encuentro-8.jpg" alt="Encuentro virtual de Red Sustento"></figure>
+    </div>
+  </div>
+</section>
+
+<section class="red-sec oscuro">
+  <div class="red-in quien">
+    <img src="/img/guido-sustento-retrato.jpg" alt="Guido Sustento, nutricionista" loading="lazy">
+    <div>
+      <h2>Quién <em>la arma</em></h2>
+      <p>Soy Guido Sustento, nutricionista (M.N. 12964) y creador del Método Sustento. Cuando me recibí me encontré con lo mismo que le pasa a casi todos: muchas preguntas y nadie a quien hacérselas.</p>
+      <p>Armé la Red para que eso no le pase a nadie más. No vengo a enseñarte desde arriba: coordino el espacio y aprendo tanto como el resto.</p>
+    </div>
+  </div>
+</section>
+
+<section class="red-sec" id="sumarte">
+  <div class="red-in">
+    <div class="centrado">
+      <h2>Cómo <em>sumarte</em></h2>
+      <p class="red-bajada">Una suscripción mensual que sostiene el espacio y lo hace crecer. Te das de baja cuando quieras.</p>
+    </div>
+    <div class="planes">
+      <div class="plan destacado">
+        <p class="donde">🇦🇷 Desde Argentina</p>
+        <p class="precio">$10.000 <small>ARS por mes</small></p>
+        <p class="medio">Suscripción por Mercado Pago, con débito automático. Después del pago, escribime por WhatsApp así te sumo al grupo.</p>
+        <a href="https://www.mercadopago.com.ar/subscriptions/checkout?preapproval_plan_id=100cbf378c084fcf83a7b31e60db334d" target="_blank" rel="noopener" class="btn-primary" data-cta="pago-ars">Suscribirme en pesos</a>
+      </div>
+      <div class="plan">
+        <p class="donde">🌎 Desde otro país</p>
+        <p class="precio">USD 10 <small>por mes</small></p>
+        <p class="medio">Escribime por WhatsApp desde el botón, te paso el medio de pago en dólares y te sumo al grupo.</p>
+        <a href="https://wa.me/541171417177?text=Hola%20Guido%2C%20quiero%20sumarme%20a%20Red%20Sustento%20desde%20afuera%20de%20Argentina" target="_blank" rel="noopener" class="btn-sec" data-cta="pago-usd">Escribirme para pagar en dólares</a>
+      </div>
+    </div>
+    <p class="pasos-titulo">Si pagás en pesos:</p>
+    <ol class="pasos">
+      <li>Tocás <strong>Suscribirme en pesos</strong> y completás el pago en Mercado Pago.</li>
+      <li>Me escribís por <a href="https://wa.me/541171417177?text=Hola%20Guido%2C%20ya%20me%20suscrib%C3%AD%20a%20Red%20Sustento" target="_blank" rel="noopener" data-cta="whatsapp-post-pago">WhatsApp</a> con tu nombre y el comprobante.</li>
+      <li>Te sumo al grupo y te paso la fecha del próximo encuentro.</li>
+    </ol>
+  </div>
+</section>
+
+<section class="red-sec oscuro" id="preguntas">
+  <div class="red-angosto faq">
+    <h2>Preguntas <em>frecuentes</em></h2>
+    <details>
+      <summary>¿Quiénes pueden sumarse?</summary>
+      <p>Nutricionistas, otros profesionales de la salud y estudiantes. Está pensada sobre todo para quienes recién se reciben o están por recibirse, pero si tenés años de consultorio tu experiencia le suma muchísimo al resto.</p>
+    </details>
+    <details>
+      <summary>¿Cuándo son los encuentros?</summary>
+      <p>Cada 15 días, a las 18 h de Argentina, de forma virtual. Vamos alternando entre jueves y viernes para que nadie quede siempre afuera. Cuando te sumás te paso la fecha del próximo, y en el grupo avisamos cada uno con anticipación.</p>
+    </details>
+    <details>
+      <summary>¿Necesito tener consultorio o experiencia?</summary>
+      <p>No. Muchas personas llegan justo porque todavía no saben cómo arrancar. Ese es uno de los temas que más trabajamos.</p>
+    </details>
+    <details>
+      <summary>¿Cómo me doy de baja?</summary>
+      <p>Si pagás por Mercado Pago, la cancelás desde la app: <strong>Tu perfil → Suscripciones → Red Sustento → Cancelar suscripción</strong>. Si pagás en dólares, me avisás por WhatsApp. No hay permanencia mínima.</p>
+    </details>
+    <details>
+      <summary>¿Es lo mismo que el Club Sustento?</summary>
+      <p>No. El Club es para cualquier persona que quiere aprender de alimentación. La Red es solo para profesionales de la salud y estudiantes, y se habla del ejercicio de la profesión.</p>
+    </details>
+  </div>
+</section>
+
+<section class="red-sec final">
+  <div class="red-angosto">
+    <h2>Te esperamos en <em>el próximo encuentro</em></h2>
+    <p class="red-bajada">Si te queda alguna duda antes de sumarte, escribime y la charlamos.</p>
+    <div class="acciones">
+      <a href="#sumarte" class="btn-primary" data-cta="final">Quiero sumarme</a>
+      <a href="https://wa.me/541171417177?text=Hola%20Guido%2C%20tengo%20una%20duda%20sobre%20Red%20Sustento" target="_blank" rel="noopener" class="btn-sec" data-cta="whatsapp-dudas">Tengo una duda</a>
+    </div>
+  </div>
+</section>
+
+</main>
 
 <footer class="blog-footer">
   <h3>Guido Sustento</h3>
@@ -118,6 +378,31 @@
 
 <script>
   window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+
+  // Fotos que todavía no se subieron: se sacan, y si no queda ninguna se oculta la sección
+  (function () {
+    var seccion = document.getElementById('fotos');
+    var imgs = seccion.querySelectorAll('.galeria img');
+    var pendientes = imgs.length;
+    function revisar() {
+      pendientes--;
+      if (pendientes === 0 && !seccion.querySelector('.galeria figure')) seccion.style.display = 'none';
+    }
+    imgs.forEach(function (img) {
+      if (img.complete && img.naturalWidth === 0) { img.parentNode.remove(); revisar(); return; }
+      if (img.complete) { revisar(); return; }
+      img.addEventListener('load', revisar);
+      img.addEventListener('error', function () { img.parentNode.remove(); revisar(); });
+    });
+  })();
+
+  // Clics en los botones, para saber desde Vercel Analytics por dónde entra la gente
+  document.querySelectorAll('[data-cta]').forEach(function (el) {
+    el.addEventListener('click', function () {
+      var params = new URLSearchParams(location.search);
+      window.va('event', { name: 'red_cta_click', data: { destino: el.dataset.cta, origen: params.get('utm_source') || document.referrer.split('/')[2] || 'directo' } });
+    });
+  });
 </script>
 <script defer src="/_vercel/insights/script.js"></script>
 </body>
