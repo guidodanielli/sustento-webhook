@@ -90,10 +90,11 @@ const AGENDA = 'https://haceloconsustento.com/agenda/?utm_source=mail&utm_medium
 const WHATSAPP = 'https://wa.me/541171417177?text=Hola%20Guido%2C%20quiero%20unirme%20a%20Red%20Sustento';
 
 // Las dos formas de suscribirse al Club. Son suscripciones mensuales reales.
-// Whop da el acceso automático; MercadoPago no, ahí el ingreso es manual.
+// Whop da el acceso automático; en pesos el ingreso es manual, pero desde el
+// 05/11/2026 pasa por /suscribirme/, que guarda el WhatsApp antes de abrir
+// MercadoPago: ya no hay que pedir el comprobante.
 const WHOP_CLUB = 'https://whop.com/checkout/plan_5cUpzEWpFAjF7';
-const MPAGO_CLUB = 'https://mpago.la/1U4znwx';
-const WHATSAPP_CLUB = 'https://wa.me/541171417177?text=Hola%20Guido%2C%20me%20suscrib%C3%AD%20al%20Club%20por%20MercadoPago.%20Te%20paso%20el%20comprobante.';
+const PESOS_CLUB = `${SITIO}/suscribirme/?plan=club&utm_source=mail`;
 
 // El Mini Recetario es lo que la persona recibe a cambio del mail, así que va en
 // las cinco variantes y va primero: el quiz lo promete, el mail lo entrega. Vive
@@ -161,9 +162,9 @@ const VARIANTES = {
     ],
     ctas: [
       { texto: 'Suscribirme por USD 10/mes 🌿', url: WHOP_CLUB },
-      { texto: 'Suscribirme por $15.000 ARS/mes 🇦🇷', url: MPAGO_CLUB }
+      { texto: 'Suscribirme por $15.000 ARS/mes 🇦🇷', url: PESOS_CLUB }
     ],
-    nota: `<strong>Si pagás en pesos, un paso más:</strong> MercadoPago no te manda la invitación a la comunidad como hace Whop. Cuando te suscribas, <a href="${WHATSAPP_CLUB}" style="color: #1e6f1d; font-weight: bold;">mandame el comprobante por WhatsApp</a> con tu número y te paso la invitación yo mismo. Por Whop entrás en el momento.`,
+    nota: `<strong>Si pagás en pesos:</strong> antes de pagar me dejás tu WhatsApp y te sumo yo a la comunidad, sin mandar comprobante. Por Whop entrás en el momento.`,
     cierre: ['Y si probás alguna de las recetas o te queda una duda antes de pagar, respondé este mail. Lo leo yo.']
   },
   metodo: {

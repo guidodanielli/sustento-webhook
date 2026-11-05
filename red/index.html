@@ -306,8 +306,8 @@
       <div class="plan destacado">
         <p class="donde">🇦🇷 Desde Argentina</p>
         <p class="precio">$10.000 <small>ARS por mes</small></p>
-        <p class="medio">Suscripción por Mercado Pago, con débito automático. Después del pago, escribime por WhatsApp así te sumo al grupo.</p>
-        <a href="https://www.mercadopago.com.ar/subscriptions/checkout?preapproval_plan_id=100cbf378c084fcf83a7b31e60db334d" target="_blank" rel="noopener" class="btn-primary" data-cta="pago-ars">Suscribirme en pesos</a>
+        <p class="medio">Suscripción por Mercado Pago, con débito automático. Dejás tu WhatsApp antes de pagar y te sumo al grupo.</p>
+        <a href="/suscribirme/?plan=red" class="btn-primary" data-cta="pago-ars">Suscribirme en pesos</a>
       </div>
       <div class="plan">
         <p class="donde">🌎 Desde otro país</p>
@@ -318,9 +318,9 @@
     </div>
     <p class="pasos-titulo">Si pagás en pesos:</p>
     <ol class="pasos">
-      <li>Tocás <strong>Suscribirme en pesos</strong> y completás el pago en Mercado Pago.</li>
-      <li>Me escribís por <a href="https://wa.me/541171417177?text=Hola%20Guido%2C%20ya%20me%20suscrib%C3%AD%20a%20Red%20Sustento" target="_blank" rel="noopener" data-cta="whatsapp-post-pago">WhatsApp</a> con tu nombre y el comprobante.</li>
-      <li>Te sumo al grupo y te paso la fecha del próximo encuentro.</li>
+      <li>Tocás <strong>Suscribirme en pesos</strong> y dejás tu nombre, mail y WhatsApp.</li>
+      <li>Completás el pago en Mercado Pago. No hace falta mandarme el comprobante.</li>
+      <li>Te escribo, te sumo al grupo y te paso la fecha del próximo encuentro.</li>
     </ol>
   </div>
 </section>
@@ -394,6 +394,14 @@
       img.addEventListener('load', revisar);
       img.addEventListener('error', function () { img.parentNode.remove(); revisar(); });
     });
+  })();
+
+  // El origen (utm_source=linkedin, etc.) viaja a /suscribirme/ para que el
+  // aviso a Guido diga de dónde vino quien se suscribió.
+  (function () {
+    var origen = new URLSearchParams(location.search).get('utm_source');
+    var boton = document.querySelector('[data-cta="pago-ars"]');
+    if (origen && boton) boton.href = '/suscribirme/?plan=red&utm_source=' + encodeURIComponent(origen);
   })();
 
   // Clics en los botones, para saber desde Vercel Analytics por dónde entra la gente

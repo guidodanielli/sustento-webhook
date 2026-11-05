@@ -38,6 +38,16 @@ function fila(label, valor) {
   `;
 }
 
+// Lo que escribió la persona en un formulario se escapa antes de entrar al HTML.
+function esc(texto) {
+  return String(texto ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+// wa.me pide el número con código de país y solo dígitos.
+export function linkDeWhatsapp(numero) {
+  return `https://wa.me/${String(numero).replace(/\D/g, '')}`;
+}
+
 // Version en texto plano de una tabla de datos. Todos los mails llevan las dos
 // versiones: uno que va solo en HTML le parece envio masivo a Gmail.
 function bloqueTexto(pares) {
@@ -54,10 +64,14 @@ function bloqueTexto(pares) {
  * quedó registrada, así que la pasarela no va a volver a avisar: si este aviso
  * no lo dice, nadie se entera de que la persona pagó y no recibió nada.
  */
-export async function notificarVenta({ product, buyerEmail, buyerName, amount, currency, paymentMethod, paymentId, recurrente = false, accesoAutomatico = false, renovacion = false, entregaFallida = false, linkEntrega = null }) {
+export async function notificarVenta({ product, buyerEmail, buyerName, amount, currency, paymentMethod, paymentId, recurrente = false, accesoAutomatico = false, renovacion = false, entregaFallida = false, linkEntrega = null, contacto = null }) {
   try {
     const monto = formatearMonto(amount, currency);
     const esDescargable = Boolean(product.driveUrl);
+    const espacio = product.espacio || 'el espacio del Club';
+    // El WhatsApp que dejó en /suscribirme/, si se encontró por el mail.
+    const whatsapp = contacto?.whatsapp || null;
+    const linkWhatsapp = whatsapp ? linkDeWhatsapp(whatsapp) : null;
 
     // Lo que Guido tiene que hacer (o no) según el tipo de producto.
     let queHacer;
@@ -66,7 +80,7 @@ export async function notificarVenta({ product, buyerEmail, buyerName, amount, c
            <strong>⚠️ El mail al comprador NO salió.</strong> Pagó y no recibió nada.
          </p>
          <p style="font-size: 0.95rem; line-height: 1.7; color: #444; margin: 0;">
-           Respondé este mail (le llega directo) y mandale ${esDescargable ? `el link de descarga: <a href="${linkEntrega}">${linkEntrega}</a>` : 'la bienvenida y el acceso al Club'}.
+           Respondé este mail (le llega directo) y mandale ${esDescargable ? `el link de descarga: <a href="${linkEntrega}">${linkEntrega}</a>` : `la bienvenida y el acceso a ${espacio}`}.
          </p>`;
     } else if (esDescargable) {
       queHacer = `<p style="font-size: 0.95rem; line-height: 1.7; color: #444; margin: 0;">
@@ -83,7 +97,7 @@ export async function notificarVenta({ product, buyerEmail, buyerName, amount, c
            <strong>${renovacion ? 'Es una renovación: revisá que ya tenga acceso.' : 'Te toca una sola cosa:'}</strong>
          </p>
          <p style="font-size: 0.95rem; line-height: 1.7; color: #444; margin: 0;">
-           Darle el acceso al espacio del Club a mano. La suscripción por ${paymentMethod} sí se renueva sola todos los meses, pero no manda ninguna invitación.
+           Sumarlo a ${espacio} a mano${whatsapp ? `: te dejó su WhatsApp, <a href="${linkWhatsapp}">${esc(whatsapp)}</a>` : '. No se encontró el formulario de la web con este mail: respondé este mail para pedirle el WhatsApp'}. La suscripción por ${paymentMethod} sí se renueva sola todos los meses, pero no manda ninguna invitación.
          </p>`;
     } else {
       queHacer = `<p style="font-size: 0.95rem; line-height: 1.7; color: #444; margin: 0 0 12px 0;">
@@ -106,13 +120,14 @@ export async function notificarVenta({ product, buyerEmail, buyerName, amount, c
         : `${renovacion ? 'Renovación' : 'Venta'}: ${product.name} · ${monto} 🌱`,
       text: [
         entregaFallida
-          ? `ATENCIÓN: el mail al comprador NO salió. Pagó y no recibió nada. Respondé este mail y mandale ${esDescargable ? `el link de descarga: ${linkEntrega}` : 'la bienvenida y el acceso al Club'}.`
+          ? `ATENCIÓN: el mail al comprador NO salió. Pagó y no recibió nada. Respondé este mail y mandale ${esDescargable ? `el link de descarga: ${linkEntrega}` : `la bienvenida y el acceso a ${espacio}`}.`
           : null,
         renovacion ? 'Se renovó una suscripción.' : 'Entró una venta.',
         bloqueTexto([
           ['Producto', product.name],
           ['Monto', monto],
           ['Comprador', buyerName ? `${buyerName} (${buyerEmail})` : buyerEmail],
+          ['WhatsApp', whatsapp ? `${whatsapp} (${linkWhatsapp})` : null],
           ['Medio de pago', paymentMethod],
           ['Fecha', fechaArgentina()],
           ['ID de pago', paymentId]
@@ -123,7 +138,7 @@ export async function notificarVenta({ product, buyerEmail, buyerName, amount, c
             ? 'El link de descarga ya le salió por mail. No tenés que hacer nada.'
             : (accesoAutomatico
                 ? 'Whop ya le dio el acceso. No tenés que hacer nada.'
-                : 'Te toca darle el acceso al espacio del Club a mano.'),
+                : `Te toca sumarlo a ${espacio} a mano.`),
         'Si respondés este mail, le escribís directo al comprador.'
       ].filter(Boolean).join('\n\n'),
       html: `
@@ -137,6 +152,7 @@ export async function notificarVenta({ product, buyerEmail, buyerName, amount, c
             </p>
             <table style="width: 100%; border-collapse: collapse; margin-bottom: 28px;">
               ${fila('Comprador', buyerName ? `${buyerName} (${buyerEmail})` : buyerEmail)}
+              ${whatsapp ? fila('WhatsApp', `<a href="${linkWhatsapp}" style="color: #1e6f1d;">${esc(whatsapp)}</a>`) : ''}
               ${fila('Medio de pago', paymentMethod)}
               ${fila('Fecha', fechaArgentina())}
               ${fila('ID de pago', paymentId)}
@@ -224,15 +240,17 @@ export async function notificarCobroSinProducto({ buyerEmail, buyerName, amount,
  * procesaba en silencio. Igual que notificarVenta, nunca tira error hacia
  * afuera — un aviso fallido no puede romper el webhook.
  */
-export async function notificarBaja({ buyerEmail, buyerName, motivo, plataforma = 'Whop' }) {
+export async function notificarBaja({ buyerEmail, buyerName, motivo, plataforma = 'Whop', product = null }) {
+  // Hasta el 05/11/2026 solo el Club tenía bajas que avisar; ahora también la Red.
+  const deQue = product?.id === 'red' ? 'de la Red' : 'del Club';
   try {
     await resend.emails.send({
       from: remitente('Avisos Sustento'),
       reply_to: buyerEmail || undefined,
       to: AVISO_A,
-      subject: `Baja del Club: ${buyerName || buyerEmail || 'un miembro'}`,
+      subject: `Baja ${deQue}: ${buyerName || buyerEmail || 'un miembro'}`,
       text: [
-        'Alguien se dio de baja del Club.',
+        `Alguien se dio de baja ${deQue}.`,
         bloqueTexto([
           ['Miembro', buyerName ? `${buyerName} (${buyerEmail || 'sin mail'})` : (buyerEmail || 'sin datos')],
           ['Plataforma', plataforma],
@@ -241,12 +259,12 @@ export async function notificarBaja({ buyerEmail, buyerName, motivo, plataforma 
         ]),
         plataforma === 'Whop'
           ? 'Whop ya le sacó el acceso. Este mail responde directo a su casilla.'
-          : 'Revisá si todavía tiene acceso al espacio del Club y sacáselo a mano.'
+          : `Revisá si todavía está en ${product?.espacio || 'el espacio del Club'} y sacalo a mano.`
       ].join('\n\n'),
       html: `
         <div style="font-family: Georgia, serif; max-width: 600px; margin: 0 auto; color: #111;">
           <div style="background: #7a3b12; padding: 24px 32px;">
-            <p style="color: #fff; font-family: Arial, sans-serif; font-size: 0.8rem; letter-spacing: 0.15em; text-transform: uppercase; margin: 0; opacity: 0.8;">Se dio de baja del Club</p>
+            <p style="color: #fff; font-family: Arial, sans-serif; font-size: 0.8rem; letter-spacing: 0.15em; text-transform: uppercase; margin: 0; opacity: 0.8;">Se dio de baja ${deQue}</p>
           </div>
           <div style="padding: 32px; background: #f5eee0;">
             <table style="width: 100%; border-collapse: collapse; margin-bottom: 28px;">
@@ -259,7 +277,7 @@ export async function notificarBaja({ buyerEmail, buyerName, motivo, plataforma 
               <p style="font-size: 0.95rem; line-height: 1.7; color: #444; margin: 0;">
                 ${plataforma === 'Whop'
                   ? 'Whop ya le sacó el acceso a la comunidad. Si querés entender por qué se fue, este mail responde directo a su casilla.'
-                  : 'Revisá si todavía tiene acceso al espacio del Club y sacáselo a mano.'}
+                  : `Revisá si todavía está en ${product?.espacio || 'el espacio del Club'} y sacalo a mano.`}
               </p>
             </div>
           </div>
@@ -348,5 +366,65 @@ export async function notificarSuscriptor({ email, name, source, motivo = '', or
     });
   } catch (err) {
     console.error('Error al notificar el alta:', err);
+  }
+}
+
+/**
+ * Avisa a Guido que alguien completó /suscribirme/ y se fue a pagar.
+ *
+ * Todavía NO hay plata: el remitente es "Avisos Sustento" y el asunto dice
+ * "Por pagar" para que no se lea como venta. Existe porque el pago puede
+ * entrar con una cuenta de MercadoPago de otro mail, y en ese caso el aviso de
+ * venta no encuentra el WhatsApp: este mail lo deja en la bandeja igual.
+ *
+ * Igual que los otros avisos, nunca tira error hacia afuera.
+ */
+export async function notificarPorPagar({ product, nombre, email, whatsapp, origen = '' }) {
+  try {
+    const link = linkDeWhatsapp(whatsapp);
+    const espacio = product.espacio || 'el espacio del Club';
+    const corto = product.id === 'red' ? 'Red' : 'Club';
+    await resend.emails.send({
+      from: remitente('Avisos Sustento'),
+      reply_to: email,
+      to: AVISO_A,
+      subject: `Por pagar: ${corto} · ${nombre}`,
+      text: [
+        `${nombre} completó el formulario de la web y se fue a pagar ${corto === 'Red' ? 'la Red' : 'el Club'} en Mercado Pago. Todavía no está confirmado el pago.`,
+        bloqueTexto([
+          ['Nombre', nombre],
+          ['Mail', email],
+          ['WhatsApp', `${whatsapp} (${link})`],
+          ['Llegó desde', origen],
+          ['Fecha', fechaArgentina()]
+        ]),
+        `Cuando entre el pago te llega el aviso de venta (o el mail de Mercado Pago). Ahí lo sumás a ${espacio}.`
+      ].join('\n\n'),
+      html: `
+        <div style="font-family: Georgia, serif; max-width: 600px; margin: 0 auto; color: #111;">
+          <div style="background: #7c4a1e; padding: 24px 32px;">
+            <p style="color: #fff; font-family: Arial, sans-serif; font-size: 0.8rem; letter-spacing: 0.15em; text-transform: uppercase; margin: 0; opacity: 0.85;">Por pagar · todavía sin cobro</p>
+          </div>
+          <div style="padding: 32px; background: #f5eee0;">
+            <p style="font-size: 1.25rem; font-family: Georgia, serif; color: #1e6f1d; margin: 0 0 24px 0;">
+              ${esc(nombre)} se fue a pagar ${corto === 'Red' ? 'la Red' : 'el Club'}
+            </p>
+            <table style="width: 100%; border-collapse: collapse; margin-bottom: 28px;">
+              ${fila('Mail', esc(email))}
+              ${fila('WhatsApp', `<a href="${link}" style="color: #1e6f1d;">${esc(whatsapp)}</a>`)}
+              ${origen ? fila('Llegó desde', esc(origen)) : ''}
+              ${fila('Fecha', fechaArgentina())}
+            </table>
+            <div style="background: #fff; border-left: 3px solid #7c4a1e; padding: 16px 20px;">
+              <p style="font-size: 0.95rem; line-height: 1.7; color: #444; margin: 0;">
+                Todavía no está confirmado el pago. Cuando entre, te llega el aviso de venta (o el mail de Mercado Pago) y ahí lo sumás a ${espacio}.
+              </p>
+            </div>
+          </div>
+        </div>
+      `
+    });
+  } catch (err) {
+    console.error('Error al avisar el alta por pagar:', err);
   }
 }

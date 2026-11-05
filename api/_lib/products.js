@@ -29,5 +29,33 @@ export const PRODUCTS = {
     ars: 15000,
     usd: 10,
     recurring: true,
+    // Plan de suscripción de MercadoPago (el link mpago.la/1U4znwx redirige
+    // acá). webhook.js lo usa para saber de qué producto es cada cuota: hasta
+    // el 05/11/2026 toda cuota recurrente se asumía del Club, y las de la Red
+    // se habrían anunciado como Club.
+    mpPlanId: '99ec2d10aa5b43ea8850df0cef6624a7',
+    // Cómo se nombra el lugar al que Guido suma a mano a quien paga en pesos.
+    espacio: 'el espacio del Club',
+  },
+  red: {
+    id: 'red',
+    name: 'Red Sustento — Suscripción mensual',
+    description: 'Encuentros quincenales para profesionales de la salud',
+    ars: 10000,
+    usd: 10,
+    recurring: true,
+    mpPlanId: '100cbf378c084fcf83a7b31e60db334d',
+    espacio: 'el grupo de la Red',
   },
 };
+
+/** Link al checkout de MercadoPago del plan de suscripción de un producto. */
+export function checkoutDelPlan(product) {
+  return `https://www.mercadopago.com.ar/subscriptions/checkout?preapproval_plan_id=${product.mpPlanId}`;
+}
+
+/** El producto recurrente que corresponde a un plan de MercadoPago, o null. */
+export function productoDelPlan(planId) {
+  if (!planId) return null;
+  return Object.values(PRODUCTS).find((p) => p.mpPlanId === planId) || null;
+}

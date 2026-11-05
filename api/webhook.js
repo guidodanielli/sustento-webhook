@@ -1,6 +1,7 @@
 import { Resend } from 'resend';
-import { PRODUCTS } from './_lib/products.js';
-import { notificarVenta, notificarCobroSinProducto } from './_lib/notificar-venta.js';
+import { PRODUCTS, productoDelPlan } from './_lib/products.js';
+import { notificarVenta, notificarCobroSinProducto, notificarBaja } from './_lib/notificar-venta.js';
+import { buscarAlta } from './_lib/altas.js';
 import { registrarCompra, yaCompro } from './_lib/registrar-compra.js';
 import { linkDeDescarga, HORAS_DE_VIDA } from './_lib/entrega.js';
 import { verificarFirmaMP, ESTADOS } from './_lib/verificar-firma-mp.js';
@@ -30,7 +31,79 @@ async function getAuthorizedPayment(authorizedPaymentId) {
   return response.json();
 }
 
-function buildClubEmail({ buyerName }) {
+/**
+ * Trae una suscripción (el "preapproval"). Es lo único que dice de qué plan
+ * es un cobro recurrente: ni la factura ni el pago traen el plan.
+ */
+async function getPreapproval(preapprovalId) {
+  const response = await fetch(
+    `https://api.mercadopago.com/preapproval/${preapprovalId}`,
+    { headers: { 'Authorization': `Bearer ${process.env.MP_ACCESS_TOKEN}` } }
+  );
+  return response.json();
+}
+
+// Los ids de suscripción de MercadoPago son alfanuméricos (no solo números,
+// como los de pago). Mismo motivo que SOLO_NUMEROS: van pegados a la URL.
+const ID_SUSCRIPCION = /^[A-Za-z0-9]{8,64}$/;
+
+/**
+ * El producto recurrente de un cobro, según el plan de su suscripción.
+ *
+ * Hasta el 05/11/2026 todo cobro recurrente se asumía del Club, porque era el
+ * único plan. La Red también cobra por un plan de MercadoPago, así que sus
+ * cuotas se habrían anunciado como Club. Si no se puede saber el plan (MP no
+ * responde, o la suscripción no tiene plan), decide el monto, y si tampoco
+ * coincide, se cae al Club como antes.
+ */
+async function productoRecurrente(preapprovalId, monto) {
+  if (preapprovalId && ID_SUSCRIPCION.test(String(preapprovalId))) {
+    try {
+      const suscripcion = await getPreapproval(preapprovalId);
+      const porPlan = productoDelPlan(suscripcion?.preapproval_plan_id);
+      if (porPlan) return porPlan;
+    } catch (err) {
+      console.error('No se pudo leer la suscripción', preapprovalId, err);
+    }
+  }
+  // Sin plan legible, el monto es la mejor pista: $10.000 es la Red y
+  // $15.000 el Club. Si los precios cambian, actualizar products.js.
+  const porMonto = Object.values(PRODUCTS).find((p) => p.recurring && p.mpPlanId && Number(p.ars) === Number(monto));
+  return porMonto || PRODUCTS.club;
+}
+
+/**
+ * Una suscripción cambió de estado. Solo interesa la cancelación: el alta y
+ * las cuotas las cuenta el evento de pago, igual que en Whop.
+ */
+async function procesarCambioDeSuscripcion(req, res) {
+  const query = req.query || {};
+  const id = req.body?.data?.id || query['data.id'] || query.id;
+  if (!id || !ID_SUSCRIPCION.test(String(id))) {
+    return res.status(200).json({ received: true, warning: 'suscripción sin id' });
+  }
+
+  const suscripcion = await getPreapproval(id);
+  if (suscripcion?.status !== 'cancelled') {
+    return res.status(200).json({ received: true, status: suscripcion?.status || null });
+  }
+
+  const product = productoDelPlan(suscripcion.preapproval_plan_id) || PRODUCTS.club;
+  const buyerEmail = suscripcion.payer_email || null;
+  const alta = await buscarAlta({ email: buyerEmail, producto: product.id });
+
+  await notificarBaja({
+    buyerEmail,
+    buyerName: alta?.nombre || null,
+    motivo: `Cancelada en Mercado Pago (suscripción ${id})${alta?.whatsapp ? ` · WhatsApp ${alta.whatsapp}` : ''}`,
+    plataforma: 'Mercado Pago',
+    product
+  });
+  return res.status(200).json({ received: true, baja: true });
+}
+
+function buildClubEmail({ buyerName, product = PRODUCTS.club }) {
+  const esRed = product.id === 'red';
   return `
     <div style="font-family: Georgia, serif; max-width: 600px; margin: 0 auto; color: #111;">
       <div style="background: #1e6f1d; padding: 28px 40px;">
@@ -38,13 +111,13 @@ function buildClubEmail({ buyerName }) {
       </div>
       <div style="padding: 48px 40px; background: #f5eee0;">
         <h2 style="font-family: Georgia, serif; color: #1e6f1d; font-size: 1.5rem; margin-bottom: 16px;">
-          ¡Hola${buyerName ? ' ' + buyerName : ''}! Bienvenido/a al Club Sustento 🌿
+          ¡Hola${buyerName ? ' ' + buyerName : ''}! Bienvenido/a ${esRed ? 'a Red Sustento' : 'al Club Sustento'} 🌿
         </h2>
         <p style="font-size: 1rem; line-height: 1.8; color: #444; margin-bottom: 20px;">
-          Gracias por sumarte. Tu pago de este mes ya está confirmado y desde ahora sos parte del Club.
+          Gracias por sumarte. Tu pago de este mes ya está confirmado y desde ahora sos parte ${esRed ? 'de la Red' : 'del Club'}.
         </p>
         <p style="font-size: 1rem; line-height: 1.8; color: #444; margin-bottom: 20px;">
-          En las próximas horas te voy a escribir para darte acceso al espacio con las recetas, los seminarios y la comunidad. Si tenés cualquier duda, respondé este mail o escribime a Instagram como <strong>@guido.sustento</strong>.
+          ${esRed ? 'En las próximas horas te escribo por WhatsApp para sumarte al grupo y pasarte la fecha del próximo encuentro.' : 'En las próximas horas te voy a escribir para darte acceso al espacio con las recetas, los seminarios y la comunidad.'} Si tenés cualquier duda, respondé este mail o escribime a Instagram como <strong>@guido.sustento</strong>.
         </p>
         <p style="font-size: 1rem; line-height: 1.8; color: #444; margin-bottom: 4px;">Nos vemos adentro,</p>
         <p style="font-size: 1rem; font-weight: bold; color: #1e6f1d; margin: 0;">Guido 🌱</p>
@@ -74,10 +147,13 @@ function textoDescarga({ buyerName, product, link }) {
   ].filter(Boolean).join('\n\n');
 }
 
-function textoClub({ buyerName }) {
+function textoClub({ buyerName, product = PRODUCTS.club }) {
+  const esRed = product.id === 'red';
   return [
-    `Hola${buyerName ? ' ' + buyerName : ''}! Ya estás adentro del Club Sustento.`,
-    'En las próximas horas te escribo para darte el acceso al espacio de la comunidad.',
+    `Hola${buyerName ? ' ' + buyerName : ''}! Ya estás adentro ${esRed ? 'de Red Sustento' : 'del Club Sustento'}.`,
+    esRed
+      ? 'En las próximas horas te escribo por WhatsApp para sumarte al grupo y pasarte la fecha del próximo encuentro.'
+      : 'En las próximas horas te escribo para darte el acceso al espacio de la comunidad.',
     'Si tenés alguna duda, respondé este mail. Lo leo yo.',
     'Guido'
   ].join('\n\n');
@@ -187,6 +263,10 @@ export default async function handler(req, res) {
     const type = extraerTipo(req);
     const esSuscripcion = type === 'subscription_authorized_payment';
 
+    if (type === 'subscription_preapproval') {
+      return await procesarCambioDeSuscripcion(req, res);
+    }
+
     if (type !== 'payment' && !esSuscripcion) {
       return res.status(200).json({ received: true });
     }
@@ -227,14 +307,17 @@ export default async function handler(req, res) {
     const buyerEmail = payment.payer?.email;
     const buyerName = payment.payer?.first_name;
 
-    // El único plan de suscripción que tiene Guido en MP es el del Club, así
-    // que todo cobro recurrente es el Club. Se mira el pago además del tipo de
+    // Un cobro recurrente es del Club o de la Red: se decide por el plan de su
+    // suscripción (ver productoRecurrente). Se mira el pago además del tipo de
     // evento porque MP también manda las cuotas como un `payment` común, y esas
-    // cuotas (link mpago.la) no traen nuestro external_reference.
+    // cuotas (links de plan) no traen nuestro external_reference.
+    const preapprovalId = facturaSuscripcion?.preapproval_id || payment.metadata?.preapproval_id || null;
     const esCobroRecurrente = esSuscripcion
       || payment.operation_type === 'recurring_payment'
-      || Boolean(payment.metadata?.preapproval_id);
-    const productId = esCobroRecurrente ? 'club' : productoDeReferencia(payment.external_reference);
+      || Boolean(preapprovalId);
+    const productId = esCobroRecurrente
+      ? (await productoRecurrente(preapprovalId, payment.transaction_amount)).id
+      : productoDeReferencia(payment.external_reference);
 
     if (!buyerEmail) {
       console.error('MP sin payer.email. paymentId:', paymentId, 'pago:', JSON.stringify(payment));
@@ -295,7 +378,7 @@ export default async function handler(req, res) {
 
     const emailContent = esDescargable
       ? { subject: `¡Acá está tu ${product.name}! 🌿`, html: buildEmail({ buyerName, product, link }), text: textoDescarga({ buyerName, product, link }) }
-      : { subject: `¡Bienvenido/a al Club Sustento! 🌿`, html: buildClubEmail({ buyerName }), text: textoClub({ buyerName }) };
+      : { subject: product.id === 'red' ? '¡Bienvenido/a a Red Sustento! 🌿' : '¡Bienvenido/a al Club Sustento! 🌿', html: buildClubEmail({ buyerName, product }), text: textoClub({ buyerName, product }) };
 
     // Se registra ANTES de avisar y de entregar. Si el pago ya estaba en la
     // tabla, la pasarela está reenviando una notificación vieja y no hay que
@@ -340,8 +423,15 @@ export default async function handler(req, res) {
       }
     }
 
+    // El WhatsApp que dejó en /suscribirme/, para que Guido lo sume sin
+    // pedirle el comprobante. En una renovación no hace falta.
+    const contacto = esRecurrente && !esRenovacion
+      ? await buscarAlta({ email: buyerEmail, producto: product.id })
+      : null;
+
     await notificarVenta({
       product,
+      contacto,
       buyerEmail,
       buyerName,
       amount: payment.transaction_amount,

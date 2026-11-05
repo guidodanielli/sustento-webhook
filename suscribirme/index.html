@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Suscribirme | Guido Sustento</title>
+<meta name="description" content="Suscripción mensual en pesos al Club Sustento o a Red Sustento, por Mercado Pago.">
+<meta name="robots" content="noindex">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="theme-color" content="#1e6f1d">
+
+<script>
+  window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+
+<link rel="preload" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=DM+Sans:opsz,wght@9..40,300..700&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=DM+Sans:opsz,wght@9..40,300..700&display=swap"></noscript>
+<!-- Misma hoja que la agenda: botones, campos y tarjetas de la marca. -->
+<link rel="stylesheet" href="/agenda/agenda.css">
+<style>
+  .sus-resumen {
+    display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+    background: var(--salvia); border-radius: 14px; padding: 14px 16px; margin-bottom: 20px;
+  }
+  .sus-resumen strong { color: var(--verde-oscuro); font-size: 1.0625rem; }
+  .sus-precio { font-family: 'Playfair Display', serif; font-weight: 700; font-size: 1.35rem; color: var(--verde); white-space: nowrap; }
+  .sus-precio small { font-family: 'DM Sans', sans-serif; font-weight: 400; font-size: 0.875rem; color: var(--gris); }
+  .sus-incluye { list-style: none; margin: 0 0 24px; }
+  .sus-incluye li { padding-left: 26px; position: relative; margin-bottom: 8px; }
+  .sus-incluye li::before { content: '🌿'; position: absolute; left: 0; font-size: 0.95rem; }
+  .sus-pasos { margin: 28px 0 0; padding-left: 20px; color: var(--gris); font-size: 0.9375rem; }
+  .sus-pasos li { margin-bottom: 6px; }
+  .sus-pasos-titulo { font-size: 0.8125rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--tierra); font-weight: 500; margin-top: 28px; }
+  #enviar { width: 100%; }
+  .sus-dolares { margin-top: 20px; font-size: 0.9375rem; color: var(--gris); text-align: center; }
+  .sus-dolares a { color: var(--verde); font-weight: 500; }
+  .sus-elegir { display: grid; gap: 12px; }
+  @media (min-width: 600px) { .sus-elegir { grid-template-columns: 1fr 1fr; } }
+  .sus-elegir a { display: block; text-decoration: none; color: inherit; }
+</style>
+</head>
+<body>
+
+<header class="ag-header">
+  <div class="ag-header-in">
+    <a href="/" class="ag-logo">Guido Sustento</a>
+    <a href="/" class="ag-volver" id="volver">Volver al sitio</a>
+  </div>
+</header>
+
+<main id="main">
+  <p class="ag-eyebrow" id="eyebrow">Suscripción mensual en pesos</p>
+  <h1 class="seccion-titulo" id="titulo">Sumate</h1>
+  <p class="ag-sub" id="sub"></p>
+
+  <!-- Si alguien llega sin ?plan=, elige acá. -->
+  <section id="elegir" class="ag-card" hidden>
+    <h2 class="ag-paso-titulo">¿A qué te querés sumar?</h2>
+    <div class="sus-elegir">
+      <a class="btn-secondary" href="?plan=club">Club Sustento</a>
+      <a class="btn-secondary" href="?plan=red">Red Sustento</a>
+    </div>
+  </section>
+
+  <section id="paso" class="ag-card" aria-labelledby="paso-titulo" hidden>
+    <div class="sus-resumen">
+      <strong id="resumenNombre"></strong>
+      <span class="sus-precio" id="resumenPrecio"></span>
+    </div>
+    <ul class="sus-incluye" id="incluye"></ul>
+
+    <h2 class="ag-paso-titulo" id="paso-titulo">Tus datos</h2>
+    <form id="form" novalidate autocomplete="on">
+      <div class="ag-campo">
+        <label for="nombre">Nombre</label>
+        <input class="ag-input" type="text" id="nombre" name="nombre" autocomplete="name" maxlength="80" required aria-describedby="err-nombre">
+        <p class="ag-error" id="err-nombre" hidden></p>
+      </div>
+
+      <div class="ag-campo">
+        <label for="email">Mail</label>
+        <input class="ag-input" type="email" id="email" name="email" autocomplete="email" maxlength="254" required aria-describedby="ayuda-email err-email">
+        <p class="ag-ayuda" id="ayuda-email">Si podés, el mismo de tu cuenta de Mercado Pago: así te reconozco apenas entra el pago.</p>
+        <p class="ag-error" id="err-email" hidden></p>
+      </div>
+
+      <div class="ag-campo">
+        <label for="whatsapp">WhatsApp</label>
+        <input class="ag-input" type="tel" id="whatsapp" name="whatsapp" autocomplete="tel" inputmode="tel" maxlength="30" required aria-describedby="ayuda-whatsapp err-whatsapp">
+        <p class="ag-ayuda" id="ayuda-whatsapp">Con código de área, ej. 11 2345 6789. Es para sumarte <span id="ayudaEspacio">al grupo</span>.</p>
+        <p class="ag-error" id="err-whatsapp" hidden></p>
+      </div>
+
+      <div class="ag-trampa" aria-hidden="true">
+        <label for="sitio">Sitio web</label>
+        <input type="text" id="sitio" name="sitio" tabindex="-1" autocomplete="off">
+      </div>
+
+      <button type="submit" class="btn-primary" id="enviar">Ir a pagar con Mercado Pago</button>
+      <p class="ag-form-error" id="formError" role="alert" hidden></p>
+    </form>
+
+    <p class="sus-pasos-titulo">Qué pasa después</p>
+    <ol class="sus-pasos" id="pasos"></ol>
+
+    <p class="sus-dolares" id="dolares"></p>
+  </section>
+</main>
+
+<footer class="ag-footer">
+  <div>© 2026 Guido Sustento · <a href="/">haceloconsustento.com</a></div>
+  <div><a href="/privacidad/">Privacidad</a> · Hecho con sustento 🌱</div>
+</footer>
+
+<script>
+(function () {
+  'use strict';
+
+  // Lo que cambia entre el Club y la Red. Los precios tienen que coincidir con
+  // los planes de Mercado Pago y con api/_lib/products.js.
+  var PLANES = {
+    club: {
+      titulo: 'Sumate al <em>Club Sustento.</em>',
+      sub: 'Recetas nuevas todas las semanas y un seminario en vivo por mes.',
+      nombre: 'Club Sustento',
+      precio: '$15.000 <small>por mes</small>',
+      incluye: ['Recetas nuevas todas las semanas', 'Un seminario en vivo por mes para profundizar', 'Comunidad y acompañamiento continuo', 'Cancelás cuando quieras'],
+      espacio: 'al espacio del Club',
+      pasos: [
+        'Pagás en Mercado Pago con tu cuenta o tu tarjeta. Se cobra solo cada mes.',
+        'Te llega un mail de bienvenida.',
+        'Te escribo por WhatsApp y te sumo al espacio del Club. No hace falta que me mandes el comprobante.'
+      ],
+      dolares: '¿Pagás desde otro país? <a href="https://whop.com/checkout/plan_5cUpzEWpFAjF7" data-cta="usd">Suscribite en dólares (USD 10/mes)</a>.',
+      volver: '/#club',
+      // Solo para cuando la web no responde: que igual pueda pagar.
+      checkout: 'https://www.mercadopago.com.ar/subscriptions/checkout?preapproval_plan_id=99ec2d10aa5b43ea8850df0cef6624a7'
+    },
+    red: {
+      titulo: 'Sumate a <em>Red Sustento.</em>',
+      sub: 'Encuentros cada 15 días para profesionales de la salud, por Google Meet.',
+      nombre: 'Red Sustento',
+      precio: '$10.000 <small>por mes</small>',
+      incluye: ['Encuentros cada 15 días, a las 18 h, alternando jueves y viernes', 'Grupo para compartir casos y recorridos', 'Te das de baja cuando quieras'],
+      espacio: 'al grupo de la Red',
+      pasos: [
+        'Pagás en Mercado Pago con tu cuenta o tu tarjeta. Se cobra solo cada mes.',
+        'Te llega un mail de bienvenida.',
+        'Te escribo por WhatsApp, te sumo al grupo y te paso la fecha del próximo encuentro. No hace falta que me mandes el comprobante.'
+      ],
+      dolares: '¿Pagás desde otro país? <a href="https://wa.me/541171417177?text=Hola%20Guido%2C%20quiero%20sumarme%20a%20Red%20Sustento%20desde%20afuera%20de%20Argentina" data-cta="usd">Escribime y te paso el medio de pago en dólares</a>.',
+      volver: '/red/',
+      checkout: 'https://www.mercadopago.com.ar/subscriptions/checkout?preapproval_plan_id=100cbf378c084fcf83a7b31e60db334d'
+    }
+  };
+
+  var $ = function (id) { return document.getElementById(id); };
+  var params = new URLSearchParams(location.search);
+  var plan = params.get('plan');
+  var P = Object.prototype.hasOwnProperty.call(PLANES, plan) ? PLANES[plan] : null;
+
+  // Origen del clic: utm_source si vino, si no el dominio que lo trajo.
+  var origen = params.get('utm_source') || params.get('origen') || '';
+  if (!origen && document.referrer) {
+    try { origen = new URL(document.referrer).hostname.replace(/^www\./, ''); } catch (e) {}
+  }
+
+  if (!P) {
+    $('titulo').innerHTML = 'Sumate en <em>pesos.</em>';
+    // Los links del selector conservan el origen.
+    document.querySelectorAll('#elegir a').forEach(function (a) {
+      if (origen) a.href += '&utm_source=' + encodeURIComponent(origen);
+    });
+    $('elegir').hidden = false;
+    return;
+  }
+
+  document.title = 'Suscribirme a ' + P.nombre + ' | Guido Sustento';
+  $('titulo').innerHTML = P.titulo;
+  $('sub').textContent = P.sub;
+  $('resumenNombre').textContent = P.nombre;
+  $('resumenPrecio').innerHTML = P.precio;
+  $('ayudaEspacio').textContent = P.espacio;
+  $('volver').href = P.volver;
+  $('dolares').innerHTML = P.dolares;
+  P.incluye.forEach(function (t) { var li = document.createElement('li'); li.textContent = t; $('incluye').appendChild(li); });
+  P.pasos.forEach(function (t) { var li = document.createElement('li'); li.textContent = t; $('pasos').appendChild(li); });
+  $('paso').hidden = false;
+  try { window.va('event', { name: 'suscribirme_inicio', data: { plan: plan, origen: origen || 'directo' } }); } catch (e) {}
+
+  var dolar = $('dolares').querySelector('a');
+  if (dolar) dolar.addEventListener('click', function () {
+    try { window.va('event', { name: 'suscribirme_usd', data: { plan: plan } }); } catch (e) {}
+  });
+
+  var MENSAJES = {
+    nombre: 'Escribí tu nombre.',
+    email: 'Escribí un mail válido.',
+    whatsapp: 'Escribí tu WhatsApp con código de área.'
+  };
+
+  function validar(campo) {
+    var el = $(campo), v = el.value.trim(), ok;
+    if (campo === 'email') ok = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v);
+    else if (campo === 'whatsapp') ok = v.replace(/\D/g, '').length >= 8;
+    else ok = v.length >= 2;
+    mostrarError(campo, ok ? '' : MENSAJES[campo]);
+    return ok;
+  }
+
+  function mostrarError(campo, msg) {
+    var el = $(campo), err = $('err-' + campo);
+    el.classList.toggle('ag-invalido', Boolean(msg));
+    el.setAttribute('aria-invalid', msg ? 'true' : 'false');
+    err.textContent = msg; err.hidden = !msg;
+  }
+
+  ['nombre', 'email', 'whatsapp'].forEach(function (c) {
+    $(c).addEventListener('blur', function () { if ($(c).value) validar(c); });
+  });
+
+  var enviando = false;
+
+  // Si vuelve desde Mercado Pago con el botón Atrás, el navegador restaura la
+  // página como estaba: con el botón trabado en "Abriendo Mercado Pago…".
+  window.addEventListener('pageshow', function (e) {
+    if (!e.persisted) return;
+    enviando = false;
+    $('enviar').disabled = false;
+    $('enviar').textContent = 'Ir a pagar con Mercado Pago';
+  });
+  $('form').addEventListener('submit', function (e) {
+    e.preventDefault();
+    if (enviando) return;
+    var campos = ['nombre', 'email', 'whatsapp'];
+    var malos = campos.filter(function (c) { return !validar(c); });
+    if (malos.length) { $(malos[0]).focus(); return; }
+
+    enviando = true;
+    var boton = $('enviar');
+    boton.disabled = true;
+    boton.textContent = 'Abriendo Mercado Pago…';
+    $('formError').hidden = true;
+
+    fetch('/api/suscripcion', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        producto: plan,
+        nombre: $('nombre').value.trim(),
+        email: $('email').value.trim(),
+        whatsapp: $('whatsapp').value.trim(),
+        origen: origen,
+        sitio: $('sitio').value
+      })
+    })
+      .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+      .then(function (res) {
+        if (res.ok && res.d.url) {
+          try { window.va('event', { name: 'suscribirme_pagar', data: { plan: plan } }); } catch (e) {}
+          // Misma pestaña: en el celular, una pestaña nueva desde Instagram se pierde.
+          location.href = res.d.url;
+          return;
+        }
+        var errores = (res.d && res.d.errores) || {};
+        var campos = Object.keys(errores).filter(function (c) { return $('err-' + c); });
+        campos.forEach(function (c) { mostrarError(c, errores[c]); });
+        // Sin errores de campos es una falla del servidor: va al mensaje con
+        // el link para pagar igual.
+        throw new Error(campos.length ? 'validacion' : 'servidor');
+      })
+      .catch(function (err) {
+        enviando = false;
+        boton.disabled = false;
+        boton.textContent = 'Ir a pagar con Mercado Pago';
+        if (err && err.message === 'validacion') return;
+        $('formError').innerHTML = 'No pude guardar tus datos. Podés <a href="' + P.checkout + '">ir a pagar igual</a> y después <a href="https://wa.me/541171417177" target="_blank" rel="noopener">escribirme por WhatsApp</a> para que te sume.';
+        $('formError').hidden = false;
+      });
+  });
+})();
+</script>
+</body>
+</html>

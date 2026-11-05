@@ -51,6 +51,7 @@ Landing Page/
     │   ├── crear-preferencia.js ← crea preferencia de pago en MercadoPago
     │   ├── webhook.js           ← MercadoPago: pagos únicos y suscripciones del Club
     │   ├── whop-webhook.js      ← Whop: cobros y bajas del Club
+    │   ├── suscripcion.js       ← formulario de /suscribirme/ (Club y Red en pesos)
     │   ├── suscribir.js         ← suscribe email a la lista → manda bienvenida
     │   ├── baja.js              ← baja de la lista de mails (link del pie)
     │   ├── club-miembros.js     ← devuelve el count de miembros del Club
@@ -87,7 +88,21 @@ Para agregar o modificar un **producto de pago único**: editar `api/products.js
 | Moneda | Plataforma | Link | Acceso |
 |---|---|---|---|
 | USD 10/mes | Whop | `https://whop.com/checkout/plan_5cUpzEWpFAjF7` | Whop manda solo la invitación a la comunidad |
-| $15.000 ARS/mes | MercadoPago | `https://mpago.la/1U4znwx` | **Manual.** MercadoPago sí le avisa del pago a Guido, pero no manda ninguna invitación. Por eso se pide el comprobante por WhatsApp: confirma el pago y le da el número para mandar la invitación a la comunidad |
+| $15.000 ARS/mes | MercadoPago | `/suscribirme/?plan=club` → plan `99ec2d10aa5b43ea8850df0cef6624a7` | **Manual, pero sin comprobante** (desde el 05/11/2026, ver abajo) |
+
+### Cobro en pesos del Club y la Red: `/suscribirme/` (desde el 05/11/2026)
+
+Los dos productos recurrentes (`club` y `red` en `products.js`, con su `mpPlanId`) se cobran en pesos por un **plan de suscripción de MercadoPago**. Antes de ir al plan, la persona pasa por `suscribirme/index.html?plan=club|red`, que pide nombre, mail y WhatsApp y llama a **`/api/suscripcion`**:
+
+1. Guarda los datos en la tabla `altas_suscripcion` de Supabase (`api/_lib/altas.js`).
+2. Le manda a Guido el aviso **"Por pagar"** (`notificarPorPagar`, remitente `Avisos Sustento`: todavía no hay plata).
+3. Devuelve el link del plan y la página redirige ahí, en la misma pestaña.
+
+Cuando entra el cobro, `webhook.js` decide si es Club o Red leyendo el plan de la suscripción (`/preapproval/{id}` → `preapproval_plan_id`) y busca el WhatsApp por mail en `altas_suscripcion` para ponerlo en el aviso de venta. Una suscripción cancelada (`subscription_preapproval` con `status: cancelled`) manda `notificarBaja` con el producto. El acceso al grupo **lo sigue dando Guido a mano**: lo eligió él.
+
+🔴 **Por qué el plan y no una suscripción armada por API:** la de API exige que el mail coincida con el de la cuenta de MercadoPago de quien paga y, si no coincide, el pago se cae. El plan acepta cualquier cuenta. La contra es que el pago no trae nuestros datos: si alguien paga con una cuenta de otro mail, el aviso de venta sale sin WhatsApp. Por eso existe el aviso "Por pagar", que ya lo trae.
+
+Los dólares no cambiaron: Club por Whop, Red por WhatsApp (decisión de Guido, hasta que alguien quiera pagar en USD).
 
 La entrada `club` de `products.js` sigue existiendo porque el webhook la necesita para los pagos únicos viejos (hay uno del 06/08/2026). Para cambiar precios del Club hay que editar los dos links **y** los textos de la landing y de `suscribir.js`, no `products.js`.
 
@@ -135,7 +150,7 @@ La entrada `club` de `products.js` sigue existiendo porque el webhook la necesit
 **Suscripciones de MercadoPago en `webhook.js`**
 - **MercadoPago avisa en dos formatos y no deja elegir.** El de webhooks manda `type` + `data.id` (en el cuerpo o en la query); el viejo (IPN) manda `topic` + `id` en la query, o un `resource` que a veces es la URL completa del recurso y a veces el id pelado. `extraerTipo()` y `extraerEventId()` miran en los cuatro lugares. Hasta el 26/08/2026 solo se leía `data.id`, así que un IPN moría con 400: el pago no quedaba en `purchases`, no salía aviso, y como `yaCompro()` mira esa tabla, la cuota siguiente de esa persona habría aparecido como venta nueva
 - El evento es `subscription_authorized_payment` y su `data.id` **no es el ID del pago**: es el de la factura. Hay que pedir `/authorized_payments/{id}`, sacar `payment.id` de ahí y recién entonces pedir el pago normal, que es el único que trae el mail del pagador
-- Toda factura de suscripción se asume del Club: es el único plan recurrente que existe. **También todo `payment` con `operation_type: recurring_payment` o `metadata.preapproval_id`**: las cuotas del link `mpago.la` no traen nuestro `external_reference`, y hasta el 23/10/2026 se anotaban como Recetario
+- Toda factura de suscripción es recurrente, y **también todo `payment` con `operation_type: recurring_payment` o `metadata.preapproval_id`**: las cuotas de los planes no traen nuestro `external_reference`, y hasta el 23/10/2026 se anotaban como Recetario. **De qué producto es** (Club o Red) se decide por el `preapproval_plan_id` de la suscripción (`productoRecurrente`); si no se puede leer, cae al Club. Hasta el 05/11/2026 todo se asumía del Club, aunque la Red ya cobraba por su propio plan
 - **Un cobro sin `external_reference` reconocible no es de la web** (link de pago, transferencia, cobro del Método). No se le manda nada a quien pagó: queda en `purchases` como `mercadopago-otro` y Guido recibe `notificarCobroSinProducto`. Hasta el 23/10/2026 caía en `recetario` por defecto
 - **El mail al comprador sale antes del aviso a Guido**, y si Resend devuelve error el aviso llega como `⚠️ Venta sin entregar` con el link. La compra ya está registrada, así que MP no reintenta: sin ese aviso, nadie se enteraba
 - Los ids de pago y de factura se aceptan **solo si son números**: van pegados a la URL de la API de MP con el token
