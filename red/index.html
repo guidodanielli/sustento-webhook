@@ -158,6 +158,8 @@
     .galeria figure { border-radius: 10px; }
   }
 </style>
+<!-- Recuerda de dónde vino la visita aunque pase por varias páginas. -->
+<script src="/origen.js"></script>
 </head>
 <body>
 
@@ -399,7 +401,8 @@
   // El origen (utm_source=linkedin, etc.) viaja a /suscribirme/ para que el
   // aviso a Guido diga de dónde vino quien se suscribió.
   (function () {
-    var origen = new URLSearchParams(location.search).get('utm_source');
+    var o = window.origenSustento;
+    var origen = (o && o.source !== 'directo' && o.source) || new URLSearchParams(location.search).get('utm_source');
     var boton = document.querySelector('[data-cta="pago-ars"]');
     if (origen && boton) boton.href = '/suscribirme/?plan=red&utm_source=' + encodeURIComponent(origen);
   })();

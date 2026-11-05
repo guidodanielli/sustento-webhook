@@ -1117,6 +1117,8 @@
     window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
   </script>
   <!-- Schema Markup JSON-LD -->
+<!-- Recuerda de dónde vino la visita aunque pase por varias páginas. -->
+<script src="/origen.js"></script>
 </head>
 <body>
 
@@ -1857,6 +1859,8 @@
   // Vive en el nivel superior del bloque y NO adentro del IIFE del quiz: el
   // formulario del pie está en otro <script> y necesita llamarla también.
   function origenVisita() {
+    // origen.js (en el <head>) recuerda la primera página de la visita.
+    if (window.origenSustento) return window.origenSustento.texto;
     try {
       const p = new URLSearchParams(location.search);
       // utm_content distingue variantes de un mismo link: en el modo regalo,
@@ -1878,7 +1882,11 @@
         .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
         .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60);
     }
-    var origen = limpiar(origenVisita()) || 'directo';
+    // Solo el utm_source, para que reservas.utm_source tenga el mismo formato
+    // que las etiquetas del kit (ig-bio, ig-follow...). Hasta el 05/11/2026 iba
+    // el texto entero aplanado: "ig-bio-social-link-in-bio".
+    var fuente = window.origenSustento ? window.origenSustento.source : origenVisita();
+    var origen = limpiar(fuente) || 'directo';
     return '/agenda/'
       + '?utm_source=' + encodeURIComponent(origen)
       + '&utm_medium=landing&utm_campaign=metodo'

@@ -44,6 +44,8 @@
   @media (min-width: 600px) { .sus-elegir { grid-template-columns: 1fr 1fr; } }
   .sus-elegir a { display: block; text-decoration: none; color: inherit; }
 </style>
+<!-- Recuerda de dónde vino la visita aunque pase por varias páginas. -->
+<script src="/origen.js"></script>
 </head>
 <body>
 
@@ -166,7 +168,8 @@
   var P = Object.prototype.hasOwnProperty.call(PLANES, plan) ? PLANES[plan] : null;
 
   // Origen del clic: utm_source si vino, si no el dominio que lo trajo.
-  var origen = params.get('utm_source') || params.get('origen') || '';
+  var origen = (window.origenSustento && window.origenSustento.source !== 'directo' && window.origenSustento.source)
+    || params.get('utm_source') || params.get('origen') || '';
   if (!origen && document.referrer) {
     try { origen = new URL(document.referrer).hostname.replace(/^www\./, ''); } catch (e) {}
   }

@@ -23,6 +23,8 @@
 <link rel="preload" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=DM+Sans:opsz,wght@9..40,300..700&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
 <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=DM+Sans:opsz,wght@9..40,300..700&display=swap"></noscript>
 <link rel="stylesheet" href="/agenda/agenda.css">
+<!-- Recuerda de dónde vino la visita aunque pase por varias páginas. -->
+<script src="/origen.js"></script>
 </head>
 <body>
 
@@ -193,7 +195,9 @@
   function recortar(s) { return String(s || '').slice(0, 120); }
   (function () {
     var q = new URLSearchParams(location.search);
-    var fuente = q.get('utm_source');
+    // origen.js recuerda la primera página de la visita: gana sobre el utm_source
+    // que traen los links internos (la home y el blog mandan el suyo).
+    var fuente = window.origenSustento ? window.origenSustento.source : q.get('utm_source');
     if (!fuente && document.referrer) {
       try { fuente = new URL(document.referrer).hostname.replace(/^www\./, ''); } catch (e) {}
     }
