@@ -274,6 +274,12 @@ No hay que tocar nada más. Si un deploy falla, revisar el panel de Vercel para 
 
 ---
 
+## Medición
+
+- **Vercel Web Analytics** (`/_vercel/insights/script.js`): mide visitas, pero en plan Hobby **no se puede leer por API** (`aggregate_pageviews` y `aggregate_events` devuelven 404, probado otra vez el 05/11/2026) y los eventos custom (`window.va`) no se ven en el panel. Solo el panel muestra visitas, países y dispositivos.
+- **Microsoft Clarity** (proyecto `z8ypc6axvc`, cuenta de `guidosustento.nutri@gmail.com`, desde el 05/11/2026): gratis, mapas de calor, hasta dónde baja la gente, grabaciones anónimas, referidores. El snippet va justo después del de Vercel en las 10 páginas públicas. **No** está en `agenda/gestionar/` a propósito (ahí se ve la reserva de la persona). Por defecto enmascara lo que se escribe en los formularios. Está declarado en `privacidad/`. Una página nueva tiene que llevar los dos scripts.
+- **Supabase** es lo único consultable desde acá: `subscribers.origen`/`source`, `reservas.utm_source`/`utm_content`/`origen`, `purchases`.
+
 ## SEO y blog
 
 Los artículos del blog viven en `blog/[slug]/index.html`. Cada uno es un HTML estático independiente. Los borradores de contenido GEO están en `contenido-GEO-borradores.md` (raíz de `Landing Page/`, fuera del repo).
