@@ -114,3 +114,30 @@ export async function yaCompro({ buyerEmail, productId }) {
     return false;
   }
 }
+
+/**
+ * ¿Este pago ya está en `purchases`? Lo usa la revisión diaria de webhook.js
+ * para no volver a procesar lo que ya entró.
+ *
+ * Ante cualquier falla devuelve `true` (lo saltea). Al revés que en yaCompro:
+ * si Supabase no responde, registrarCompra tampoco detecta el duplicado, y la
+ * revisión mandaría el mismo aviso todos los días. Saltearlo un día no pierde
+ * nada, porque la revisión mira tres días hacia atrás.
+ */
+export async function yaRegistrado(paymentId) {
+  try {
+    const query = new URLSearchParams({ payment_id: `eq.${paymentId}`, select: 'id', limit: '1' });
+    const response = await fetch(`${process.env.SUPABASE_URL}/rest/v1/purchases?${query}`, {
+      headers: {
+        'apikey': process.env.SUPABASE_SERVICE_KEY,
+        'Authorization': `Bearer ${process.env.SUPABASE_SERVICE_KEY}`
+      }
+    });
+    if (!response.ok) return true;
+    const filas = await response.json();
+    return !Array.isArray(filas) || filas.length > 0;
+  } catch (err) {
+    console.error('Supabase yaRegistrado error:', err);
+    return true;
+  }
+}

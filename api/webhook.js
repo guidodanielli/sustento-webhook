@@ -2,7 +2,7 @@ import { Resend } from 'resend';
 import { PRODUCTS, productoDelPlan } from './_lib/products.js';
 import { notificarVenta, notificarCobroSinProducto, notificarBaja } from './_lib/notificar-venta.js';
 import { buscarAlta } from './_lib/altas.js';
-import { registrarCompra, yaCompro } from './_lib/registrar-compra.js';
+import { registrarCompra, yaCompro, yaRegistrado } from './_lib/registrar-compra.js';
 import { linkDeDescarga, HORAS_DE_VIDA } from './_lib/entrega.js';
 import { verificarFirmaMP, ESTADOS } from './_lib/verificar-firma-mp.js';
 import { productoDeReferencia } from './_lib/referencia-externa.js';
@@ -56,7 +56,9 @@ const ID_SUSCRIPCION = /^[A-Za-z0-9]{8,64}$/;
  * responde, o la suscripción no tiene plan), decide el monto, y si tampoco
  * coincide, se cae al Club como antes.
  */
-async function productoRecurrente(preapprovalId, monto) {
+async function productoRecurrente(preapprovalId, monto, payment = null) {
+  const planDelPago = productoDelPlan(payment?.point_of_interaction?.transaction_data?.plan_id);
+  if (planDelPago) return planDelPago;
   if (preapprovalId && ID_SUSCRIPCION.test(String(preapprovalId))) {
     try {
       const suscripcion = await getPreapproval(preapprovalId);
@@ -66,10 +68,33 @@ async function productoRecurrente(preapprovalId, monto) {
       console.error('No se pudo leer la suscripción', preapprovalId, err);
     }
   }
+  const porNombre = cuotaPorNombre(payment);
+  if (porNombre) return porNombre;
   // Sin plan legible, el monto es la mejor pista: $10.000 es la Red y
   // $15.000 el Club. Si los precios cambian, actualizar products.js.
   const porMonto = Object.values(PRODUCTS).find((p) => p.recurring && p.mpPlanId && Number(p.ars) === Number(monto));
   return porMonto || PRODUCTS.club;
+}
+
+/**
+ * Una cuota de plan que llegó sin ninguna marca de suscripción, reconocida
+ * por lo único que trae: la descripción (el nombre del plan) y el monto.
+ *
+ * Pasó el 05/11/2026 con la primera cuota de la Red: el pago llegó sin
+ * `preapproval_id`, sin `operation_type: recurring_payment` y sin nuestro
+ * `external_reference`, con descripción "Red Sustento" y $10.000, y se anotó
+ * como cobro fuera de la web. Tienen que coincidir las dos cosas, nombre y
+ * monto, para que un cobro suelto parecido no se tome por una suscripción.
+ */
+function cuotaPorNombre(payment) {
+  if (!payment) return null;
+  const descripcion = String(payment.description || '').trim().toLowerCase();
+  if (!descripcion) return null;
+  return Object.values(PRODUCTS).find((p) => {
+    if (!p.recurring || !p.mpPlanId) return false;
+    const nombreCorto = p.name.split(' — ')[0].trim().toLowerCase();
+    return descripcion.startsWith(nombreCorto) && Number(p.ars) === Number(payment.transaction_amount);
+  }) || null;
 }
 
 /**
@@ -228,7 +253,85 @@ function extraerEventId(req) {
   return SOLO_NUMEROS.test(ultimo || '') ? ultimo : null;
 }
 
+/**
+ * La revisión diaria: busca en MercadoPago las cuotas del Club y de la Red de
+ * los últimos días que no estén en `purchases` y las procesa como si hubiera
+ * llegado el aviso.
+ *
+ * Existe porque los planes se crearon desde la sección de suscripciones de
+ * MercadoPago y no desde la aplicación, y MercadoPago no avisa al webhook de
+ * esos cobros. El 05/11/2026 la primera cuota de la Red entró aprobada y no
+ * llegó ningún aviso, aunque el panel tenía tildados Pagos y Planes y
+ * suscripciones. Probablemente por eso tampoco quedó ninguna cuota del Club en
+ * pesos desde agosto.
+ *
+ * Solo mira cuotas de plan: los cobros sueltos ya avisan solos (la preferencia
+ * lleva su `notification_url`), y las transferencias del Método no tienen que
+ * generar avisos. Mira tres días para que una corrida que falle no pierda
+ * nada; lo que ya está registrado se saltea, así que repetir no duplica.
+ *
+ * La dispara el cron de vercel.json. Si existe CRON_SECRET en Vercel, exige el
+ * header que el cron manda con ese valor.
+ */
+async function revisionDiaria(req, res) {
+  const secreto = process.env.CRON_SECRET;
+  if (secreto && req.headers?.authorization !== `Bearer ${secreto}`) {
+    return res.status(401).json({ error: 'No autorizado' });
+  }
+
+  const query = new URLSearchParams({
+    sort: 'date_created',
+    criteria: 'desc',
+    range: 'date_created',
+    // Formato relativo de la API de búsqueda de MercadoPago.
+    begin_date: 'NOW-3DAYS',
+    end_date: 'NOW',
+    status: 'approved',
+    limit: '100'
+  });
+
+  const response = await fetch(`https://api.mercadopago.com/v1/payments/search?${query}`, {
+    headers: { 'Authorization': `Bearer ${process.env.MP_ACCESS_TOKEN}` }
+  });
+  if (!response.ok) {
+    console.error('Revisión diaria: MP no respondió', response.status, await response.text());
+    return res.status(502).json({ error: 'MercadoPago no respondió' });
+  }
+
+  const { results = [] } = await response.json();
+  const cuotas = results.filter((p) => p.operation_type === 'recurring_payment'
+    || p.point_of_interaction?.type === 'SUBSCRIPTIONS'
+    || Boolean(p.metadata?.preapproval_id)
+    || Boolean(cuotaPorNombre(p)));
+
+  const procesadas = [];
+  for (const cuota of cuotas) {
+    const id = String(cuota.id);
+    if (!SOLO_NUMEROS.test(id) || await yaRegistrado(id)) continue;
+    // Se reusa el camino del aviso de MercadoPago tal cual, para que una cuota
+    // que entra por acá reciba exactamente lo mismo que una avisada.
+    const resultado = { status: 200, body: null };
+    const resFalsa = {
+      status(code) { resultado.status = code; return this; },
+      json(body) { resultado.body = body; return this; }
+    };
+    await handler(
+      { method: 'POST', headers: {}, query: {}, body: { type: 'payment', data: { id } } },
+      resFalsa
+    );
+    procesadas.push({ id, status: resultado.status, ...resultado.body });
+  }
+
+  console.log(`Revisión diaria: ${results.length} cobros aprobados, ${cuotas.length} cuotas de plan, ${procesadas.length} sin registrar.`, JSON.stringify(procesadas));
+  return res.status(200).json({ revisados: results.length, cuotas: cuotas.length, procesadas });
+}
+
 export default async function handler(req, res) {
+  // El cron de Vercel llama con GET; MercadoPago siempre avisa con POST.
+  if (req.method === 'GET') {
+    return revisionDiaria(req, res);
+  }
+
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -311,12 +414,18 @@ export default async function handler(req, res) {
     // suscripción (ver productoRecurrente). Se mira el pago además del tipo de
     // evento porque MP también manda las cuotas como un `payment` común, y esas
     // cuotas (links de plan) no traen nuestro external_reference.
-    const preapprovalId = facturaSuscripcion?.preapproval_id || payment.metadata?.preapproval_id || null;
+    const datosDeCuota = payment.point_of_interaction?.transaction_data || {};
+    const preapprovalId = facturaSuscripcion?.preapproval_id
+      || payment.metadata?.preapproval_id
+      || datosDeCuota.subscription_id
+      || null;
     const esCobroRecurrente = esSuscripcion
       || payment.operation_type === 'recurring_payment'
-      || Boolean(preapprovalId);
+      || payment.point_of_interaction?.type === 'SUBSCRIPTIONS'
+      || Boolean(preapprovalId)
+      || Boolean(cuotaPorNombre(payment));
     const productId = esCobroRecurrente
-      ? (await productoRecurrente(preapprovalId, payment.transaction_amount)).id
+      ? (await productoRecurrente(preapprovalId, payment.transaction_amount, payment)).id
       : productoDeReferencia(payment.external_reference);
 
     if (!buyerEmail) {
@@ -330,6 +439,16 @@ export default async function handler(req, res) {
     // compró. Se registra igual (así un reenvío de MP no vuelve a avisar) y
     // se le avisa a Guido, sin mandarle nada a quien pagó.
     if (!productId || !PRODUCTS[productId]) {
+      // Lo justo para saber, si era una cuota de plan, por qué no se reconoció.
+      console.log('MP cobro sin producto:', JSON.stringify({
+        paymentId,
+        description: payment.description,
+        amount: payment.transaction_amount,
+        operation_type: payment.operation_type,
+        external_reference: payment.external_reference,
+        metadata: payment.metadata,
+        point_of_interaction: payment.point_of_interaction
+      }));
       const { esNueva } = await registrarCompra({
         productId: 'mercadopago-otro',
         productName: payment.description || 'Cobro por MercadoPago fuera de la web',

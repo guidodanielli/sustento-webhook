@@ -1,5 +1,15 @@
 {
   "redirects": [
-    { "source": "/productos/(.*)", "destination": "/#tienda", "permanent": true }
+    {
+      "source": "/productos/(.*)",
+      "destination": "/#tienda",
+      "permanent": true
+    }
+  ],
+  "crons": [
+    {
+      "path": "/api/webhook",
+      "schedule": "0 12 * * *"
+    }
   ]
 }
