@@ -499,6 +499,22 @@ export default async function handler(req, res) {
       ? { subject: `¡Acá está tu ${product.name}! 🌿`, html: buildEmail({ buyerName, product, link }), text: textoDescarga({ buyerName, product, link }) }
       : { subject: product.id === 'red' ? '¡Bienvenido/a a Red Sustento! 🌿' : '¡Bienvenido/a al Club Sustento! 🌿', html: buildClubEmail({ buyerName, product }), text: textoClub({ buyerName, product }) };
 
+    // El WhatsApp que dejó en /suscribirme/, para que Guido lo sume sin
+    // pedirle el comprobante. En una renovación no hace falta.
+    const contacto = esRecurrente && !esRenovacion
+      ? await buscarAlta({ email: buyerEmail, producto: product.id })
+      : null;
+
+    // Por dónde entró una suscripción nueva. ManyChat ("comentá RED") manda
+    // directo al plan de MercadoPago a propósito, porque desde el chat de
+    // Instagram es más cómodo que pasar por la web. Esas altas no dejan fila
+    // en altas_suscripcion, así que "sin formulario" = link directo. Puede
+    // fallar al revés: alguien que llenó el formulario pero pagó con una
+    // cuenta de MP de otro mail queda como link directo.
+    const canal = esRecurrente && !esRenovacion
+      ? (contacto ? 'formulario-web' : 'link-directo')
+      : null;
+
     // Se registra ANTES de avisar y de entregar. Si el pago ya estaba en la
     // tabla, la pasarela está reenviando una notificación vieja y no hay que
     // volver a hacer nada: ni mail al comprador ni aviso a Guido.
@@ -510,7 +526,8 @@ export default async function handler(req, res) {
       amount: payment.transaction_amount,
       currency: payment.currency_id,
       paymentMethod: esRecurrente ? 'mercadopago-suscripcion' : 'mercadopago',
-      paymentId: String(paymentId)
+      paymentId: String(paymentId),
+      canal
     });
 
     if (!esNueva) {
@@ -542,15 +559,10 @@ export default async function handler(req, res) {
       }
     }
 
-    // El WhatsApp que dejó en /suscribirme/, para que Guido lo sume sin
-    // pedirle el comprobante. En una renovación no hace falta.
-    const contacto = esRecurrente && !esRenovacion
-      ? await buscarAlta({ email: buyerEmail, producto: product.id })
-      : null;
-
     await notificarVenta({
       product,
       contacto,
+      canal,
       buyerEmail,
       buyerName,
       amount: payment.transaction_amount,

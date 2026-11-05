@@ -64,7 +64,7 @@ function bloqueTexto(pares) {
  * quedó registrada, así que la pasarela no va a volver a avisar: si este aviso
  * no lo dice, nadie se entera de que la persona pagó y no recibió nada.
  */
-export async function notificarVenta({ product, buyerEmail, buyerName, amount, currency, paymentMethod, paymentId, recurrente = false, accesoAutomatico = false, renovacion = false, entregaFallida = false, linkEntrega = null, contacto = null }) {
+export async function notificarVenta({ product, buyerEmail, buyerName, amount, currency, paymentMethod, paymentId, recurrente = false, accesoAutomatico = false, renovacion = false, entregaFallida = false, linkEntrega = null, contacto = null, canal = null }) {
   try {
     const monto = formatearMonto(amount, currency);
     const esDescargable = Boolean(product.driveUrl);
@@ -72,6 +72,12 @@ export async function notificarVenta({ product, buyerEmail, buyerName, amount, c
     // El WhatsApp que dejó en /suscribirme/, si se encontró por el mail.
     const whatsapp = contacto?.whatsapp || null;
     const linkWhatsapp = whatsapp ? linkDeWhatsapp(whatsapp) : null;
+    // Por dónde entró una suscripción nueva de MercadoPago (ver webhook.js).
+    const comoLlego = canal === 'formulario-web'
+      ? `Formulario de la web${contacto?.origen ? ` (${contacto.origen})` : ''}`
+      : canal === 'link-directo'
+        ? 'Link directo de Mercado Pago, sin pasar por la web (lo más probable: ManyChat)'
+        : null;
 
     // Lo que Guido tiene que hacer (o no) según el tipo de producto.
     let queHacer;
@@ -128,6 +134,7 @@ export async function notificarVenta({ product, buyerEmail, buyerName, amount, c
           ['Monto', monto],
           ['Comprador', buyerName ? `${buyerName} (${buyerEmail})` : buyerEmail],
           ['WhatsApp', whatsapp ? `${whatsapp} (${linkWhatsapp})` : null],
+          ['Cómo llegó', comoLlego],
           ['Medio de pago', paymentMethod],
           ['Fecha', fechaArgentina()],
           ['ID de pago', paymentId]
@@ -153,6 +160,7 @@ export async function notificarVenta({ product, buyerEmail, buyerName, amount, c
             <table style="width: 100%; border-collapse: collapse; margin-bottom: 28px;">
               ${fila('Comprador', buyerName ? `${buyerName} (${buyerEmail})` : buyerEmail)}
               ${whatsapp ? fila('WhatsApp', `<a href="${linkWhatsapp}" style="color: #1e6f1d;">${esc(whatsapp)}</a>`) : ''}
+              ${comoLlego ? fila('Cómo llegó', esc(comoLlego)) : ''}
               ${fila('Medio de pago', paymentMethod)}
               ${fila('Fecha', fechaArgentina())}
               ${fila('ID de pago', paymentId)}

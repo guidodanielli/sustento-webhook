@@ -57,7 +57,7 @@ export async function buscarAlta({ email, producto }) {
       email: `eq.${String(email).trim().toLowerCase()}`,
       producto: `eq.${producto}`,
       created_at: `gte.${desde}`,
-      select: 'nombre,whatsapp',
+      select: 'nombre,whatsapp,origen',
       order: 'created_at.desc',
       limit: '1'
     });

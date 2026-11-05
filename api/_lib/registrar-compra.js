@@ -23,7 +23,8 @@ export async function registrarCompra({
   amount,
   currency,
   paymentMethod,
-  paymentId
+  paymentId,
+  canal = null
 }) {
   try {
     const response = await fetch(`${process.env.SUPABASE_URL}/rest/v1/purchases?on_conflict=payment_id`, {
@@ -47,7 +48,10 @@ export async function registrarCompra({
         currency,
         payment_method: paymentMethod,
         payment_id: paymentId,
-        status: 'approved'
+        status: 'approved',
+        // Solo suscripciones nuevas de MercadoPago: 'formulario-web' o
+        // 'link-directo' (ManyChat). Columna agregada el 05/11/2026.
+        ...(canal ? { canal } : {})
       })
     });
 
